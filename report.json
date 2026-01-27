@@ -1,0 +1,179 @@
+{
+  "version": "1",
+  "pip_version": "25.2",
+  "install": [
+    {
+      "download_info": {
+        "url": "https://pypi.nvidia.com/isaacsim/isaacsim-4.5.0.0-cp310-none-manylinux_2_34_x86_64.whl",
+        "archive_info": {
+          "hash": "sha256=29ac8907cf85d5935594132b7a2b2f812e3ea2ac85988bd2e0cc06933ce07081",
+          "hashes": {
+            "sha256": "29ac8907cf85d5935594132b7a2b2f812e3ea2ac85988bd2e0cc06933ce07081"
+          }
+        }
+      },
+      "is_direct": false,
+      "is_yanked": false,
+      "requested": true,
+      "metadata": {
+        "metadata_version": "2.2",
+        "name": "isaacsim",
+        "version": "4.5.0.0",
+        "summary": "A metapackage to manage the Isaac Sim installation",
+        "description_content_type": "text/markdown",
+        "keywords": [
+          "nvidia",
+          "omniverse",
+          "isaacsim"
+        ],
+        "author": "Isaac Sim team",
+        "license": "NVIDIA Proprietary Software",
+        "classifier": [
+          "Programming Language :: Python :: 3",
+          "Programming Language :: Python :: 3.10",
+          "License :: Other/Proprietary License"
+        ],
+        "requires_dist": [
+          "isaacsim-kernel==4.5.0.0",
+          "isaacsim-rl==4.5.0.0; extra == \"rl\"",
+          "isaacsim-replicator==4.5.0.0; extra == \"rl\"",
+          "isaacsim-app==4.5.0.0; extra == \"rl\"",
+          "isaacsim-ros1==4.5.0.0; extra == \"ros\"",
+          "isaacsim-ros2==4.5.0.0; extra == \"ros2\"",
+          "isaacsim-extscache-kit==4.5.0.0; extra == \"extscache\"",
+          "isaacsim-extscache-kit-sdk==4.5.0.0; extra == \"extscache\"",
+          "isaacsim-extscache-physics==4.5.0.0; extra == \"extscache\"",
+          "isaacsim-app==4.5.0.0; extra == \"all\"",
+          "isaacsim-asset==4.5.0.0; extra == \"all\"",
+          "isaacsim-benchmark==4.5.0.0; extra == \"all\"",
+          "isaacsim-code-editor==4.5.0.0; extra == \"all\"",
+          "isaacsim-core==4.5.0.0; extra == \"all\"",
+          "isaacsim-cortex==4.5.0.0; extra == \"all\"",
+          "isaacsim-example==4.5.0.0; extra == \"all\"",
+          "isaacsim-gui==4.5.0.0; extra == \"all\"",
+          "isaacsim-replicator==4.5.0.0; extra == \"all\"",
+          "isaacsim-rl==4.5.0.0; extra == \"all\"",
+          "isaacsim-robot==4.5.0.0; extra == \"all\"",
+          "isaacsim-robot-motion==4.5.0.0; extra == \"all\"",
+          "isaacsim-robot-setup==4.5.0.0; extra == \"all\"",
+          "isaacsim-ros1==4.5.0.0; extra == \"all\"",
+          "isaacsim-ros2==4.5.0.0; extra == \"all\"",
+          "isaacsim-sensor==4.5.0.0; extra == \"all\"",
+          "isaacsim-storage==4.5.0.0; extra == \"all\"",
+          "isaacsim-template==4.5.0.0; extra == \"all\"",
+          "isaacsim-test==4.5.0.0; extra == \"all\"",
+          "isaacsim-utils==4.5.0.0; extra == \"all\""
+        ],
+        "requires_python": "==3.10.*",
+        "project_url": [
+          "Home page, https://developer.nvidia.com/isaac-sim",
+          "Documentation, https://docs.isaacsim.omniverse.nvidia.com",
+          "Forum, https://forums.developer.nvidia.com/c/omniverse/simulation/69"
+        ],
+        "provides_extra": [
+          "rl",
+          "ros",
+          "ros2",
+          "extscache",
+          "all"
+        ],
+        "description": "# isaacsim\n\nA metapackage to manage the Isaac Sim installation\n\n<hr>\n\nSee [Install Isaac Sim using PIP](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_python.html)\nfor details on how to install and run Isaac Sim in a (virtual) Python environment.\n\n"
+      }
+    },
+    {
+      "download_info": {
+        "url": "https://pypi.nvidia.com/isaacsim-kernel/isaacsim_kernel-4.5.0.0-cp310-none-manylinux_2_34_x86_64.whl",
+        "archive_info": {
+          "hash": "sha256=f1966f4ad9e3e73ac10211994eeefb43559481cb2211769b133c984808286742",
+          "hashes": {
+            "sha256": "f1966f4ad9e3e73ac10211994eeefb43559481cb2211769b133c984808286742"
+          }
+        }
+      },
+      "is_direct": false,
+      "is_yanked": false,
+      "requested": false,
+      "metadata": {
+        "metadata_version": "2.2",
+        "name": "isaacsim-kernel",
+        "version": "4.5.0.0",
+        "summary": "Isaac Sim kernel",
+        "description_content_type": "text/markdown",
+        "keywords": [
+          "nvidia",
+          "omniverse",
+          "isaacsim",
+          "kernel"
+        ],
+        "author": "Isaac Sim team",
+        "license": "NVIDIA Proprietary Software",
+        "classifier": [
+          "Programming Language :: Python :: 3",
+          "Programming Language :: Python :: 3.10",
+          "License :: Other/Proprietary License"
+        ],
+        "requires_dist": [
+          "omniverse-kit==106.5.0.162521"
+        ],
+        "requires_python": "==3.10.*",
+        "project_url": [
+          "Home page, https://developer.nvidia.com/isaac-sim",
+          "Documentation, https://docs.isaacsim.omniverse.nvidia.com",
+          "Forum, https://forums.developer.nvidia.com/c/omniverse/simulation/69"
+        ],
+        "description": "# isaacsim-kernel\n\nIsaac Sim kernel\n\n<hr>\n\nSee [Install Isaac Sim using PIP](https://docs.omniverse.nvidia.com/isaacsim/latest/installation/install_python.html)\nfor details on how to install and run Isaac Sim in a (virtual) Python environment.\n\n"
+      }
+    },
+    {
+      "download_info": {
+        "url": "https://pypi.nvidia.com/omniverse-kit/omniverse_kit-106.5.0.162521-cp310-none-manylinux_2_34_x86_64.whl",
+        "archive_info": {
+          "hash": "sha256=c320dfb1dba2c660102e95fb48af9c3617933e5916d184d84f71917ca6bad7f1",
+          "hashes": {
+            "sha256": "c320dfb1dba2c660102e95fb48af9c3617933e5916d184d84f71917ca6bad7f1"
+          }
+        }
+      },
+      "is_direct": false,
+      "is_yanked": false,
+      "requested": false,
+      "metadata": {
+        "metadata_version": "2.1",
+        "name": "omniverse-kit",
+        "version": "106.5.0.162521",
+        "summary": "Omniverse Kit Kernel",
+        "description_content_type": "text/markdown",
+        "keywords": [
+          "nvidia",
+          "omniverse",
+          "kit",
+          "kernel"
+        ],
+        "author": "Kit Team",
+        "license": "NVIDIA Proprietary Software",
+        "classifier": [
+          "Programming Language :: Python :: 3"
+        ],
+        "requires_python": "==3.10.*",
+        "project_url": [
+          "Home page, https://developer.nvidia.com/omniverse",
+          "Documentation, https://docs.omniverse.nvidia.com/kit/docs/kit-manual"
+        ],
+        "description": "(kit-python-package-main-doc)=\n\n# Kit Python Package\n\n**Kit** is published as a Python (PIP, wheel) package. This means that you can use **Kit** as a Python library in your Python projects.\n\nIt [can be found PyPI index](https://pypi.org/project/omniverse-kit/). But it is a placeholder package, to install **Kit** from PyPI you need pass an extra index URL to pip:\n\n```bash\npip install omniverse-kit --extra-index-url https://pypi.nvidia.com\n```\n\n## Getting Started\n\n```bash\npython -m venv myenv\nmyenv\\Scripts\\activate\npip install omniverse-kit --extra-index-url https://pypi.nvidia.com\npython -m omni.kit_app\n```\n\nIn this example we create a new virtual environment, activate it, install **Kit** into it as python package, and run **Kit**. It will start in the same way as if it was started from the `kit.exe`, but instead your python is used.\n\n\n## KitApp Example\n\nThe `omni.kit_app` module provides an initial bootstrapping and `KitApp` class, which is a Pythonic way to start **Kit**. It is a thin wrapper around the `kit.exe` command line interface, and it provides a way to start **Kit** from Python, to pass command line arguments to it, to control the basic update loop:\n\n```{literalinclude} ../../../../../source/extensions/omni.kit.core.tests/omni/kit/core/tests/scripts/example_kit_app_ui.py\n:language: py\n```\n\nIn this example we startup **Kit** asking it to enable `omni.ui` extension. Use it to build a simple UI window. After that we keep app update loop running until app is signaled to exit.\nThat will only work if among enabled extension is `omni.kit.loop` (or similar) which implements the main update loop interface (`omni::kit::IRunLoopRunner`). Otherwise **Kit** will exit.\n\nThe `from omni.kit_app import KitApp` import must be the first of omniverse imports, it sets up the environment (loads Carbonite, adds library and python paths).\n\nTypically extensions subscribe to update loop events (like render UI every frame, process new input events, etc). However, for some applications it might be useful to have a full control over the update loop. To call explicit API of various extensions, rather than rely on their event-based API:\n\n```{literalinclude} ../../../../../source/extensions/omni.kit.core.tests/omni/kit/core/tests/scripts/example_kit_app_simple.py\n:language: py\n```\n\nIn this example we startup **Kit** asking it to enable `omni.usd` extension. After that extension is available (added to `sys.path`, startup was called) and we can use it in our Python code.\n\n## EULA\n\nOn the first import of `omni.kit_app` module, it will ask you to accept the EULA. This is a one-time operation, if accepted, it will not ask again. An alternative way to accept the EULA is to set the environment variable `OMNI_KIT_ACCEPT_EULA` to `yes`.\n\n## Editable Mode\n\nYou can install **Kit** python package in editable mode, which means that you can modify the source code and see the changes immediately. This is useful for development and debugging.\n\nAssuming you've built **Kit** from source:\n\n```bash\npip install -e [path to kit source]/_build/packages/python/omniverse-kit\n```\n"
+      }
+    }
+  ],
+  "environment": {
+    "implementation_name": "cpython",
+    "implementation_version": "3.10.12",
+    "os_name": "posix",
+    "platform_machine": "x86_64",
+    "platform_release": "6.8.0-90-generic",
+    "platform_system": "Linux",
+    "platform_version": "#91~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Thu Nov 20 15:20:45 UTC 2",
+    "python_full_version": "3.10.12",
+    "platform_python_implementation": "CPython",
+    "python_version": "3.10",
+    "sys_platform": "linux"
+  }
+}
