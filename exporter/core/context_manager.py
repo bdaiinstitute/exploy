@@ -3,7 +3,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from .components import Group, Input, Memory, Output
+from .components import Group, Input, Memory, Output, Connection
 
 
 class ContextManager:
@@ -12,13 +12,20 @@ class ContextManager:
     def __init__(
         self,
     ):
-        self._components: list[Input | Output] = []
+        self._components: list[Input | Output | Connection] = []
         self._groups: list[Group] = []
 
-    def add_component(self, component: Input | Output) -> None:
+    def add_component(self, component: Input | Output | Connection) -> None:
+        if isinstance(component, Input):
+            self.assert_unique_name(component.input_name)
+        elif isinstance(component, Output):
+            self.assert_unique_name(component.output_name)
+
         self._components.append(component)
 
     def add_group(self, group: Group) -> None:
+        self.assert_unique_name(group.name)
+
         for item in group.items:
             if isinstance(item, Group):
                 self.add_group(item)
@@ -28,6 +35,9 @@ class ContextManager:
 
     def get_input_components(self) -> list[Input]:
         return [comp for comp in self._components if isinstance(comp, Input | Memory)]
+
+    def get_connection_components(self) -> list[Connection]:
+        return [comp for comp in self._components if isinstance(comp, Connection)]
 
     def get_output_components(self) -> list[Output]:
         return [comp for comp in self._components if isinstance(comp, Output | Memory)]
@@ -47,9 +57,8 @@ class ContextManager:
         for component in self.get_input_components():
             component.read()
 
-    def write_inputs_to_env(self) -> None:
-        for component in self.get_input_components():
-            print(f"set input for name: {component.input_name}")
+    def write_connections(self) -> None:
+        for component in self.get_connection_components():
             component.write()
 
     def get_inputs(self, to_numpy: bool = False) -> dict[str, torch.Tensor] | dict[str, np.ndarray]:
@@ -87,3 +96,9 @@ class ContextManager:
             },
             **{group.name: group.metadata for group in self._groups if group.metadata is not None},
         }
+
+    def assert_unique_name(self, name: str) -> bool:
+        assert name not in [g.name for g in self._groups]
+        assert name not in [comp.input_name for comp in self.get_input_components()]
+        assert name not in [comp.output_name for comp in self.get_output_components()]
+        return True

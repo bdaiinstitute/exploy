@@ -39,6 +39,11 @@ class TensorProxy:
         self._split_dim = split_dim
         assert self._split_dim < self._total_dim and self._split_dim >= 0
 
+    @property
+    def device(self) -> torch.device:
+        # TODO: get correct device.
+        return torch.device("cpu")
+
     def __getitem__(self, idx):
         """Index into a `TensorProxy` as if the user was indexing into the un-split list of tensors."""
         if not isinstance(idx, tuple):
@@ -145,6 +150,11 @@ class TensorProxy:
 
     def __repr__(self):
         return f"TensorProxy(shape={self.to_tensor().shape})"
+
+    @property
+    def tensors(self) -> list[torch.Tensor]:
+        """Get the list of tensors stored in this `TensorProxy`."""
+        return self._tensors
 
 
 def args_to_tensor(args):

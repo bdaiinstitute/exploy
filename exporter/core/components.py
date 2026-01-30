@@ -12,12 +12,10 @@ class Input:
         self,
         name: str,
         get_from_env_cb: Callable[[], torch.Tensor],
-        set_to_env_cb: Callable[[torch.Tensor], None],
         metadata: Any = None,
     ):
         self._name = name
         self._get_from_env_cb = get_from_env_cb
-        self._set_to_env_cb = set_to_env_cb
         self._metadata: Any = metadata
         self._data: torch.Tensor = self._get_from_env_cb()
 
@@ -39,9 +37,6 @@ class Input:
     @property
     def input_name(self) -> str:
         return self._name
-
-    def write(self) -> None:
-        self._set_to_env_cb(self._data)
 
     def read(self) -> None:
         self._data = self._get_from_env_cb()
@@ -98,13 +93,11 @@ class Memory(Input, Output):
         self,
         name: str,
         get_from_env_cb: Callable[[], torch.Tensor],
-        set_to_env_cb: Callable[[torch.Tensor], None],
     ):
         Input.__init__(
             self,
             name=name,
             get_from_env_cb=get_from_env_cb,
-            set_to_env_cb=set_to_env_cb,
         )
         Output.__init__(
             self,
@@ -156,3 +149,23 @@ class Group:
     @property
     def metadata(self) -> Any:
         return self._metadata
+
+
+class Connection:
+    def __init__(
+        self,
+        name: str,
+        getter: callable,
+        setter: callable,
+    ):
+        self._name = name
+        self._getter = getter
+        self._setter = setter
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    def write(self) -> None:
+        if self._setter is not None:
+            self._setter(self._getter())

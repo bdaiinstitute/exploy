@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 
 # isort: skip_file
-from .components import Input, Memory, Output, Group
+from .components import Input, Memory, Output, Group, Connection
 from .context_manager import ContextManager
 from .exporter import export_environment_as_onnx, ExportMode, OnnxEnvironmentExporter
 from .exportable_environment import ExportableEnvironment

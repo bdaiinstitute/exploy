@@ -155,13 +155,17 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             memory (containing the previous actions for example).
         """
         # Set data handlers from source inputs.
-        self._env.context_manager().write_inputs_to_env()
+        self._env.context_manager().write_connections()
 
         # Compute.
         with torch.no_grad():
+            observations = self._env.empty_actor_observations()
+            actions = self._env.empty_actions()
+
             # Inference: compute actions.
             match self.export_mode:
                 case ExportMode.Default:
+                    # TODO: Fix updating commands.
                     # Update required commands.
                     # Note: we explicitly only call the `_update_command` method
                     #       to enable the computational graph associated with commands.
@@ -180,17 +184,7 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                     self._env.process_actions(actions)
 
                 case ExportMode.ProcessActions:
-                    # We only want the subgraph from actions to outputs in the post-process graph.
-                    # We always add memory with the name "actions", it is therefore guaranteed to be present here.
-                    actions = input_data["memory.actions.in"].unsqueeze(
-                        0
-                    )  # self._env.empty_actions()
-
-                    # We do not want the computation of the observations to be part of the post-process graph.
-                    # We therefore set it to zeros.
-                    observations = torch.zeros_like(
-                        self._env.compute_observations(device=self._export_device)
-                    )  # self._env.empty_actor_observations()
+                    pass
 
             self._env.apply_actions()
 
@@ -234,13 +228,8 @@ class OnnxEnvironmentExporter(torch.nn.Module):
         input_values.append({})
         input_values = tuple(input_values)
 
-        for n, v in input_values[0].items():
-            print(f"input name: {n}, value id: {id(v)}")
-
         output_names = ["actions", "obs"]
         output_names += self._env.context_manager().get_output_names()
-
-        print(f"output_names: {output_names}")
 
         assert are_values_on_device(
             names=input_names,

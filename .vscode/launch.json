@@ -5,12 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Pixi Current File",
+            "name": "[Examples] Export IsaacLab task.",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/examples/exporter_scripts/export_isaaclab.py",
             "console": "integratedTerminal",
-            "python": "${workspaceFolder}/.pixi/envs/default/bin/python"  // Adjust path if needed
+            "python": "${workspaceFolder}/.pixi/envs/default/bin/python",  // Adjust path if needed
+            "justMyCode": false,
         }
     ]
 }

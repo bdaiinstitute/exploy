@@ -10,16 +10,12 @@ from typing import TYPE_CHECKING
 import gymnasium as gym
 from isaaclab.app import AppLauncher
 
-# local imports
-# import cli_args  # isort: skip
-
-
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnvCfg
     from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg
 
 
-def make_simulation_app():
+def make_simulation_app() -> "SimulationApp":
     # Create argument parser for headless mode
     parser = argparse.ArgumentParser()
 
@@ -39,26 +35,24 @@ simulation_app = make_simulation_app()
 
 
 # Import tasks to register environments
-import isaaclab_tasks  # noqa: F401
+import isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c  # noqa: F401
+import isaaclab_tasks.manager_based.locomotion.velocity.config.g1  # noqa: F401
+
 import torch
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
-from isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c import *  # noqa: F401, F403
-from isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c.flat_env_cfg import (
-    AnymalCFlatEnvCfg_PLAY,
-)
 from isaaclab_tasks.utils import parse_env_cfg
 from rsl_rl.runners import OnPolicyRunner
 
 from exporter import core as exporter_core
 from exporter.core.evaluator import evaluate
 from exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
+from isaaclab.sim import SimulationContext
 
 
-def main():
+def main(task_name: str = None):
     # test_dir = pathlib.Path(tempfile.gettempdir()) / "exporter_tests"
     test_dir = pathlib.Path(__file__).parent / "exporter_tests"
 
-    task_name = "Isaac-Velocity-Flat-Anymal-C-Play-v0"
     task_device = "cpu"
 
     env_cfg: ManagerBasedRLEnvCfg = parse_env_cfg(task_name, num_envs=1, device=task_device)
@@ -104,7 +98,7 @@ def main():
     )
 
     # Evaluate.
-    evaluate_steps = 5000
+    evaluate_steps = 50
     with torch.inference_mode():
         evaluate(
             env=exportable_env,
@@ -117,10 +111,13 @@ def main():
     # Close simulation app.
     if simulation_app:
         print("Closing simulation app...")
+        SimulationContext.clear_instance()
         simulation_app.close()
 
     print("Done.")
 
 
 if __name__ == "__main__":
-    main()
+    # main(task_name="Isaac-Velocity-Flat-Anymal-C-Play-v0")
+    # main(task_name="Isaac-Velocity-Rough-Anymal-C-Play-v0")
+    main(task_name="Isaac-Velocity-Rough-G1-Play-v0")

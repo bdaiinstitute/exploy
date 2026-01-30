@@ -12,7 +12,11 @@ from exporter.frameworks.isaaclab.utils import get_observation_names
 
 
 class IsaacLabExportableEnvironment(ExportableEnvironment):
-    def __init__(self, env: ManagerBasedRLEnv, env_id: int):
+    def __init__(
+        self,
+        env: ManagerBasedRLEnv,
+        env_id: int,
+    ):
         assert type(env) is ManagerBasedRLEnv, (
             "IsaacLabExportableEnvironment only supports ManagerBasedRLEnv environments."
         )
@@ -48,36 +52,25 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         inputs.add_commands(
             source=self._env.command_manager,
             context_manager=self._context_manager,
-            env_id=self._env_id,
         )
         inputs.add_articulation_data(
             articulation=self._env.scene[self._articulation_name],
             context_manager=self._context_manager,
-            env_id=self._env_id,
+        )
+        inputs.add_sensor_inputs(
+            articulation=self._env.scene[self._articulation_name],
+            sensors=self._env.scene.sensors,
+            context_manager=self._context_manager,
         )
         memory.add_memory(
             env=self._env,
-            env_id=self._env_id,
             context_manager=self._context_manager,
         )
         outputs.add_outputs(
             action_manager=self._env.action_manager,
             articulation=self._env.scene[self._articulation_name],
-            env_id=self._env_id,
             context_manager=self._context_manager,
         )
-
-        # Keep track of and reset each sensor's info to avoid
-        # them being updated while exporting.
-        # self._sensor_info = {}
-        # for sensor_name, sensor in self._env.scene.sensors.items():
-        #     self._sensor_info[sensor_name] = {}
-        #     self._sensor_info[sensor_name]["timestamp"] = sensor._timestamp
-        #     self._sensor_info[sensor_name]["timestamp_last_update"] = sensor._timestamp_last_update
-        #     self._sensor_info[sensor_name]["is_outdated"] = sensor._is_outdated.clone()
-        #     sensor._timestamp = -100.0
-        #     sensor._timestamp_last_update = 100.0
-        #     sensor._is_outdated[:] = False
 
     @property
     def env(self) -> ManagerBasedRLEnv:
@@ -95,12 +88,6 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
 
         for i_rigid_object, rigid_object in enumerate(self._env.scene.rigid_objects.values()):
             rigid_object._data = self._rigid_object_list[i_rigid_object]
-
-        # # Set back sensor info.
-        # for sensor_name, sensor in self.env.scene.sensors.items():
-        #     sensor._timestamp = sensor_info[sensor_name]["timestamp"]
-        #     sensor._timestamp_last_update = sensor_info[sensor_name]["timestamp_last_update"]
-        #     sensor._is_outdated[:] = sensor_info[sensor_name]["is_outdated"]
 
     def compute_observations(self, device: str) -> torch.Tensor:
         """Compute and return the observations of the environment."""
@@ -155,10 +142,12 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         return True
 
     def empty_actor_observations(self) -> torch.Tensor:
-        return self._empty_actor_observations
+        return torch.zeros_like(
+            self._env.observation_manager._obs_buffer[self._policy_obs_group_name]
+        )
 
     def empty_actions(self) -> torch.Tensor:
-        return self._empty_actions
+        return torch.zeros_like(self._env.action_manager._action)
 
     def metadata(self) -> dict[str, str]:
         metadata = {}
