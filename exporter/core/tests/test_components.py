@@ -1,14 +1,15 @@
 """Tests for core components."""
 
+import numpy as np
 import pytest
 import torch
-import numpy as np
 
 from exporter.core.components import Group, Input, Memory, Output
 
 
 class TestInput:
     """Test Input component."""
+
     def test_input_creation(self):
         """Test creating an Input component."""
         data = torch.tensor([1.0, 2.0])
