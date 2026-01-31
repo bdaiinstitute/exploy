@@ -34,6 +34,7 @@ class TestModel(torch.nn.Module):
         depth_image,
         body_quat,
         memory,
+        step_count,
     ):
         # use all inputs and ensure they are not optimized away
         inputs = [
@@ -58,6 +59,7 @@ class TestModel(torch.nn.Module):
             depth_image,
             body_quat,
             memory,
+            step_count,
         ]
 
         # Identity operations to keep them in the graph
@@ -109,6 +111,7 @@ def main():
     trail_scan = torch.rand((1, 8), dtype=torch.float32)
     body_quat = torch.rand((1, 4), dtype=torch.float32)
     memory = torch.rand((1, 2), dtype=torch.float32)
+    step_count = torch.tensor([[42]], dtype=torch.int32)
 
     data_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -139,36 +142,38 @@ def main():
             depth_image,
             body_quat,
             memory,
+            step_count,
         ),
         output_path,
         input_names=[
-            "joint_pos",
-            "joint_vel",
-            "pos_base_in_w",
-            "world_Q_base",
-            "lin_vel_base_in_base",
-            "ang_vel_base_in_base",
-            "command.se2_vel",
-            "command.se2_vel_with_range",
-            "command.se3_pose",
-            "imu_data.quat.imu1",
-            "imu_data.ang_vel.imu1",
-            "sensor.height_scanner",
-            "sensor.another_height_scanner",
-            "sensor.lidar_scanner",
-            "sensor.trail_scanner.height",
-            "sensor.trail_scanner.r",
-            "sensor.trail_scanner.g",
-            "sensor.trail_scanner.b",
-            "sensor.depth_image",
-            "body.hand.quat",
+            "articulation.joint.pos",
+            "articulation.joint.vel",
+            "articulation.bodies.pelvis.pos_base_in_w",
+            "articulation.bodies.pelvis.world_Q_body",
+            "articulation.bodies.pelvis.lin_vel_base_in_base",
+            "articulation.bodies.pelvis.ang_vel_base_in_base",
+            "command.se2_velocity.vel",
+            "command.se2_velocity.vel_with_range",
+            "command.se3_pose.pose",
+            "articulation.bodies.torso.world_Q_body",
+            "articulation.bodies.torso.ang_vel_body",
+            "sensor.height_scanner.one.height",
+            "sensor.height_scanner.two.height",
+            "sensor.range_image.one",
+            "sensor.height_scanner.trail.height",
+            "sensor.height_scanner.trail.r",
+            "sensor.height_scanner.trail.g",
+            "sensor.height_scanner.trail.b",
+            "sensor.depth_image.one",
+            "rigid_bodies.box.body_Q_body",
             "memory.output.joint_targets.pos.in",
+            "step_count",
         ],
         output_names=[
             "output.joint_targets.pos",
             "output.joint_targets.vel",
             "output.joint_targets.effort",
-            "output.se2_base_velocity",
+            "output.se2_velocity",
             "actions",
             "memory.output.joint_targets.pos.out",
         ],
@@ -176,20 +181,17 @@ def main():
 
     output_metadata = {
         "output.joint_targets": {
-            "type": "joint_targets",
             "names": ["j1", "j2"],
             "stiffness": [1.0, 2.0],
             "damping": [0.1, 0.2],
         },
-        "output.se2_base_velocity": {
-            "type": "se2_velocity",
+        "output.se2_velocity": {
             "target_frame": "base_frame",
         },
     }
 
     sensor_metadata = {
-        "sensor.height_scanner": {
-            "type": "ray_caster",
+        "sensor.height_scanner.one": {
             "pattern_type": "grid_pattern",
             "resolution": 0.1,
             "size_x": 1.6,
@@ -197,15 +199,13 @@ def main():
             "offset_x": 1.0,
             "offset_y": 0.0,
         },
-        "sensor.another_height_scanner": {
-            "type": "ray_caster",
+        "sensor.height_scanner.two": {
             "pattern_type": "grid_pattern",
             "resolution": 0.1,
             "size_x": 1.6,
             "size_y": 1.0,
         },
-        "sensor.lidar_scanner": {
-            "type": "lidar_range_image",
+        "sensor.range_image.one": {
             "pattern_type": "lidar_pattern",
             "v_res": 128,
             "h_res": 1024,
@@ -213,17 +213,7 @@ def main():
             "v_fov_max_deg": 45.0,
             "unobserved_value": -2.0,
         },
-        "sensor.trail_scanner": {
-            "type": "trail_ray_caster",
-            "pattern_type": "grid_pattern",
-            "resolution": 0.1,
-            "size_x": 1.6,
-            "size_y": 1.0,
-            "offset_x": 0.0,
-            "offset_y": 0.0,
-        },
-        "sensor.depth_image": {
-            "type": "depth_image",
+        "sensor.depth_image.one": {
             "pattern_type": "grid_pattern",
             "height": 1,
             "width": 1,
@@ -232,13 +222,19 @@ def main():
             "cx": 0.5,
             "cy": 0.5,
         },
+        "sensor.height_scanner.trail": {
+            "pattern_type": "grid_pattern",
+            "resolution": 0.1,
+            "size_x": 1.6,
+            "size_y": 1.0,
+            "offset_x": 0.0,
+            "offset_y": 0.0,
+        },
     }
 
     command_metadata = {
-        "command.se3_pose": {"type": "se3_pose"},
-        "command.se2_vel": {"type": "se2_velocity"},
-        "command.se2_vel_with_range": {
-            "type": "se2_velocity",
+        "command.se2_velocity.vel": {},
+        "command.se2_velocity.vel_with_range": {
             "ranges": {
                 "lin_vel_x": [-1.5, 1.5],
                 "lin_vel_y": [-0.75, 0.75],
@@ -247,23 +243,23 @@ def main():
         },
     }
 
+    env_metadata = {
+        "update_rate": 10.0,
+    }
+
+    articulation_metadata = {
+        "articulation.joint.pos": {
+            "names": ["j1", "j2", "j3"],
+        },
+        "articulation.joint.vel": {
+            "names": ["j1", "j2", "j3"],
+        },
+    }
+
     add_metadata(
         output_path,
-        {
-            "policy_dt": 0.1,
-            "decimation": 2.0,
-            "outputs": output_metadata,
-            "commands": command_metadata,
-            "sensors": sensor_metadata,
-        },
+        env_metadata | output_metadata | command_metadata | sensor_metadata | articulation_metadata,
     )
-
-    # Remove as soon as we remove joint_names support.
-    onnx_model = onnx.load(output_path)
-    meta = onnx_model.metadata_props.add()
-    meta.key = "joint_names"
-    meta.value = "j1,j2,j3"
-    onnx.save(onnx_model, output_path)
 
 
 if __name__ == "__main__":

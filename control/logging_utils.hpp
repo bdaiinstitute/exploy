@@ -16,8 +16,3 @@
   do {                                                              \
     std::cout << "[" << #LEVEL << "] " << __VA_ARGS__ << std::endl; \
   } while (0);
-
-#define SCOPED_LOG GENERIC_LOG
-#define SCOPED_LOG_STREAM GENERIC_LOG_STREAM
-
-#define CS_TRACE_SCOPED_ZONE

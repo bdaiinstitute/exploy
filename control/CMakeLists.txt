@@ -5,8 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find dependencies
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(fmt REQUIRED)
@@ -30,7 +28,7 @@ set_target_properties(onnxruntime PROPERTIES
     IMPORTED_LOCATION "${ONNXRUNTIME_LIBRARY}"
 )
 # Note: INTERFACE_INCLUDE_DIRECTORIES needs to point to the root of headers so #include <onnxruntime/...> works
-# Wait, let's check the find_path result. If it finds onnxruntime_c_api.h in include/onnxruntime/core/session, 
+# Wait, let's check the find_path result. If it finds onnxruntime_c_api.h in include/onnxruntime/core/session,
 # then header root is include/.
 find_package(GTest REQUIRED)
 
@@ -38,10 +36,12 @@ find_package(GTest REQUIRED)
 include_directories(/usr/include/eigen3) # Fallback if FindEigen3 is weird, but usually Eigen3::Eigen is better
 
 # C++ Shared Library
-add_library(onnx_controller SHARED 
+add_library(onnx_controller SHARED
     onnx_controller.cpp
-    onnx_config_parser.cpp
+    onnx_context.cpp
     onnx_runtime.cpp
+    onnx_components.cpp
+    onnx_matcher.cpp
 )
 
 target_include_directories(onnx_controller PUBLIC .)
@@ -65,13 +65,13 @@ add_custom_command(
 )
 
 add_executable(onnx_controller_test test/onnx_controller_test.cpp "${GEN_OUTPUT}")
-target_compile_definitions(onnx_controller_test PRIVATE 
+target_compile_definitions(onnx_controller_test PRIVATE
     TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/testdata"
 )
-target_link_libraries(onnx_controller_test PRIVATE 
-    onnx_controller 
-    GTest::gtest_main 
-    GTest::gmock 
+target_link_libraries(onnx_controller_test PRIVATE
+    onnx_controller
+    GTest::gtest_main
+    GTest::gmock
     fmt::fmt
 )
 add_test(NAME onnx_controller_test COMMAND onnx_controller_test)

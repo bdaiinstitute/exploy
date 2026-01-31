@@ -89,47 +89,48 @@ class OnnxControllerTest : public ::testing::Test {
   void SetUp() override {}
 
   void ExpectInitBase() {
-    EXPECT_CALL(state_mock_, initBasePosW())
-        .Times(2)
-        .WillRepeatedly(Return(true));  // called twice for heightmap and base pos
+    EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(true));  // called once for base pos
     EXPECT_CALL(state_mock_, initBaseQuatW())
         .Times(2)
-        .WillRepeatedly(Return(true));  // called twice for heightmap and base quat
+        .WillRepeatedly(Return(true));  // called twice for pelvis and torso
     EXPECT_CALL(state_mock_, initBaseLinVelB()).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initBaseAngVelB()).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initSe2Velocity("base_frame")).WillOnce(Return(true));
   }
 
-  void ExpectInitJoints() {
+  void ExpectInitOutput() {
+    // Joint outputs from the output joint targets
     EXPECT_CALL(state_mock_, initJointOutput("j1")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initJointOutput("j2")).WillOnce(Return(true));
+    // Joint position and velocity inputs
     EXPECT_CALL(state_mock_, initJointPosition("j1")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initJointPosition("j2")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initJointPosition("j3")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initJointVelocity("j1")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initJointVelocity("j2")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initJointVelocity("j3")).WillOnce(Return(true));
+
+    EXPECT_CALL(state_mock_, initSe2Velocity("base_frame")).WillOnce(Return(true));
   }
 
   void ExpectInitSensors() {
-    EXPECT_CALL(state_mock_, initImuAngularVelocityImu("imu1")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initImuOrientationW("imu1")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initBodyOrientationW("hand")).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initHeightScan(_)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initHeightScan(_)).Times(3).WillRepeatedly(Return(true));
     EXPECT_CALL(state_mock_, initRangeImage(_)).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initDepthImage(_)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initImuAngularVelocityImu("torso")).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initBodyOrientationW("box")).WillOnce(Return(true));
   }
 
   void ExpectInitCommands() {
-    EXPECT_CALL(command_mock_, initSe2Velocity("command.se2_vel",
-                                               Field(&SE2VelocityConfig::ranges, Eq(std::nullopt))))
+    // SE2 velocity commands from inputs - check range configuration
+    EXPECT_CALL(command_mock_,
+                initSe2Velocity("vel", Field(&SE2VelocityConfig::ranges, Eq(std::nullopt))))
         .WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initSe2Velocity("command.se2_vel_with_range", HasRanges(kRanges)))
+    EXPECT_CALL(command_mock_, initSe2Velocity("vel_with_range", HasRanges(kRanges)))
         .WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initSe3Pose("command.se3_pose")).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initSe3Pose("pose")).WillOnce(Return(true));
   }
 
-  void ExpectSetJoints() {
+  void ExpectSetOutput() {
     EXPECT_CALL(state_mock_, setJointPosition("j1", _)).WillRepeatedly(Return(true));
     EXPECT_CALL(state_mock_, setJointPosition("j2", _)).WillRepeatedly(Return(true));
     EXPECT_CALL(state_mock_, setJointVelocity("j1", _)).WillRepeatedly(Return(true));
@@ -153,9 +154,10 @@ class OnnxControllerTest : public ::testing::Test {
   }
 
   void ExpectReadState() {
-    EXPECT_CALL(state_mock_, imuAngularVelocityImu("imu1")).WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(state_mock_, imuOrientationW("imu1")).WillRepeatedly(Return(kQuaternionData));
-    EXPECT_CALL(state_mock_, bodyOrientationW("hand")).WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, imuAngularVelocityImu("pelvis")).WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(state_mock_, imuAngularVelocityImu("torso")).WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(state_mock_, imuOrientationW("pelvis")).WillRepeatedly(Return(kQuaternionData));
+    EXPECT_CALL(state_mock_, bodyOrientationW("box")).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, heightScan(_, _))
         .WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
     EXPECT_CALL(state_mock_, basePosW()).WillRepeatedly(Return(kPositionData));
@@ -169,11 +171,9 @@ class OnnxControllerTest : public ::testing::Test {
   }
 
   void ExpectReadCommands() {
-    EXPECT_CALL(command_mock_, se2Velocity("command.se2_vel"))
-        .WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(command_mock_, se2Velocity("command.se2_vel_with_range"))
-        .WillRepeatedly(Return(kPositionData));
-    EXPECT_CALL(command_mock_, se3Pose("command.se3_pose")).WillRepeatedly(Return(kSE3PoseData));
+    EXPECT_CALL(command_mock_, se2Velocity("vel")).WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(command_mock_, se2Velocity("vel_with_range")).WillRepeatedly(Return(kPositionData));
+    EXPECT_CALL(command_mock_, se3Pose("pose")).WillRepeatedly(Return(kSE3PoseData));
   }
 };
 
@@ -192,12 +192,12 @@ TEST_F(OnnxControllerTest, InitWithoutLoad) {
   NiceMock<MockDataCollectionInterface> nice_data_collection_mock;
   OnnxRLController oc(strict_state_mock, strict_command_mock, nice_data_collection_mock);
 
-  EXPECT_NO_THROW(oc.init(false));
+  EXPECT_FALSE(oc.init(false));
 }
 
 TEST_F(OnnxControllerTest, Update) {
   ExpectInitBase();
-  ExpectInitJoints();
+  ExpectInitOutput();
   ExpectInitSensors();
   ExpectInitCommands();
 
@@ -210,7 +210,7 @@ TEST_F(OnnxControllerTest, Update) {
   ExpectReadState();
   ExpectReadCommands();
 
-  ExpectSetJoints();
+  ExpectSetOutput();
 
   const uint64_t t0_us = 0;
   ASSERT_TRUE(oc_.update(t0_us));
@@ -218,7 +218,7 @@ TEST_F(OnnxControllerTest, Update) {
 
 TEST_F(OnnxControllerTest, ReadJointFailure) {
   ExpectInitBase();
-  ExpectInitJoints();
+  ExpectInitOutput();
   ExpectInitSensors();
   ExpectInitCommands();
 
@@ -235,14 +235,14 @@ TEST_F(OnnxControllerTest, ReadJointFailure) {
   ExpectReadState();
   ExpectReadCommands();
 
-  ExpectSetJoints();
+  ExpectSetOutput();
 
   EXPECT_FALSE(oc_.update(0));
 }
 
 TEST_F(OnnxControllerTest, WriteJointFailure) {
   ExpectInitBase();
-  ExpectInitJoints();
+  ExpectInitOutput();
   ExpectInitSensors();
   ExpectInitCommands();
 

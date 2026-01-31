@@ -5,13 +5,12 @@
 #include "command_interface.hpp"
 #include "data_collection_interface.hpp"
 #include "interfaces.hpp"
-#include "onnx_config_parser.hpp"
+#include "onnx_context.hpp"
 #include "onnx_runtime.hpp"
 #include "state_interface.hpp"
 
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace rai::cs::control::common::onnx {
@@ -37,7 +36,7 @@ class OnnxRLController {
       RobotStateInterface& state, CommandInterface& command,
       operation::common::data_collection::DataCollectionInterface& data_collection);
   /**
-   * @brief Load the ONNX model and parse configuration.
+   * @brief Create the ONNX model and context.
    *
    * This function only parses the configuration needed to interface with the ONNX model. Call
    * init() to fully initialize the controller.
@@ -45,7 +44,14 @@ class OnnxRLController {
    * @param onnx_model_path Path to the ONNX model file.
    * @return True if parsing succeeds, false otherwise.
    */
-  bool load(const std::string& onnx_model_path);
+  bool create(const std::string& onnx_model_path);
+  /**
+   * @brief Load the ONNX model (alias for create method).
+   *
+   * @param onnx_model_path Path to the ONNX model file.
+   * @return True if parsing succeeds, false otherwise.
+   */
+  bool load(const std::string& onnx_model_path) { return create(onnx_model_path); }
   /**
    * @brief Initialize the controller.
    *
@@ -65,56 +71,20 @@ class OnnxRLController {
    * @return True if update succeeds, false otherwise.
    */
   bool update(uint64_t time_us);
+  /**
+   * @brief Get the update rate from the ONNX model context.
+   *
+   * @return The update rate in Hz.
+   */
+  int updateRate() const { return context_.updateRate(); }
 
-  /**
-   * @brief Get the update rate of the ONNX policy.
-   *
-   * @return The update rate of the ONNX policy in Hertz.
-   */
-  int updateRate() const { return config_.update_rate; }
-  /**
-   * @brief Get the set of joints managed by the ONNX policy.
-   *
-   * The set of joints handled by the ONNX policy includes both joints that are actively controlled
-   * (e.g., ones for which we generate torques from a PD controller) and passive joints (e.g., the
-   * front wheel of a driving robot). The list includes all the joints that were visible to the
-   * controller when the ONNX file was generated. If the ONNX policy does not generate any joint
-   * commands, the method returns std::nullopt.
-   *
-   * Note:
-   * The list does not necessarily include all the joints that are available or controllable. For
-   * example, the ONNX file may have been generated for a system that included only the upper body
-   * of a humanoid robot. In this case, the list will not include the lower body joints.
-   *
-   * @return A set of joint names managed by the ONNX policy. If no joints are managed, returns
-   * std::nullopt.
-   */
-  std::optional<std::unordered_set<std::string>> jointNames() const {
-    // The policy manages joints only if there are joint target outputs configured.
-    if (config_.joint_target_keys_to_data.empty()) return std::nullopt;
-    return std::unordered_set<std::string>(config_.joint_names.begin(), config_.joint_names.end());
-  }
+  OnnxContext& context() { return context_; }
 
  private:
   bool initCommands();
   bool initSensors();
 
-  bool readCommands();
-  bool readIMU();
-  bool readBody();
-  bool readJointState();
-  bool readBasePosInWorld();
-  bool readBaseQuatInWorld();
-  bool readBaseLinVelInBase();
-  bool readBaseAngVelInBase();
-  bool readSensors();
-
-  bool writeActions();
-  bool writeMemory();
-  bool writeOutputs();
-  void increaseStepCount();
-
-  OnnxControllerConfig config_{};
+  OnnxContext context_{};
   OnnxRuntime onnx_model_{};
   RobotStateInterface& state_;
   CommandInterface& command_;

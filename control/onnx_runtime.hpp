@@ -70,7 +70,6 @@ class OnnxRuntime {
    * @param model_path The file path to the ONNX model.
    * @param options The runtime options.
    * @return True if initialization is successful, false otherwise.
-   *
    */
   bool initialize(const std::string& model_path, const OnnxRuntimeOptions& options = {});
 
@@ -142,6 +141,13 @@ class OnnxRuntime {
    * @return An unordered set containing the names of all output tensors.
    */
   std::unordered_set<std::string> outputNames() const;
+
+  /**
+   * @brief Checks if the ONNX runtime is properly initialized.
+   *
+   * @return True if the runtime has been initialized with a valid model, false otherwise.
+   */
+  bool isInitialized() const { return session_ != nullptr; }
 
   /**
    * @brief Copies the output tensor data to the input tensor.

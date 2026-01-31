@@ -8,6 +8,7 @@
 #include <ranges>
 #include <span>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace rai::cs::control::common::onnx {
@@ -122,7 +123,6 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
 }
 
 bool OnnxRuntime::evaluate() {
-  CS_TRACE_SCOPED_ZONE;
   try {
     session_->Run(run_options_, input_.names.data(), input_.tensors.data(), input_.size,
                   output_.names.data(), output_.tensors.data(), output_.size);

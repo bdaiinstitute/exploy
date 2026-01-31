@@ -12,16 +12,18 @@ class MockRobotStateInterface : public RobotStateInterface {
   MOCK_METHOD(bool, initBaseQuatW, (), (override));
   MOCK_METHOD(bool, initBaseLinVelB, (), (override));
   MOCK_METHOD(bool, initBaseAngVelB, (), (override));
-  MOCK_METHOD(std::optional<Position>, basePosW, (), (override));
-  MOCK_METHOD(std::optional<Quaternion>, baseQuatW, (), (override));
-  MOCK_METHOD(std::optional<LinearVelocity>, baseLinVelB, (), (override));
-  MOCK_METHOD(std::optional<AngularVelocity>, baseAngVelB, (), (override));
+  MOCK_METHOD(std::optional<Position>, basePosW, (), (const, override));
+  MOCK_METHOD(std::optional<Quaternion>, baseQuatW, (), (const, override));
+  MOCK_METHOD(std::optional<LinearVelocity>, baseLinVelB, (), (const, override));
+  MOCK_METHOD(std::optional<AngularVelocity>, baseAngVelB, (), (const, override));
   MOCK_METHOD(bool, initJointOutput, (const std::string& joint_name), (override));
   MOCK_METHOD(bool, initJointPosition, (const std::string& joint_name), (override));
   MOCK_METHOD(bool, initJointVelocity, (const std::string& joint_name), (override));
   MOCK_METHOD(bool, initJointEffort, (const std::string& joint_name), (override));
-  MOCK_METHOD(std::optional<double>, jointPosition, (const std::string& joint_name), (override));
-  MOCK_METHOD(std::optional<double>, jointVelocity, (const std::string& joint_name), (override));
+  MOCK_METHOD(std::optional<double>, jointPosition, (const std::string& joint_name),
+              (const, override));
+  MOCK_METHOD(std::optional<double>, jointVelocity, (const std::string& joint_name),
+              (const, override));
   MOCK_METHOD(std::optional<double>, jointEffort, (const std::string& joint_name), (override));
   MOCK_METHOD(bool, setJointPosition, (const std::string& joint_name, double position), (override));
   MOCK_METHOD(bool, setJointVelocity, (const std::string& joint_name, double velocity), (override));
@@ -33,21 +35,22 @@ class MockRobotStateInterface : public RobotStateInterface {
               (override));
   MOCK_METHOD(bool, initImuAngularVelocityImu, (const std::string& imu_name), (override));
   MOCK_METHOD(bool, initImuOrientationW, (const std::string& imu_name), (override));
-  MOCK_METHOD(std::optional<Position>, imuAngularVelocityImu, (const std::string& imu_name),
-              (override));
+  MOCK_METHOD(std::optional<AngularVelocity>, imuAngularVelocityImu, (const std::string& imu_name),
+              (const, override));
   MOCK_METHOD(std::optional<Quaternion>, imuOrientationW, (const std::string& imu_name),
-              (override));
+              (const, override));
   MOCK_METHOD(bool, initBodyOrientationW, (const std::string& body_name), (override));
   MOCK_METHOD(bool, initBodyPositionW, (const std::string& body_name), (override));
   MOCK_METHOD(bool, initBodyLinearVelocityB, (const std::string& body_name), (override));
   MOCK_METHOD(bool, initBodyAngularVelocityB, (const std::string& body_name), (override));
-  MOCK_METHOD(std::optional<Position>, bodyPositionW, (const std::string& body_name), (override));
+  MOCK_METHOD(std::optional<Position>, bodyPositionW, (const std::string& body_name),
+              (const override));
   MOCK_METHOD(std::optional<Quaternion>, bodyOrientationW, (const std::string& body_name),
-              (override));
+              (const override));
   MOCK_METHOD(std::optional<LinearVelocity>, bodyLinearVelocityB, (const std::string& body_name),
-              (override));
+              (const override));
   MOCK_METHOD(std::optional<AngularVelocity>, bodyAngularVelocityB, (const std::string& body_name),
-              (override));
+              (const override));
   MOCK_METHOD(bool, initHeightScan, (const HeightScanConfig& config), (override));
   MOCK_METHOD(std::optional<std::vector<HeightScan>*>, heightScan,
               (const Position& base_pos_w, const Quaternion& base_quat_w), (override));

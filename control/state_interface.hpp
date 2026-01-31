@@ -87,7 +87,7 @@ class RobotStateInterface {
    *
    * @return The base position in world frame (x,y,z).
    */
-  virtual std::optional<Position> basePosW() {
+  virtual std::optional<Position> basePosW() const {
     GENERIC_LOG_STREAM(ERROR, "basePosW() not implemented");
     return std::nullopt;
   }
@@ -96,7 +96,7 @@ class RobotStateInterface {
    *
    * @return The base orientation in world frame (w,x,y,z).
    */
-  virtual std::optional<Quaternion> baseQuatW() {
+  virtual std::optional<Quaternion> baseQuatW() const {
     GENERIC_LOG_STREAM(ERROR, "baseQuatW() not implemented");
     return std::nullopt;
   }
@@ -123,7 +123,7 @@ class RobotStateInterface {
    *
    * @return The linear base velocity in base frame (vx, vy, vz).
    */
-  virtual std::optional<LinearVelocity> baseLinVelB() {
+  virtual std::optional<LinearVelocity> baseLinVelB() const {
     GENERIC_LOG_STREAM(ERROR, "baseLinVelB() not implemented");
     return std::nullopt;
   }
@@ -132,7 +132,7 @@ class RobotStateInterface {
    *
    * @return The angular base velocity in base frame (ωx, ωy, ωz).
    */
-  virtual std::optional<AngularVelocity> baseAngVelB() {
+  virtual std::optional<AngularVelocity> baseAngVelB() const {
     GENERIC_LOG_STREAM(ERROR, "baseAngVelB() not implemented");
     return std::nullopt;
   }
@@ -186,7 +186,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    * @return The position of the joint.
    */
-  virtual std::optional<double> jointPosition(const std::string& joint_name) {
+  virtual std::optional<double> jointPosition(const std::string& joint_name) const {
     GENERIC_LOG_STREAM(ERROR, "jointPosition() not implemented for joint: " << joint_name);
     return std::nullopt;
   }
@@ -196,7 +196,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    * @return The velocity of the joint.
    */
-  virtual std::optional<double> jointVelocity(const std::string& joint_name) {
+  virtual std::optional<double> jointVelocity(const std::string& joint_name) const {
     GENERIC_LOG_STREAM(ERROR, "jointVelocity() not implemented for joint: " << joint_name);
     return std::nullopt;
   }
@@ -335,7 +335,7 @@ class RobotStateInterface {
    * @param imu_name The name of the IMU.
    * @return The angular velocity of the IMU in world frame (x,y,z) .
    */
-  virtual std::optional<AngularVelocity> imuAngularVelocityImu(const std::string& imu_name) {
+  virtual std::optional<AngularVelocity> imuAngularVelocityImu(const std::string& imu_name) const {
     GENERIC_LOG_STREAM(ERROR, "imuAngularVelocityImu() not implemented for IMU: " << imu_name);
     return std::nullopt;
   }
@@ -345,7 +345,7 @@ class RobotStateInterface {
    * @param imu_name The name of the IMU.
    * @return The orientation of the IMU in world frame represented as a unit quaternion (w,x,y,z).
    */
-  virtual std::optional<Quaternion> imuOrientationW(const std::string& imu_name) {
+  virtual std::optional<Quaternion> imuOrientationW(const std::string& imu_name) const {
     GENERIC_LOG_STREAM(ERROR, "imuOrientationW() not implemented for IMU: " << imu_name);
     return std::nullopt;
   }
@@ -399,7 +399,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    * @return The position of the body in world frame.
    */
-  virtual std::optional<Position> bodyPositionW(const std::string& body_name) {
+  virtual std::optional<Position> bodyPositionW(const std::string& body_name) const {
     GENERIC_LOG_STREAM(ERROR, "bodyPositionW() not implemented for body: " << body_name);
     return std::nullopt;
   }
@@ -409,7 +409,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    * @return The orientation of the body in world frame.
    */
-  virtual std::optional<Quaternion> bodyOrientationW(const std::string& body_name) {
+  virtual std::optional<Quaternion> bodyOrientationW(const std::string& body_name) const {
     GENERIC_LOG_STREAM(ERROR, "bodyOrientationW() not implemented for body: " << body_name);
     return std::nullopt;
   }
@@ -419,7 +419,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    * @return The linear velocity of the body in body frame.
    */
-  virtual std::optional<LinearVelocity> bodyLinearVelocityB(const std::string& body_name) {
+  virtual std::optional<LinearVelocity> bodyLinearVelocityB(const std::string& body_name) const {
     GENERIC_LOG_STREAM(ERROR, "bodyLinearVelocityB() not implemented for body: " << body_name);
     return std::nullopt;
   }
@@ -429,7 +429,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    * @return The angular velocity of the body in body frame.
    */
-  virtual std::optional<AngularVelocity> bodyAngularVelocityB(const std::string& body_name) {
+  virtual std::optional<AngularVelocity> bodyAngularVelocityB(const std::string& body_name) const {
     GENERIC_LOG_STREAM(ERROR, "bodyAngularVelocityB() not implemented for body: " << body_name);
     return std::nullopt;
   }

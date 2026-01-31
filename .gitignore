@@ -1,6 +1,7 @@
 build/
 .pixi/
-__pycache__
+__pycache__/
 .pytest_cache/
 IsaacLab/
 *.onnx
+*.egg-info
