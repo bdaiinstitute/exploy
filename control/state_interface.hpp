@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "interfaces.hpp"
@@ -18,8 +19,8 @@ struct HeightScanConfig {
     double resolution{};
     Eigen::Vector2d offset{};
   };
-  std::vector<Pattern> patterns{};
-  bool use_colors = false;
+  Pattern pattern{};
+  std::unordered_set<std::string> layer_names{};
 };
 
 // Configuration for range image.
@@ -440,7 +441,8 @@ class RobotStateInterface {
    *
    * @param config The configuration of the heightscan.
    */
-  virtual bool initHeightScan(const HeightScanConfig& /*config*/) {
+  virtual bool initHeightScan(const std::string& /*sensor_name*/,
+                              const HeightScanConfig& /*config*/) {
     GENERIC_LOG_STREAM(ERROR, "initHeightScan() not implemented");
     return false;
   }
@@ -454,8 +456,9 @@ class RobotStateInterface {
    * @param base_quat_w The base orientation in world frame.
    * @return A vector of heightscans.
    */
-  virtual std::optional<std::vector<HeightScan>*> heightScan(const Position& /*base_pos_w*/,
-                                                             const Quaternion& /*base_quat_w*/) {
+  virtual std::optional<HeightScan*> heightScan(
+      const std::string& /*sensor_name*/, const std::unordered_set<std::string>& /*layer_names*/,
+      const Position& /*base_pos_w*/, const Quaternion& /*base_quat_w*/) const {
     GENERIC_LOG_STREAM(ERROR, "heightScan() not implemented");
     return std::nullopt;
   }
@@ -477,7 +480,7 @@ class RobotStateInterface {
    *
    * @return The flattened range image.
    */
-  virtual std::optional<std::vector<double>*> rangeImage() {
+  virtual std::optional<std::vector<double>*> rangeImage() const {
     GENERIC_LOG_STREAM(ERROR, "rangeImage() not implemented");
     return std::nullopt;
   }
@@ -499,7 +502,7 @@ class RobotStateInterface {
    *
    * @return The flattened depth image.
    */
-  virtual std::optional<std::vector<double>*> depthImage() {
+  virtual std::optional<std::vector<double>*> depthImage() const {
     GENERIC_LOG_STREAM(ERROR, "depthImage() not implemented");
     return std::nullopt;
   }

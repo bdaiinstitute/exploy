@@ -2,6 +2,7 @@
 #pragma once
 
 #include <gmock/gmock.h>
+#include <unordered_set>
 #include "state_interface.hpp"
 
 namespace rai::cs::control::common::onnx {
@@ -51,13 +52,16 @@ class MockRobotStateInterface : public RobotStateInterface {
               (const override));
   MOCK_METHOD(std::optional<AngularVelocity>, bodyAngularVelocityB, (const std::string& body_name),
               (const override));
-  MOCK_METHOD(bool, initHeightScan, (const HeightScanConfig& config), (override));
-  MOCK_METHOD(std::optional<std::vector<HeightScan>*>, heightScan,
-              (const Position& base_pos_w, const Quaternion& base_quat_w), (override));
+  MOCK_METHOD(bool, initHeightScan,
+              (const std::string& sensor_name, const HeightScanConfig& config), (override));
+  MOCK_METHOD(std::optional<HeightScan*>, heightScan,
+              (const std::string& sensor_name, const std::unordered_set<std::string>& layer_names,
+               const Position& base_pos_w, const Quaternion& base_quat_w),
+              (const override));
   MOCK_METHOD(bool, initRangeImage, (const RangeImageConfig& config), (override));
-  MOCK_METHOD(std::optional<std::vector<double>*>, rangeImage, (), (override));
+  MOCK_METHOD(std::optional<std::vector<double>*>, rangeImage, (), (const override));
   MOCK_METHOD(bool, initDepthImage, (const DepthImageConfig& config), (override));
-  MOCK_METHOD(std::optional<std::vector<double>*>, depthImage, (), (override));
+  MOCK_METHOD(std::optional<std::vector<double>*>, depthImage, (), (const override));
 };
 
 }  // namespace rai::cs::control::common::onnx

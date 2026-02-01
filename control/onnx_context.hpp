@@ -28,9 +28,6 @@ class OnnxContext {
   int updateRate() const { return update_rate_; }
 
  private:
-  GroupMatcher* tryGroupMatchers(const Match& match);
-  Matcher* tryMatcher(const Match& match, bool found_match = false);
-
   std::vector<std::unique_ptr<Input>> inputs_;
   std::vector<std::unique_ptr<Output>> outputs_;
   std::vector<std::unique_ptr<Matcher>> matchers_;

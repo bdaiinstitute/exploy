@@ -36,7 +36,7 @@ struct SE2VelocityRanges {
 };
 
 /**
- * @brief A flattened height scan with optional color information (r, g, b).
+ * @brief A flattened height scan with layers.
  *
  * The height scan was flattened from a grid pattern according to IsaacLab conventions.
  * height and colors come from a single pattern and need to have the same length.
@@ -44,13 +44,7 @@ struct SE2VelocityRanges {
  * array.
  */
 struct HeightScan {
-  std::vector<double> height;
-  struct ColorScan {
-    std::vector<double> r;
-    std::vector<double> g;
-    std::vector<double> b;
-  };
-  std::optional<ColorScan> color;
+  std::unordered_map<std::string, std::vector<double>> layers;
 };
 
 namespace References {

@@ -53,15 +53,18 @@ MATCHER_P(HasRanges, expected_ranges, "") {
 const std::string model_path = (std::filesystem::path(TEST_DATA_DIR) / "test.onnx").string();
 
 HeightScan createTestHeightScan(int size) {
-  return HeightScan{.height = std::vector<double>(size),
-                    .color = HeightScan::ColorScan{
-                        .r = std::vector<double>(size),
-                        .g = std::vector<double>(size),
-                        .b = std::vector<double>(size),
-                    }};
-}
-auto kHeightScanData = std::vector<HeightScan>{createTestHeightScan(4), createTestHeightScan(4),
-                                               createTestHeightScan(8)};
+  return HeightScan{
+      .layers =
+          std::unordered_map<std::string, std::vector<double>>{
+              {"height", std::vector<double>(size)},
+              {"r", std::vector<double>(size)},
+              {"g", std::vector<double>(size)},
+              {"b", std::vector<double>(size)},
+          },
+  };
+};
+auto kHeightScanData = createTestHeightScan(4);
+auto kTrailScanData = createTestHeightScan(8);
 auto kRangeImageData = std::vector<double>{0, 0, 0, 0};
 auto kDepthImageData = std::vector<double>{0, 0, 0, 0};
 const auto kPositionData = std::make_optional(Position{0, 0, 0});
@@ -89,10 +92,10 @@ class OnnxControllerTest : public ::testing::Test {
   void SetUp() override {}
 
   void ExpectInitBase() {
-    EXPECT_CALL(state_mock_, initBasePosW()).WillOnce(Return(true));  // called once for base pos
-    EXPECT_CALL(state_mock_, initBaseQuatW())
-        .Times(2)
-        .WillRepeatedly(Return(true));  // called twice for pelvis and torso
+    // base position and three height scans
+    EXPECT_CALL(state_mock_, initBasePosW()).Times(4).WillRepeatedly(Return(true));
+    // 2x base quat and three height scans
+    EXPECT_CALL(state_mock_, initBaseQuatW()).Times(5).WillRepeatedly(Return(true));
     EXPECT_CALL(state_mock_, initBaseLinVelB()).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initBaseAngVelB()).WillOnce(Return(true));
   }
@@ -113,7 +116,7 @@ class OnnxControllerTest : public ::testing::Test {
   }
 
   void ExpectInitSensors() {
-    EXPECT_CALL(state_mock_, initHeightScan(_)).Times(3).WillRepeatedly(Return(true));
+    EXPECT_CALL(state_mock_, initHeightScan(_, _)).Times(3).WillRepeatedly(Return(true));
     EXPECT_CALL(state_mock_, initRangeImage(_)).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initDepthImage(_)).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initImuAngularVelocityImu("torso")).WillOnce(Return(true));
@@ -158,7 +161,11 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(state_mock_, imuAngularVelocityImu("torso")).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, imuOrientationW("pelvis")).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, bodyOrientationW("box")).WillRepeatedly(Return(kQuaternionData));
-    EXPECT_CALL(state_mock_, heightScan(_, _))
+    EXPECT_CALL(state_mock_, heightScan("trail", _, _, _))
+        .WillRepeatedly(Return(std::make_optional(&kTrailScanData)));
+    EXPECT_CALL(state_mock_, heightScan("one", _, _, _))
+        .WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
+    EXPECT_CALL(state_mock_, heightScan("two", _, _, _))
         .WillRepeatedly(Return(std::make_optional(&kHeightScanData)));
     EXPECT_CALL(state_mock_, basePosW()).WillRepeatedly(Return(kPositionData));
     EXPECT_CALL(state_mock_, baseQuatW()).WillRepeatedly(Return(kQuaternionData));

@@ -37,35 +37,6 @@ void OnnxContext::registerGroupMatcher(std::unique_ptr<GroupMatcher> matcher) {
   group_matchers_.push_back(std::move(matcher));
 }
 
-GroupMatcher* OnnxContext::tryGroupMatchers(const Match& match) {
-  GroupMatcher* matched = nullptr;
-  for (const auto& matcher : group_matchers_) {
-    auto maybe_group_name = matcher->matches(match.name);
-    if (maybe_group_name.has_value()) {
-      if (matched) {
-        GENERIC_LOG_STREAM(ERROR, fmt::format("{} matches multiple matcher patterns.", match.name));
-        return nullptr;
-      }
-      matched = matcher.get();
-    }
-  }
-  return matched;
-}
-
-Matcher* OnnxContext::tryMatcher(const Match& match, bool found_match) {
-  Matcher* matched = nullptr;
-  for (const auto& matcher : matchers_) {
-    if (matcher->matches(match.name)) {
-      if (matched || found_match) {
-        GENERIC_LOG_STREAM(ERROR, fmt::format("{} matches multiple matcher patterns.", match.name));
-        return nullptr;
-      }
-      matched = matcher.get();
-    }
-  }
-  return matched;
-}
-
 bool OnnxContext::createContext(OnnxRuntime& onnx_model) {
   // Check if ONNX model is properly loaded before accessing its properties
   if (!onnx_model.isInitialized()) {
@@ -84,28 +55,20 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model) {
   if (!maybe_update_rate.has_value()) return false;
   update_rate_ = maybe_update_rate.value();
 
-  std::unordered_map<std::string, GroupMatch> group_name_to_matches;
-  std::unordered_map<std::string, GroupMatcher*> group_name_to_matcher;
-
   for (const auto& input_name : onnx_model.inputNames()) {
     Match maybe_match{
         .name = input_name,
         .metadata = onnx_model.getCustomMetadata(input_name),
     };
-    GroupMatcher* group_matcher = tryGroupMatchers(maybe_match);
-    if (group_matcher) {
-      auto group_name = group_matcher->matches(maybe_match.name).value();
-      group_name_to_matches[group_name].input_matches.push_back(maybe_match);
-      group_name_to_matcher[group_name] = group_matcher;
+    bool found_match = false;
+    for (auto& group_matchers : group_matchers_) {
+      found_match |= group_matchers->matches(maybe_match);
     }
-    Matcher* matcher = tryMatcher(maybe_match, group_matcher != nullptr);
-    if (matcher) {
-      auto maybe_input = matcher->createInput(maybe_match);
-      if (maybe_input) inputs_.push_back(std::move(maybe_input));
+    for (auto& matchers : matchers_) {
+      found_match |= matchers->matches(maybe_match);
     }
-    if (!matcher && !group_matcher) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("No matcher found for input {}", input_name));
-      return false;
+    if (!found_match) {
+      GENERIC_LOG_STREAM(WARNING, fmt::format("No matcher found for input '{}'", input_name));
     }
   }
 
@@ -115,37 +78,45 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model) {
         .name = output_name,
         .metadata = onnx_model.getCustomMetadata(output_name),
     };
-    auto group_matcher = tryGroupMatchers(maybe_match);
-    if (group_matcher) {
-      auto group_name = group_matcher->matches(maybe_match.name).value();
-      group_name_to_matches[group_name].input_matches.push_back(maybe_match);
-      group_name_to_matcher[group_name] = group_matcher;
+    bool found_match = false;
+    for (auto& group_matchers : group_matchers_) {
+      found_match |= group_matchers->matches(maybe_match);
     }
-    Matcher* matcher = tryMatcher(maybe_match, group_matcher != nullptr);
-    if (matcher) {
-      auto maybe_output = matcher->createOutput(maybe_match);
-      if (maybe_output) outputs_.push_back(std::move(maybe_output));
+    for (auto& matchers : matchers_) {
+      found_match |= matchers->matches(maybe_match);
     }
-    if (!matcher && !group_matcher) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("No matcher found for output {}", output_name));
-      return false;
+    if (!found_match) {
+      GENERIC_LOG_STREAM(WARNING, fmt::format("No matcher found for output '{}'", output_name));
     }
   }
 
-  for (auto& [group_name, group_match] : group_name_to_matches) {
-    GroupMatcher* group_matcher = group_name_to_matcher[group_name];
-    if (!group_matcher) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("No group matcher found for group {}", group_name));
-      return false;
-    }
+  for (auto& group_matcher : group_matchers_) {
+    group_matcher->populateGroupMetadata([&onnx_model](const std::string& name) {
+      return onnx_model.getCustomMetadata(name);
+    });
+  }
 
-    group_match.name = group_name;
-    group_match.metadata = onnx_model.getCustomMetadata(group_name);
+  // TODO: simplify
+  for (auto& matcher : matchers_) {
+    auto inputs = matcher->createInputs();
+    inputs_.insert(inputs_.end(), std::make_move_iterator(inputs.begin()),
+                   std::make_move_iterator(inputs.end()));
+  }
+  for (auto& group_matcher : group_matchers_) {
+    auto inputs = group_matcher->createInputs();
+    inputs_.insert(inputs_.end(), std::make_move_iterator(inputs.begin()),
+                   std::make_move_iterator(inputs.end()));
+  }
 
-    auto maybe_input = group_matcher->createInput(group_match);
-    if (maybe_input) inputs_.push_back(std::move(maybe_input));
-    auto maybe_output = group_matcher->createOutput(group_match);
-    if (maybe_output) outputs_.push_back(std::move(maybe_output));
+  for (auto& matcher : matchers_) {
+    auto outputs = matcher->createOutputs();
+    outputs_.insert(outputs_.end(), std::make_move_iterator(outputs.begin()),
+                    std::make_move_iterator(outputs.end()));
+  }
+  for (auto& group_matcher : group_matchers_) {
+    auto outputs = group_matcher->createOutputs();
+    outputs_.insert(outputs_.end(), std::make_move_iterator(outputs.begin()),
+                    std::make_move_iterator(outputs.end()));
   }
 
   return true;

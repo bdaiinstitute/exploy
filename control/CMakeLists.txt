@@ -64,7 +64,7 @@ add_custom_command(
     COMMENT "Generating test ONNX model..."
 )
 
-add_executable(onnx_controller_test test/onnx_controller_test.cpp "${GEN_OUTPUT}")
+add_executable(onnx_controller_test test/onnx_controller_test.cpp test/onnx_components_test.cpp "${GEN_OUTPUT}")
 target_compile_definitions(onnx_controller_test PRIVATE
     TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/test/testdata"
 )

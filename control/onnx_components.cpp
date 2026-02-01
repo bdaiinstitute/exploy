@@ -275,22 +275,58 @@ bool SE2VelocityOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
 }
 
 // Implementation of HeightScanInput methods
-HeightScanInput::HeightScanInput(const std::string& key,
+HeightScanInput::HeightScanInput(const std::string& key, const std::string& sensor_name,
+                                 const std::unordered_set<std::string>& layer_names,
                                  const metadata::HeightScanMetadata& metadata)
-    : key_(key), metadata_(metadata) {}
+    : key_(key), sensor_name_(sensor_name), layer_names_(layer_names), metadata_(metadata) {}
 
 bool HeightScanInput::init(RobotStateInterface& state, CommandInterface&) {
-  HeightScanConfig config;
-  HeightScanConfig::Pattern pattern;
-  pattern.size = Eigen::Vector2d(metadata_.size_x, metadata_.size_y);
-  pattern.resolution = metadata_.resolution;
-  pattern.offset = Eigen::Vector2d(metadata_.offset_x, metadata_.offset_y);
-  config.patterns.push_back(pattern);
-  return state.initHeightScan(config);
+  HeightScanConfig config = HeightScanConfig{
+      .pattern =
+          HeightScanConfig::Pattern{
+              .size = Eigen::Vector2d(metadata_.size_x, metadata_.size_y),
+              .resolution = metadata_.resolution,
+              .offset = Eigen::Vector2d(metadata_.offset_x, metadata_.offset_y),
+          },
+      .layer_names = layer_names_,
+  };
+  if (!state.initBasePosW()) {
+    GENERIC_LOG_STREAM(ERROR, "Failed to initialize base position for HeightScanInput");
+    return false;
+  };
+  if (!state.initBaseQuatW()) {
+    GENERIC_LOG_STREAM(ERROR, "Failed to initialize base orientation for HeightScanInput");
+    return false;
+  };
+  return state.initHeightScan(sensor_name_, config);
 }
 
 bool HeightScanInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
                            const CommandInterface&) {
+  auto maybe_base_pos = state.basePosW();
+  if (!maybe_base_pos.has_value()) {
+    GENERIC_LOG_STREAM(ERROR, "Failed to get base position for HeightScanInput");
+    return false;
+  }
+  auto maybe_base_quat = state.baseQuatW();
+  if (!maybe_base_quat.has_value()) {
+    GENERIC_LOG_STREAM(ERROR, "Failed to get base orientation for HeightScanInput");
+    return false;
+  }
+  auto maybe_scan =
+      state.heightScan(sensor_name_, layer_names_, maybe_base_pos.value(), maybe_base_quat.value());
+  if (!maybe_scan.has_value()) {
+    GENERIC_LOG_STREAM(ERROR, "Failed to get height scan data for HeightScanInput");
+    return false;
+  }
+  for (const auto& layer_name : layer_names_) {
+    auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, layer_name));
+    if (!maybe_buffer.has_value()) {
+      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, layer_name));
+      return false;
+    }
+    copyToBuffer(maybe_scan.value()->layers.at(layer_name), maybe_buffer.value());
+  }
   return true;
 }
 
@@ -311,6 +347,11 @@ bool RangeImageInput::init(RobotStateInterface& state, CommandInterface&) {
 
 bool RangeImageInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
                            const CommandInterface&) {
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  auto maybe_image = state.rangeImage();
+  if (!maybe_image.has_value()) return false;
+  copyToBuffer(*maybe_image.value(), maybe_buffer.value());
   return true;
 }
 
@@ -332,6 +373,11 @@ bool DepthImageInput::init(RobotStateInterface& state, CommandInterface&) {
 
 bool DepthImageInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
                            const CommandInterface&) {
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  auto maybe_image = state.depthImage();
+  if (!maybe_image.has_value()) return false;
+  copyToBuffer(*maybe_image.value(), maybe_buffer.value());
   return true;
 }
 
@@ -362,6 +408,11 @@ bool SE3PoseInput::init(RobotStateInterface& state, CommandInterface& command) {
 
 bool SE3PoseInput::read(OnnxRuntime& runtime, const RobotStateInterface& state,
                         const CommandInterface& command) {
+  auto maybe_pose = command.se3Pose(command_name_);
+  if (!maybe_pose.has_value()) return false;
+  auto maybe_buffer = runtime.inputBuffer<float>(key_);
+  if (!maybe_buffer.has_value()) return false;
+  copyToBuffer(maybe_pose.value(), maybe_buffer.value());
   return true;
 }
 
@@ -401,7 +452,8 @@ bool MemoryOutput::init(RobotStateInterface& state, CommandInterface& command) {
 
 bool MemoryOutput::write(OnnxRuntime& runtime, RobotStateInterface& state,
                          CommandInterface& command) {
-  return runtime.copyOutputToInput(fmt::format("{}.out", key_), fmt::format("{}.in", key_));
+  return runtime.copyOutputToInput(fmt::format("memory.{}.out", key_),
+                                   fmt::format("memory.{}.in", key_));
 }
 
 }  // namespace rai::cs::control::common::onnx

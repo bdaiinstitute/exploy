@@ -1,13 +1,17 @@
+#pragma once
+
 #include <optional>
 #include <regex>
+#include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+#include "onnx_components.hpp"
 
 namespace rai::cs::control::common::onnx {
 
-// Forward declarations
-struct Input;
-struct Output;
+constexpr std::string_view alphanumeric = "[a-zA-Z0-9_]+";
 
 struct Match {
   std::string name{};
@@ -21,132 +25,138 @@ struct GroupMatch {
   std::vector<Match> output_matches{};
 };
 
-struct Matcher {
+class Matcher {
+ public:
   virtual ~Matcher() = default;
-  virtual bool matches(const std::string& name) = 0;
-  virtual std::unique_ptr<Input> createInput(const Match& match) const { return nullptr; };
-  virtual std::unique_ptr<Output> createOutput(const Match& match) const { return nullptr; };
+  virtual bool matches(const Match& maybe_match) = 0;
+  virtual std::vector<std::unique_ptr<Input>> createInputs() const { return {}; }
+  virtual std::vector<std::unique_ptr<Output>> createOutputs() const { return {}; }
+
+ protected:
+  std::unordered_map<std::string, Match> found_matches_;
 };
 
-struct GroupMatcher {
+class GroupMatcher {
+ public:
   virtual ~GroupMatcher() = default;
-  virtual std::optional<std::string> matches(const std::string& name) = 0;
-  virtual std::unique_ptr<Input> createInput(const GroupMatch& match) const { return nullptr; };
-  virtual std::unique_ptr<Output> createOutput(const GroupMatch& match) const { return nullptr; };
+  virtual bool matches(const Match& maybe_match) = 0;
+  virtual std::vector<std::unique_ptr<Input>> createInputs() const { return {}; }
+  virtual std::vector<std::unique_ptr<Output>> createOutputs() const { return {}; }
+  void populateGroupMetadata(
+      std::function<std::optional<std::string>(const std::string&)> get_metadata) {
+    for (auto& [name, group_match] : found_matches_) {
+      group_match.metadata = get_metadata(name);
+    }
+  }
+
+ protected:
+  std::unordered_map<std::string, GroupMatch> found_matches_;
 };
 
 class IMUAngularVelocityMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
-
- private:
-  std::string imu_name_;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class JointPositionMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class JointVelocityMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class BasePositionMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class BaseOrientationMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class BaseLinearVelocityMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class BaseAngularVelocityMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class JointTargetMatcher : public GroupMatcher {
  public:
-  std::optional<std::string> matches(const std::string& name) override;
-  std::unique_ptr<Output> createOutput(const GroupMatch& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
 
 class SE2VelocityMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Output> createOutput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
 
 class HeightScanMatcher : public GroupMatcher {
  public:
-  std::optional<std::string> matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const GroupMatch& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
+
+ private:
+  const std::regex pattern_ =
+      std::regex(fmt::format("(sensor\\.height_scanner\\.({}))\\.(height|r|g|b)", alphanumeric));
 };
 
 class RangeImageMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class DepthImageMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class BodyOrientationMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
-
- private:
-  std::string body_name_;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class SE3PoseMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
-
- private:
-  std::string command_name_;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class CommandSE2VelocityMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
-
- private:
-  std::string command_name_;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 class MemoryMatcher : public GroupMatcher {
  public:
-  std::optional<std::string> matches(const std::string& name) override;
-  std::unique_ptr<Output> createOutput(const GroupMatch& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Output>> createOutputs() const override;
 };
 
 class StepCountMatcher : public Matcher {
  public:
-  bool matches(const std::string& name) override;
-  std::unique_ptr<Input> createInput(const Match& match) const override;
+  bool matches(const Match& maybe_match) override;
+  std::vector<std::unique_ptr<Input>> createInputs() const override;
 };
 
 }  // namespace rai::cs::control::common::onnx

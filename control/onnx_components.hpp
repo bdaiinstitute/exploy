@@ -1,3 +1,5 @@
+#pragma once
+
 #include <optional>
 #include <regex>
 #include <string>
@@ -105,13 +107,17 @@ class BaseAngularVelocityInput : public Input {
 
 class HeightScanInput : public Input {
  public:
-  HeightScanInput(const std::string& key, const metadata::HeightScanMetadata& metadata);
+  HeightScanInput(const std::string& key, const std::string& sensor_name,
+                  const std::unordered_set<std::string>& layer_names,
+                  const metadata::HeightScanMetadata& metadata);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
             const CommandInterface& command) override;
 
  private:
   std::string key_;
+  std::string sensor_name_;
+  std::unordered_set<std::string> layer_names_;
   metadata::HeightScanMetadata metadata_;
 };
 

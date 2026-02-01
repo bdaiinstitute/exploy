@@ -66,7 +66,7 @@ class CommandInterface {
    * @param command_name The name of the command.
    * @return The commanded SE3 pose.
    */
-  virtual std::optional<SE3Pose> se3Pose(const std::string& command_name) {
+  virtual std::optional<SE3Pose> se3Pose(const std::string& command_name) const {
     GENERIC_LOG_STREAM(ERROR, "se3Pose() not implemented for command: " << command_name);
     return std::nullopt;
   }
