@@ -64,7 +64,8 @@ class OnnxContextTest : public ::testing::Test {
  protected:
   void SetUp() override {
     // Load the test ONNX model
-    std::string test_model_path = (std::filesystem::path(TEST_DATA_DIR) / "test.onnx").string();
+    std::string test_model_path =
+        (std::filesystem::path(TEST_DATA_DIR) / "test_export.onnx").string();
     ASSERT_TRUE(runtime_.initialize(test_model_path));
   }
 
@@ -80,7 +81,7 @@ TEST_F(OnnxContextTest, RegisterMatcher_MultipleMatchers) {
   context_.registerMatcher(std::make_unique<SimpleTestMatcher>("joint"));
   context_.registerMatcher(std::make_unique<SimpleTestMatcher>("base"));
   context_.registerMatcher(std::make_unique<SimpleTestMatcher>("sensor"));
-  EXPECT_TRUE(context_.createContext(runtime_));
+  EXPECT_TRUE(context_.createContext(runtime_, false));
 }
 
 TEST_F(OnnxContextTest, RegisterGroupMatcher_MultipleGroupMatchers) {
@@ -97,7 +98,7 @@ TEST_F(OnnxContextTest, RegisterGroupMatcher_MultipleGroupMatchers) {
 
 TEST_F(OnnxContextTest, CreateContext_ParsesUpdateRate) {
   context_.registerMatcher(std::make_unique<SimpleTestMatcher>("joint"));
-  bool result = context_.createContext(runtime_);
+  bool result = context_.createContext(runtime_, false);
   EXPECT_TRUE(result);
   EXPECT_EQ(context_.updateRate(), 10);
 }
@@ -129,7 +130,7 @@ TEST_F(OnnxContextTest, Integration_RealMatchersWithTestModel) {
   context_.registerMatcher(std::make_unique<JointVelocityMatcher>());
   context_.registerMatcher(std::make_unique<BasePositionMatcher>());
   context_.registerMatcher(std::make_unique<BaseOrientationMatcher>());
-  EXPECT_TRUE(context_.createContext(runtime_));
+  EXPECT_TRUE(context_.createContext(runtime_, false));
   EXPECT_GT(context_.getInputs().size(), 0);
   EXPECT_EQ(context_.updateRate(), 10);
 }
@@ -139,7 +140,7 @@ TEST_F(OnnxContextTest, Integration_MixedMatchersAndGroupMatchers) {
   auto mock_group_matcher = std::make_unique<NiceMock<MockGroupMatcher>>();
   ON_CALL(*mock_group_matcher, matches(_)).WillByDefault(Return(false));
   context_.registerGroupMatcher(std::move(mock_group_matcher));
-  EXPECT_TRUE(context_.createContext(runtime_));
+  EXPECT_TRUE(context_.createContext(runtime_, false));
 }
 
 }  // namespace rai::cs::control::common::onnx

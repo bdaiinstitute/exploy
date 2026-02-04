@@ -22,7 +22,8 @@ class OnnxComponentsTest : public ::testing::Test {
  protected:
   void SetUp() override {
     // Create a minimal test ONNX model for testing
-    std::string test_model_path = (std::filesystem::path(TEST_DATA_DIR) / "test.onnx").string();
+    std::string test_model_path =
+        (std::filesystem::path(TEST_DATA_DIR) / "test_export.onnx").string();
     ASSERT_TRUE(runtime.initialize(test_model_path));
   }
 

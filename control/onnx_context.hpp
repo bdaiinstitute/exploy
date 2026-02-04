@@ -20,7 +20,7 @@ class OnnxContext {
   void registerMatcher(std::unique_ptr<Matcher> matcher);
   void registerGroupMatcher(std::unique_ptr<GroupMatcher> matcher);
 
-  bool createContext(OnnxRuntime& onnx_model);
+  bool createContext(OnnxRuntime& onnx_model, bool strict = true);
 
   const std::vector<std::unique_ptr<Input>>& getInputs() const { return inputs_; }
   const std::vector<std::unique_ptr<Output>>& getOutputs() const { return outputs_; }

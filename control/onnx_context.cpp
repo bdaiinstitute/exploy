@@ -37,7 +37,7 @@ void OnnxContext::registerGroupMatcher(std::unique_ptr<GroupMatcher> matcher) {
   group_matchers_.push_back(std::move(matcher));
 }
 
-bool OnnxContext::createContext(OnnxRuntime& onnx_model) {
+bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   // Check if ONNX model is properly loaded before accessing its properties
   if (!onnx_model.isInitialized()) {
     GENERIC_LOG_STREAM(ERROR, "ONNX model not properly loaded, skipping context creation");
@@ -69,6 +69,9 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model) {
     }
     if (!found_match) {
       GENERIC_LOG_STREAM(WARNING, fmt::format("No matcher found for input '{}'", input_name));
+      if (strict) {
+        return false;
+      }
     }
   }
 
@@ -87,6 +90,7 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model) {
     }
     if (!found_match) {
       GENERIC_LOG_STREAM(WARNING, fmt::format("No matcher found for output '{}'", output_name));
+      if (strict) return false;
     }
   }
 
