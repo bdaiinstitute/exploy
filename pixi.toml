@@ -23,20 +23,13 @@ pip = "*"
 # FEATURE: Python Development - Python tools, linting, formatting, testing
 [feature.python.dependencies]
 python = "3.11.*"
-onnx = "*"
 onnxscript = "*"
-protobuf = "*"
 pybind11 = ">=2.10"
-numpy = "==1.26.0"
-typing_extensions = "==4.12.2"
-packaging = "==23.0"
-markupsafe = "==2.1.3"
-click = "==8.1.7"
 ruff = "*"
 
 [feature.python.pypi-dependencies]
-onnxruntime = "*"
-torch = { version = "==2.7.0", index = "https://download.pytorch.org/whl/cu128" }
+exporter-core = { path = "./exporter/core", editable = true }
+build = "*"
 
 [feature.python.tasks]
 # Python linting and formatting
@@ -84,19 +77,14 @@ setup = { depends-on = ["configure"] }
 
 # FEATURE: Isaac Lab - GPU simulation and robotics
 [feature.isaaclab.dependencies]
-gymnasium = "==1.2.0"
-tqdm = "*"
 tensorboard = "*"
-pillow = "==11.3.0"
-psutil = "==5.9.8"
 pytest = "*"
 
 [feature.isaaclab.pypi-options]
 extra-index-urls = ["https://pypi.nvidia.com"]
 
 [feature.isaaclab.pypi-dependencies]
-torchvision = { version = "==0.22.0", index = "https://download.pytorch.org/whl/cu128" }
-isaacsim = { version = "==5.1.0", extras = ["all", "extscache"] }
+exporter-isaaclab = { path = "./exporter/frameworks/isaaclab", editable = true }
 pytest-gitignore = "*"
 
 [feature.isaaclab.tasks]
@@ -113,6 +101,10 @@ isaac-sim = { cmd = "isaacsim --disable-extensions isaacsim.ros2.bridge" }
 # Python testing
 test-python = "pytest -s ."
 test = { depends-on = ["test-python"] }
+# Build wheel packages
+build-wheel-core = "python -m build --wheel exporter/core"
+build-wheel-isaaclab = "python -m build --wheel exporter/frameworks/isaaclab"
+build-wheels = { depends-on = ["build-wheel-core", "build-wheel-isaaclab"] }
 
 # ENVIRONMENTS
 [environments]

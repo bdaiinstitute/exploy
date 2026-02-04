@@ -35,7 +35,7 @@ OnnxRLController::OnnxRLController(
   context_.registerMatcher(std::make_unique<CommandBooleanMatcher>());
   context_.registerMatcher(std::make_unique<CommandFloatMatcher>());
   context_.registerMatcher(std::make_unique<StepCountMatcher>());
-
+  // Register all group matchers
   context_.registerGroupMatcher(std::make_unique<JointTargetMatcher>());
   context_.registerGroupMatcher(std::make_unique<HeightScanMatcher>());
   context_.registerGroupMatcher(std::make_unique<MemoryMatcher>());

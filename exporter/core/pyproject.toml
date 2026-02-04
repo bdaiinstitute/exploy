@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exporter-core"
+version = "0.1.0"
+description = "Framework-agnostic ONNX environment exporter core"
+authors = [
+    {name = "Robotics and AI Institute LLC dba RAI Institute"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "onnx",
+    "onnxruntime",
+    "numpy",
+]
+
+[tool.setuptools]
+package-dir = {"" = "../.."}
+
+[tool.setuptools.packages.find]
+where = ["../.."]
+include = ["exporter.core*", "exporter.utils*"]
+namespaces = true

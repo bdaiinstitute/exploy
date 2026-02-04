@@ -4,11 +4,11 @@ from collections.abc import Callable, Sequence
 import torch
 from isaaclab.envs import ManagerBasedRLEnv
 
-from exporter.core.articulation_data import ArticulationDataSource
+from exporter.isaaclab.articulation_data import ArticulationDataSource
 from exporter.core.exportable_environment import ExportableEnvironment
-from exporter.core.rigid_object_data import RigidObjectDataSource
-from exporter.frameworks.isaaclab import inputs, memory, outputs
-from exporter.frameworks.isaaclab.utils import get_observation_names
+from exporter.isaaclab.rigid_object_data import RigidObjectDataSource
+from exporter.isaaclab import inputs, memory, outputs
+from exporter.isaaclab.utils import get_observation_names
 
 
 class IsaacLabExportableEnvironment(ExportableEnvironment):

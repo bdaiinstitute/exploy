@@ -6,13 +6,13 @@ import isaaclab.utils.math as math_utils
 import torch
 from isaaclab.assets import Articulation, ArticulationData
 
-from .tensor_proxy import TensorProxy
+from exporter.core.tensor_proxy import TensorProxy
 
 
 class ArticulationDataSource:
     """Mimic the interface of an `ArticulationData`, but manage its own tensor data.
 
-    This class is an adaptor for an `ArticulationData` class, mimicking it sfull interface. However,
+    This class is an adaptor for an `ArticulationData` class, mimicking its full interface. However,
     it holds its own tensor data. The main use case for this class is to be used in the context of
     exporting an MDP to ONNX.
     """

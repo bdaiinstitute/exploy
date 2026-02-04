@@ -45,7 +45,7 @@ from rsl_rl.runners import OnPolicyRunner
 
 from exporter import core as exporter_core
 from exporter.core.evaluator import evaluate
-from exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
+from exporter.isaaclab.env import IsaacLabExportableEnvironment
 from isaaclab.sim import SimulationContext
 
 

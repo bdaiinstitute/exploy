@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exporter-isaaclab"
+version = "0.1.0"
+description = "IsaacLab-specific ONNX environment exporter implementation"
+authors = [
+    {name = "Robotics and AI Institute LLC dba RAI Institute"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "torch",
+    "numpy",
+    "gymnasium==1.2.0",
+    "tqdm",
+    "isaacsim[all,extscache]==5.1.0",
+]
+
+[tool.setuptools]
+packages = ["exporter.isaaclab"]
+package-dir = {"exporter.isaaclab" = "../../../exporter/frameworks/isaaclab"}

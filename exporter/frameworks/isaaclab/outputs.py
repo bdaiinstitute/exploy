@@ -5,7 +5,7 @@ from isaaclab.envs.manager_based_env import ActionManager
 from isaaclab.envs.mdp.actions import JointAction, JointActionCfg
 
 from exporter.core import ContextManager, Group, Output
-from exporter.frameworks.isaaclab.utils import get_articulation_actuator_gains
+from exporter.isaaclab.utils import get_articulation_actuator_gains
 
 
 def add_outputs(

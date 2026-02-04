@@ -1,7 +1,11 @@
-build/
+
 .pixi/
+build/
+
 __pycache__/
 .pytest_cache/
+
 IsaacLab/
 *.onnx
 *.egg-info
+*.whl
