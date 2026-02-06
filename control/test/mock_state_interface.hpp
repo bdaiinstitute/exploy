@@ -25,7 +25,7 @@ class MockRobotStateInterface : public RobotStateInterface {
               (const, override));
   MOCK_METHOD(std::optional<double>, jointVelocity, (const std::string& joint_name),
               (const, override));
-  MOCK_METHOD(std::optional<double>, jointEffort, (const std::string& joint_name), (override));
+  MOCK_METHOD(std::optional<double>, jointEffort, (const std::string& joint_name), (const, override));
   MOCK_METHOD(bool, setJointPosition, (const std::string& joint_name, double position), (override));
   MOCK_METHOD(bool, setJointVelocity, (const std::string& joint_name, double velocity), (override));
   MOCK_METHOD(bool, setJointEffort, (const std::string& joint_name, double effort), (override));

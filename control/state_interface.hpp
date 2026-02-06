@@ -207,7 +207,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    * @return The effort of the joint.
    */
-  virtual std::optional<double> jointEffort(const std::string& joint_name) {
+  virtual std::optional<double> jointEffort(const std::string& joint_name) const {
     GENERIC_LOG_STREAM(ERROR, "jointEffort() not implemented for joint: " << joint_name);
     return std::nullopt;
   }
@@ -458,7 +458,7 @@ class RobotStateInterface {
    */
   virtual std::optional<HeightScan*> heightScan(
       const std::string& /*sensor_name*/, const std::unordered_set<std::string>& /*layer_names*/,
-      const Position& /*base_pos_w*/, const Quaternion& /*base_quat_w*/) const {
+      const Position& /*base_pos_w*/, const Quaternion& /*base_quat_w*/) {
     GENERIC_LOG_STREAM(ERROR, "heightScan() not implemented");
     return std::nullopt;
   }
@@ -480,7 +480,7 @@ class RobotStateInterface {
    *
    * @return The flattened range image.
    */
-  virtual std::optional<std::span<const float>> rangeImage() const {
+  virtual std::optional<std::span<const float>> rangeImage() {
     GENERIC_LOG_STREAM(ERROR, "rangeImage() not implemented");
     return std::nullopt;
   }
@@ -502,7 +502,7 @@ class RobotStateInterface {
    *
    * @return The flattened depth image.
    */
-  virtual std::optional<std::span<const float>> depthImage() const {
+  virtual std::optional<std::span<const float>> depthImage() {
     GENERIC_LOG_STREAM(ERROR, "depthImage() not implemented");
     return std::nullopt;
   }

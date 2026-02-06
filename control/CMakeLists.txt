@@ -4,36 +4,15 @@ project(my_robot_project LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Treat warnings as errors
+add_compile_options(-Werror -Wpedantic -Wunused-variable -Wunused-parameter -Wreorder)
+
 # Find dependencies
 find_package(Eigen3 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(fmt REQUIRED)
-# Find ONNX Runtime manually since it might not provide a CMake config
-find_path(ONNXRUNTIME_INCLUDE_DIR
-    NAMES onnxruntime_c_api.h
-    PATH_SUFFIXES onnxruntime/core/session onnxruntime
-)
-find_library(ONNXRUNTIME_LIBRARY
-    NAMES onnxruntime
-)
-
-if(NOT ONNXRUNTIME_INCLUDE_DIR OR NOT ONNXRUNTIME_LIBRARY)
-    message(FATAL_ERROR "ONNX Runtime not found. Include: ${ONNXRUNTIME_INCLUDE_DIR}, Library: ${ONNXRUNTIME_LIBRARY}")
-endif()
-
-# Create imported target for onnxruntime
-add_library(onnxruntime SHARED IMPORTED)
-set_target_properties(onnxruntime PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${ONNXRUNTIME_INCLUDE_DIR}/../../"
-    IMPORTED_LOCATION "${ONNXRUNTIME_LIBRARY}"
-)
-# Note: INTERFACE_INCLUDE_DIRECTORIES needs to point to the root of headers so #include <onnxruntime/...> works
-# Wait, let's check the find_path result. If it finds onnxruntime_c_api.h in include/onnxruntime/core/session,
-# then header root is include/.
+find_package(onnxruntime REQUIRED)
 find_package(GTest REQUIRED)
-
-# Include directory
-include_directories(/usr/include/eigen3) # Fallback if FindEigen3 is weird, but usually Eigen3::Eigen is better
 
 # C++ Shared Library
 add_library(onnx_controller SHARED

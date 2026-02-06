@@ -26,7 +26,7 @@ using ::testing::NiceMock;
 using ::testing::Return;
 using ::testing::StrictMock;
 
-using operation::common::data_collection::MockDataCollectionInterface;
+using operation::common::data_collection_public::MockDataCollectionInterface;
 
 MATCHER_P2(DoubleRangeIs, min_val, max_val, "") {
   return arg.min == min_val && arg.max == max_val;
@@ -59,10 +59,10 @@ const std::string model_path = (std::filesystem::path(TEST_DATA_DIR) / "test_exp
 std::unique_ptr<HeightScan> createTestHeightScan(int size) {
   const std::vector<double> data(size, 0.0);
   auto scan = std::make_unique<HeightScan>();
-  scan->layers["height"] = std::span<const double>(data);
-  scan->layers["r"] = std::span<const double>(data);
-  scan->layers["g"] = std::span<const double>(data);
-  scan->layers["b"] = std::span<const double>(data);
+  scan->layers["height"] = std::vector<double>(data.begin(), data.end());
+  scan->layers["r"] = std::vector<double>(data.begin(), data.end());
+  scan->layers["g"] = std::vector<double>(data.begin(), data.end());
+  scan->layers["b"] = std::vector<double>(data.begin(), data.end());
   return scan;
 };
 
@@ -101,12 +101,12 @@ class CustomInput : public Input {
               CustomInterface* custom_interface)
       : key_(key), command_name_(command_name), custom_interface_(*custom_interface) {}
 
-  bool init(RobotStateInterface& state, CommandInterface& command) override {
+  bool init(RobotStateInterface& /*state*/, CommandInterface& /*command*/) override {
     return custom_interface_.initExtensibleCommand(command_name_);
   }
 
-  bool read(OnnxRuntime& runtime, const RobotStateInterface& state,
-            const CommandInterface& command) override {
+  bool read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
+            CommandInterface& /*command*/) override {
     auto maybe_data = custom_interface_.extensibleCommand(command_name_);
     if (!maybe_data.has_value()) return false;
     auto maybe_buffer = runtime.inputBuffer<float>(key_);

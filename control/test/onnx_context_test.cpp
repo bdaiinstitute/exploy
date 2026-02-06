@@ -51,6 +51,8 @@ class SimpleTestMatcher : public Matcher {
   std::vector<std::unique_ptr<Input>> createInputs() const override {
     std::vector<std::unique_ptr<Input>> inputs;
     for (const auto& [name, match] : found_matches_) {
+      (void)name;
+      (void)match;
       // do nothing
     }
     return inputs;

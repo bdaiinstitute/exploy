@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace rai::cs::operation::common::data_collection {
+namespace rai::cs::operation::common::data_collection_public {
 
 /**
  * @class DataCollectionInterface
@@ -24,7 +24,7 @@ class DataCollectionInterface {
    * @param prefix A prefix to identify the data.
    * @param data The data to be logged.
    */
-  virtual bool registerDataSource(const std::string& prefix, std::span<const double> data) {
+  virtual bool registerDataSource(const std::string& /*prefix*/, std::span<const double> /*data*/) {
     return false;
   };
   /**
@@ -33,7 +33,7 @@ class DataCollectionInterface {
    * @param prefix A prefix to identify the data.
    * @param data The data to be logged.
    */
-  virtual bool registerDataSource(const std::string& prefix, std::span<const float> data) {
+  virtual bool registerDataSource(const std::string& /*prefix*/, std::span<const float> /*data*/) {
     return false;
   };
   /**
@@ -42,7 +42,9 @@ class DataCollectionInterface {
    * @param prefix A prefix to identify the data.
    * @param data The data to be logged.
    */
-  virtual bool registerDataSource(const std::string& prefix, const double& data) { return false; };
+  virtual bool registerDataSource(const std::string& /*prefix*/, const double& /*data*/) {
+    return false;
+  };
   /**
    * @brief Collect registered data.
    *
@@ -52,4 +54,4 @@ class DataCollectionInterface {
   virtual bool collectData(uint64_t time_us) = 0;
 };
 
-}  // namespace rai::cs::operation::common::data_collection
+}  // namespace rai::cs::operation::common::data_collection_public

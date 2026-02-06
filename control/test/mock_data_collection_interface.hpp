@@ -4,7 +4,7 @@
 #include <gmock/gmock.h>
 #include "data_collection_interface.hpp"
 
-namespace rai::cs::operation::common::data_collection {
+namespace rai::cs::operation::common::data_collection_public {
 
 class MockDataCollectionInterface : public DataCollectionInterface {
  public:
@@ -17,4 +17,4 @@ class MockDataCollectionInterface : public DataCollectionInterface {
   MOCK_METHOD(bool, collectData, (uint64_t time_us), (override));
 };
 
-}  // namespace rai::cs::operation::common::data_collection
+}  // namespace rai::cs::operation::common::data_collection_public

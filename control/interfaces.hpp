@@ -5,7 +5,6 @@
 #include <Eigen/Geometry>
 
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -45,7 +44,7 @@ struct SE2VelocityRanges {
  * array.
  */
 struct HeightScan {
-  std::unordered_map<std::string, std::span<const double>> layers;
+  std::unordered_map<std::string, std::vector<double>> layers;
 };
 
 }  // namespace rai::cs::control::common::onnx

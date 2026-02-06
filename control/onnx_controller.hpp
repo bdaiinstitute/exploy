@@ -34,7 +34,7 @@ class OnnxRLController {
    */
   explicit OnnxRLController(
       RobotStateInterface& state, CommandInterface& command,
-      operation::common::data_collection::DataCollectionInterface& data_collection);
+      operation::common::data_collection_public::DataCollectionInterface& data_collection);
   /**
    * @brief Create the ONNX model and context.
    *
@@ -90,7 +90,7 @@ class OnnxRLController {
   CommandInterface& command_;
 
   // Data collection.
-  operation::common::data_collection::DataCollectionInterface& data_collection_;
+  operation::common::data_collection_public::DataCollectionInterface& data_collection_;
   double inference_duration_s_{};
 };
 

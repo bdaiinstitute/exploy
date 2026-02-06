@@ -14,7 +14,7 @@ namespace rai::cs::control::common::onnx {
 
 OnnxRLController::OnnxRLController(
     RobotStateInterface& state, CommandInterface& command,
-    operation::common::data_collection::DataCollectionInterface& data_collection)
+    operation::common::data_collection_public::DataCollectionInterface& data_collection)
     : state_(state), command_(command), data_collection_(data_collection) {
   // Register all matchers
   context_.registerMatcher(std::make_unique<JointPositionMatcher>());
