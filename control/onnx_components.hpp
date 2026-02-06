@@ -29,8 +29,7 @@ class JointPositionInput : public Input {
  public:
   JointPositionInput(const std::string& key, const std::vector<std::string>& joint_names);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -41,8 +40,7 @@ class JointVelocityInput : public Input {
  public:
   JointVelocityInput(const std::string& key, const std::vector<std::string>& joint_names);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -53,8 +51,7 @@ class BasePositionInput : public Input {
  public:
   BasePositionInput(const std::string& key);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -64,8 +61,7 @@ class BaseOrientationInput : public Input {
  public:
   BaseOrientationInput(const std::string& key);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -75,8 +71,7 @@ class BaseLinearVelocityInput : public Input {
  public:
   BaseLinearVelocityInput(const std::string& key);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -86,8 +81,7 @@ class BaseAngularVelocityInput : public Input {
  public:
   BaseAngularVelocityInput(const std::string& key);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -97,8 +91,7 @@ class IMUAngularVelocityInput : public Input {
  public:
   IMUAngularVelocityInput(const std::string& key, const std::string& imu_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -109,8 +102,7 @@ class IMUOrientationInput : public Input {
  public:
   IMUOrientationInput(const std::string& key, const std::string& imu_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -123,8 +115,7 @@ class HeightScanInput : public Input {
                   const std::unordered_set<std::string>& layer_names,
                   const metadata::HeightScanMetadata& metadata);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -137,8 +128,7 @@ class RangeImageInput : public Input {
  public:
   RangeImageInput(const std::string& key, const metadata::RangeImageMetadata& metadata);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -149,8 +139,7 @@ class DepthImageInput : public Input {
  public:
   DepthImageInput(const std::string& key, const metadata::DepthImageMetadata& metadata);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -161,8 +150,7 @@ class BodyOrientationInput : public Input {
  public:
   BodyOrientationInput(const std::string& key, const std::string& body_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -173,8 +161,7 @@ class BodyPositionInput : public Input {
  public:
   BodyPositionInput(const std::string& key, const std::string& body_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -185,8 +172,7 @@ class CommandSE3PoseInput : public Input {
  public:
   CommandSE3PoseInput(const std::string& key, const std::string& command_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -198,8 +184,7 @@ class CommandSE2VelocityInput : public Input {
   CommandSE2VelocityInput(const std::string& key, const std::string& command_name,
                           const metadata::SE2VelocityCommandMetadata& metadata);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -211,8 +196,7 @@ class CommandBooleanInput : public Input {
  public:
   CommandBooleanInput(const std::string& key, const std::string& command_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -223,8 +207,7 @@ class CommandFloatInput : public Input {
  public:
   CommandFloatInput(const std::string& key, const std::string& command_name);
   bool init(RobotStateInterface& state, CommandInterface& command) override;
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;
@@ -234,8 +217,7 @@ class CommandFloatInput : public Input {
 class StepCountInput : public Input {
  public:
   StepCountInput(const std::string& key);
-  bool read(OnnxRuntime& runtime, RobotStateInterface& state,
-            CommandInterface& command) override;
+  bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
   std::string key_;

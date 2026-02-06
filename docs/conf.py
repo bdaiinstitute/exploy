@@ -11,15 +11,26 @@ from unittest.mock import MagicMock
 # This allows "import exporter" and "import exporter_frameworks" to work
 sys.path.insert(0, os.path.abspath("../exporter"))
 
+
 # Mock isaaclab and isaacsim to avoid import errors
 class Mock(MagicMock):
     @classmethod
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ['isaaclab', 'isaacsim', 'isaaclab.app', 'isaaclab.envs',
-                'isaaclab.sim', 'isaaclab_tasks', 'isaaclab_rl',
-                'isaaclab_rl.rsl_rl', 'rsl_rl', 'rsl_rl.runners']
+
+MOCK_MODULES = [
+    "isaaclab",
+    "isaacsim",
+    "isaaclab.app",
+    "isaaclab.envs",
+    "isaaclab.sim",
+    "isaaclab_tasks",
+    "isaaclab_rl",
+    "isaaclab_rl.rsl_rl",
+    "rsl_rl",
+    "rsl_rl.runners",
+]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # -- Project information -----------------------------------------------------
@@ -43,11 +54,9 @@ extensions = [
 ]
 
 # Breathe configuration for C++ documentation
-breathe_projects = {
-    "Exporter": "_build/doxygen/xml"
-}
+breathe_projects = {"Exporter": "_build/doxygen/xml"}
 breathe_default_project = "Exporter"
-breathe_default_members = ('members', 'undoc-members')
+breathe_default_members = ("members", "undoc-members")
 
 # Add external documentation links for Eigen types
 breathе_domain_by_extension = {
@@ -78,22 +87,25 @@ autodoc_default_options = {
 }
 
 # Skip isaaclab and isaacsim modules in autodoc
-autodoc_mock_imports = ['isaaclab', 'isaacsim', 'isaaclab_tasks', 'isaaclab_rl', 'rsl_rl']
+autodoc_mock_imports = ["isaaclab", "isaacsim", "isaaclab_tasks", "isaaclab_rl", "rsl_rl"]
+
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
     """Skip documenting isaaclab and isaacsim related members."""
     # Skip if the module is from isaaclab or isaacsim
-    if hasattr(obj, '__module__'):
+    if hasattr(obj, "__module__"):
         module = obj.__module__
-        if module and any(mod in module for mod in ['isaaclab', 'isaacsim']):
+        if module and any(mod in module for mod in ["isaaclab", "isaacsim"]):
             return True
     return skip
+
 
 def add_eigen_links(app, doctree, docname):
     """Add hyperlinks to Eigen documentation for common Eigen types."""
     from docutils import nodes
+
     eigen_base_url = "https://eigen.tuxfamily.org/dox/"
-    
+
     # Mapping of Eigen types to their documentation URLs
     eigen_types = {
         "Eigen::Vector3d": eigen_base_url + "group__matrixtypedefs.html",
@@ -102,7 +114,7 @@ def add_eigen_links(app, doctree, docname):
         "Eigen::MatrixXd": eigen_base_url + "group__matrixtypedefs.html",
         "Eigen::Matrix": eigen_base_url + "classEigen_1_1Matrix.html",
     }
-    
+
     for node in doctree.traverse(nodes.Text):
         text = node.astext()
         for eigen_type, url in eigen_types.items():
@@ -113,10 +125,10 @@ def add_eigen_links(app, doctree, docname):
                     parts = text.split(eigen_type)
                     if len(parts) > 1:
                         new_nodes = []
-                        for i, part in enumerate(parts[:-1]):
+                        for _i, part in enumerate(parts[:-1]):
                             if part:
                                 new_nodes.append(nodes.Text(part))
-                            ref = nodes.reference('', eigen_type, refuri=url, internal=False)
+                            ref = nodes.reference("", eigen_type, refuri=url, internal=False)
                             ref += nodes.Text(eigen_type)
                             new_nodes.append(ref)
                         if parts[-1]:
@@ -124,9 +136,11 @@ def add_eigen_links(app, doctree, docname):
                         parent.replace(node, new_nodes)
                         break
 
+
 def setup(app):
-    app.connect('autodoc-skip-member', autodoc_skip_member)
-    app.connect('doctree-resolved', add_eigen_links)
+    app.connect("autodoc-skip-member", autodoc_skip_member)
+    app.connect("doctree-resolved", add_eigen_links)
+
 
 # -- Options for napoleon (Google/NumPy docstring style) --------------------
 napoleon_google_docstring = True

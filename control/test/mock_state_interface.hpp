@@ -25,7 +25,8 @@ class MockRobotStateInterface : public RobotStateInterface {
               (const, override));
   MOCK_METHOD(std::optional<double>, jointVelocity, (const std::string& joint_name),
               (const, override));
-  MOCK_METHOD(std::optional<double>, jointEffort, (const std::string& joint_name), (const, override));
+  MOCK_METHOD(std::optional<double>, jointEffort, (const std::string& joint_name),
+              (const, override));
   MOCK_METHOD(bool, setJointPosition, (const std::string& joint_name, double position), (override));
   MOCK_METHOD(bool, setJointVelocity, (const std::string& joint_name, double velocity), (override));
   MOCK_METHOD(bool, setJointEffort, (const std::string& joint_name, double effort), (override));
@@ -57,11 +58,11 @@ class MockRobotStateInterface : public RobotStateInterface {
   MOCK_METHOD(std::optional<HeightScan*>, heightScan,
               (const std::string& sensor_name, const std::unordered_set<std::string>& layer_names,
                const Position& base_pos_w, const Quaternion& base_quat_w),
-              (const override));
+              (override));
   MOCK_METHOD(bool, initRangeImage, (const RangeImageConfig& config), (override));
-  MOCK_METHOD(std::optional<std::span<const float>>, rangeImage, (), (const override));
+  MOCK_METHOD(std::optional<std::span<float>>, rangeImage, (), (override));
   MOCK_METHOD(bool, initDepthImage, (const DepthImageConfig& config), (override));
-  MOCK_METHOD(std::optional<std::span<const float>>, depthImage, (), (const override));
+  MOCK_METHOD(std::optional<std::span<float>>, depthImage, (), (override));
 };
 
 }  // namespace rai::cs::control::common::onnx

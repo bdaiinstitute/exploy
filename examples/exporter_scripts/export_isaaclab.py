@@ -11,10 +11,11 @@ from isaaclab.app import AppLauncher
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnvCfg
+    from isaaclab.sim import SimulationApp
     from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg
 
 
-def make_simulation_app() -> "SimulationApp":
+def make_simulation_app() -> SimulationApp:
     # Create argument parser for headless mode
     parser = argparse.ArgumentParser()
 
@@ -36,16 +37,15 @@ simulation_app = make_simulation_app()
 # Import tasks to register environments
 import isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c  # noqa: F401
 import isaaclab_tasks.manager_based.locomotion.velocity.config.g1  # noqa: F401
-
 import torch
+from exporter.evaluator import evaluate
+from exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
+from isaaclab.sim import SimulationContext
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
 from isaaclab_tasks.utils import parse_env_cfg
 from rsl_rl.runners import OnPolicyRunner
 
 import exporter
-from exporter.evaluator import evaluate
-from exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
-from isaaclab.sim import SimulationContext
 
 
 def main(task_name: str = None):

@@ -3,7 +3,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from exporter.components import Group, Input, Memory, Output, Connection
+from exporter.components import Connection, Group, Input, Memory, Output
 
 
 class ContextManager:

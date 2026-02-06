@@ -39,11 +39,11 @@ def evaluate(
         verbose: Whether to print verbose output during evaluation. Defaults to True.
         reset_from_onnx_counter_steps: Set after how many steps we should set memory inputs from ONNX instead of using
             the environment's state.
-            
+
             Note: we do this to avoid numerical error accumulation that would occur if we only every use
             the ONNX inference outputs as memory fed back as ONNX inference inputs, while
             all other inputs are set directly from the environment's state.
-            
+
             Note: this value is chosen arbitrarily.
         atol: Absolute tolerance used to compare tensors.
         rtol: Relative tolerance used to compare tensors.

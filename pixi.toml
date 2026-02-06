@@ -28,7 +28,7 @@ pybind11 = ">=2.10"
 ruff = "*"
 
 [feature.python.pypi-dependencies]
-exporter = { path = "./exporter/exporter", editable = true }
+exporter-core = { path = "./exporter/exporter", editable = true }
 build = "*"
 
 [feature.python.tasks]
@@ -39,8 +39,7 @@ format-python = "ruff format ."
 format-python-check = "ruff format --check ."
 lint = { depends-on = ["lint-python"] }
 format = { depends-on = ["format-python"] }
-format-check = { depends-on = ["format-python-check"] }
-check = { depends-on = ["lint", "format-check"] }
+check = { depends-on = ["lint", "format"] }
 
 # FEATURE: C++ Development - Build tools, native libraries, C++ linting/testing
 [feature.cpp.dependencies]
@@ -66,14 +65,25 @@ test-cpp = "ctest --test-dir build --output-on-failure"
 test = { depends-on = ["test-cpp"] }
 
 # C++ formatting and linting
-format-cpp = "clang-format -i **/*.cpp **/*.hpp"
-format-cpp-check = "clang-format --dry-run **/*.cpp **/*.hpp"
+format-cpp = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i"
+format-cpp-check = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror"
 format = { depends-on = ["format-cpp"] }
-format-check = { depends-on = ["format-cpp-check"] }
+format-check = { depends-on = ["format-python-check", "format-cpp-check"] }
 check = { depends-on = ["format-check"] }
 
 # C++ setup
 setup = { depends-on = ["configure"] }
+
+[feature.core.dependencies]
+pytest = "*"
+
+[feature.core.pypi-dependencies]
+exporter-core = { path = "./exporter/exporter", editable = true }
+pytest-gitignore = "*"
+
+[feature.core.tasks]
+test-python = "pytest -s ."
+test = { depends-on = ["test-python"] }
 
 # FEATURE: Isaac Lab - GPU simulation and robotics
 [feature.isaaclab.dependencies]
@@ -85,7 +95,7 @@ extra-index-urls = ["https://pypi.nvidia.com"]
 
 [feature.isaaclab.pypi-dependencies]
 exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
-isaacsim = { version = "==5.1.0", extras = ["all", "extscache"] }
+# isaacsim = { version = "==5.1.0", extras = ["all", "extscache"] }
 pytest-gitignore = "*"
 
 [feature.isaaclab.tasks]
@@ -99,14 +109,6 @@ test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_a
 verify = { depends-on = ["test-import", "test-torch"] }
 setup = { depends-on = ["install-isaaclab"] }
 export-isaaclab = "python examples/exporter_scripts/export_isaaclab.py"
-isaac-sim = { cmd = "isaacsim --disable-extensions isaacsim.ros2.bridge" }
-# Python testing
-test-python = "pytest -s ."
-test = { depends-on = ["test-python"] }
-# Build wheel packages
-build-wheel-core = "python -m build --wheel exporter/exporter"
-build-wheel-isaaclab = "python -m build --wheel exporter/exporter_frameworks/isaaclab"
-build-wheels = { depends-on = ["build-wheel-core", "build-wheel-isaaclab"] }
 
 # FEATURE: Documentation - Sphinx documentation building
 [feature.docs.dependencies]
@@ -118,7 +120,7 @@ doxygen = "*"
 breathe = "*"
 
 [feature.docs.pypi-dependencies]
-exporter = { path = "./exporter/exporter", editable = true }
+exporter-core = { path = "./exporter/exporter", editable = true }
 exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
 
 [feature.docs.tasks]
@@ -133,7 +135,8 @@ open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html
 [environments]
 python = ["python"]               # Python-only development
 cpp = ["cpp"]                     # C++-only development
-exporter = ["python", "isaaclab"] # Exporter environment: Python + Isaac Lab
+core = ["python", "core"]         # Exporter environment: Python + core functionality
+isaaclab = ["isaaclab"]           # Isaac Lab only
 controller = ["python", "cpp"]    # Controller environment: Python + C++
 docs = ["docs"]                   # Documentation building
 

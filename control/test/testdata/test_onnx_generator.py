@@ -6,7 +6,6 @@ import sys
 import onnx
 import torch
 
-
 # ========== Constants ==========
 
 INPUT_NAMES = [

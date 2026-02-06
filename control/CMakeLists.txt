@@ -4,6 +4,9 @@ project(my_robot_project LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable testing
+enable_testing()
+
 # Treat warnings as errors
 add_compile_options(-Werror -Wpedantic -Wunused-variable -Wunused-parameter -Wreorder)
 

@@ -1,5 +1,5 @@
 [project]
-name = "exporter"
+name = "exporter-core"
 version = "0.1.0"
 description = "Framework-agnostic ONNX environment exporter core"
 authors = [{ name = "Robotics and AI Institute LLC dba RAI Institute" }]

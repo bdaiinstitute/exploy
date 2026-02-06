@@ -14,6 +14,12 @@ void copyToBuffer(std::span<const T> from, std::span<T> to) {
   std::copy(from.begin(), from.end(), to.begin());
 }
 
+template <typename T>
+void copyToBuffer(std::span<T> from, std::span<T> to) {
+  assert(to.size() == from.size() && "Buffer size must match input size.");
+  std::copy(from.begin(), from.end(), to.begin());
+}
+
 template <typename T, typename U>
 void copyToBuffer(std::span<const T> from, std::span<U> to) {
   assert(to.size() == from.size() && "Buffer size must match input size.");
@@ -118,8 +124,7 @@ bool JointPositionInput::init(RobotStateInterface& state, CommandInterface&) {
   return true;
 }
 
-bool JointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                              CommandInterface&) {
+bool JointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   std::vector<double> positions;
   for (const auto& joint_name : joint_names_) {
     auto maybe_pos = state.jointPosition(joint_name);
@@ -144,8 +149,7 @@ bool JointVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   return true;
 }
 
-bool JointVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                              CommandInterface&) {
+bool JointVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   std::vector<double> velocities;
   for (const auto& joint_name : joint_names_) {
     auto maybe_vel = state.jointVelocity(joint_name);
@@ -165,8 +169,7 @@ bool BasePositionInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initBasePosW();
 }
 
-bool BasePositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                             CommandInterface&) {
+bool BasePositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   auto maybe_pos = state.basePosW();
   if (!maybe_pos.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
@@ -335,8 +338,7 @@ bool HeightScanInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initHeightScan(sensor_name_, config);
 }
 
-bool HeightScanInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                           CommandInterface&) {
+bool HeightScanInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   auto maybe_base_pos = state.basePosW();
   if (!maybe_base_pos.has_value()) {
     GENERIC_LOG_STREAM(ERROR, "Failed to get base position for HeightScanInput");
@@ -379,8 +381,7 @@ bool RangeImageInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initRangeImage(config);
 }
 
-bool RangeImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                           CommandInterface&) {
+bool RangeImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
   auto maybe_image = state.rangeImage();
@@ -405,8 +406,7 @@ bool DepthImageInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initDepthImage(config);
 }
 
-bool DepthImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                           CommandInterface&) {
+bool DepthImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   auto maybe_buffer = runtime.inputBuffer<float>(key_);
   if (!maybe_buffer.has_value()) return false;
   auto maybe_image = state.depthImage();
@@ -492,8 +492,7 @@ BodyPositionInput::BodyPositionInput(const std::string& key, const std::string& 
 bool BodyPositionInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initBodyPositionW(body_name_);
 }
-bool BodyPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
-                             CommandInterface&) {
+bool BodyPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   auto maybe_pos = state.bodyPositionW(body_name_);
   if (!maybe_pos.has_value()) return false;
   auto maybe_buffer = runtime.inputBuffer<float>(key_);

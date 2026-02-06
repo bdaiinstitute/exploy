@@ -1,13 +1,13 @@
 # Copyright (c) 2025-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import torch
+from exporter_frameworks.isaaclab.utils import make_getter_body_pos_w, make_getter_body_quat_w
 from isaaclab.assets import Articulation
 from isaaclab.envs.mdp.commands.velocity_command import UniformVelocityCommand
 from isaaclab.managers import CommandManager
 from isaaclab.sensors import RayCaster, RayCasterCamera, SensorBase
 
-from exporter import ContextManager, Input, Connection
-from exporter_frameworks.isaaclab.utils import make_getter_body_pos_w, make_getter_body_quat_w
+from exporter import Connection, ContextManager, Input
 
 
 def add_commands(source: CommandManager, context_manager: ContextManager):
@@ -77,7 +77,7 @@ def add_sensor_inputs(
     sensors: dict[str, SensorBase],
     context_manager: ContextManager,
 ):
-    for sensor_name_in_source in sensors.keys():
+    for sensor_name_in_source in sensors:
         sensor: SensorBase = sensors[sensor_name_in_source]
         sensor_key: str = f"sensor.{sensor_name_in_source}"
         if isinstance(sensor, RayCaster):

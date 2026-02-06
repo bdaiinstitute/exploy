@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 import torch
-
 from exporter.components import Group, Input, Memory, Output
 
 

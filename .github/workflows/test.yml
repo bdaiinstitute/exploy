@@ -1,0 +1,70 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.workflow }}-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.sha || ''}}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test-export:
+    name: Test Export Core Package
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: latest
+          cache: true
+          environments: core
+
+      - name: Run Tests
+        run: pixi run -e core test
+
+      - name: Run Python Linting
+        run: pixi run -e core lint
+
+      - name: Check Python Formatting
+        run: pixi run -e core format-python-check
+
+  test-controller:
+    name: Test Controller Environment
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: latest
+          cache: true
+          environments: controller
+
+      - name: Setup Controller Environment
+        run: pixi run -e controller setup
+
+      - name: Build Controller
+        run: pixi run -e controller build
+
+      - name: Run Controller Tests
+        run: pixi run -e controller test
+
+      - name: Check Formatting
+        run: pixi run -e controller format-check

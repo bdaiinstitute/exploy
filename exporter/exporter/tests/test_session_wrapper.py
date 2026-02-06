@@ -6,7 +6,6 @@ import tempfile
 import numpy as np
 import pytest
 import torch
-
 from exporter.session_wrapper import SessionWrapper
 
 

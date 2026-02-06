@@ -1,6 +1,6 @@
+import torch
 from isaaclab.assets import Articulation
 from isaaclab.managers import ObservationManager
-import torch
 
 from exporter.tensor_proxy import TensorProxy
 
