@@ -30,13 +30,13 @@ def compare_tensors(
 
     msg = f"Comparing {vec_name}: "
     if torch.all(is_close):
-        msg += "all elements are close."
+        msg += "\033[92mall elements are close.\033[0m"
         print(msg)
         return True
 
     mismatched_indices = (torch.logical_not(is_close)).nonzero(as_tuple=False)
 
-    msg += "found mismatch."
+    msg += "\033[91mfound mismatch.\033[0m"
     name_a = "a" if name_a is None else name_a
     name_b = "b" if name_b is None else name_b
     for idx in mismatched_indices:
@@ -45,8 +45,10 @@ def compare_tensors(
         val_b = vec_b[idx_tuple].item()
         val_name = f"[{index_names[idx_tuple[1]]}]" if index_names is not None else ""
         msg += (
-            f"\n\tAt index {idx_tuple}{val_name}: error:"
-            f" {np.abs(val_a - val_b):+.5f}\t{name_a}={val_a:+.5f}\t{name_b}={val_b:+.5f}"
+            f"\n\t{idx_tuple}{val_name}:\t"
+            f"{name_a}={val_a:+.5f}\t"
+            f"{name_b}={val_b:+.5f}\t"
+            f"Δ={np.abs(val_a - val_b):.5f}"
         )
 
     if verbose:

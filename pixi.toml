@@ -105,6 +105,8 @@ test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaacl
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
 verify = { depends-on = ["test-import", "test-torch"] }
 export-isaaclab = "python examples/exporter_scripts/export_isaaclab.py"
+test-export-isaaclab = "python exporter/exporter_frameworks/isaaclab/tests/export_isaaclab.py"
+test = { depends-on = ["test-export-isaaclab"] }
 
 # FEATURE: Documentation - Sphinx documentation building
 [feature.docs.dependencies]

@@ -96,7 +96,7 @@ def main(task_name: str = None):
     )
 
     # Evaluate.
-    evaluate_steps = 50
+    evaluate_steps = 200
     with torch.inference_mode():
         exporter.evaluate(
             env=exportable_env,
