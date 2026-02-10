@@ -1,0 +1,24 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
+# Markdownlint configuration
+# Disable some rules for GitHub-specific files
+
+# Line length
+MD013:
+  # Allow longer lines in tables and code blocks
+  line_length: 120
+  code_blocks: false
+  tables: false
+  # Don't check headings (often contain long URLs)
+  headings: false
+
+# First line in file should be a top level heading
+# Disabled for files with YAML frontmatter (GitHub issue templates)
+MD041: false
+
+# Heading style - use ATX style (##) consistently
+MD003:
+  style: atx
+
+# Allow increment by more than one level for subheadings
+MD001: false

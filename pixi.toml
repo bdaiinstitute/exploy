@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 [workspace]
 name = "exporter"
 version = "0.1.0"
@@ -26,6 +28,7 @@ python = "3.11.*"
 onnxscript = "*"
 pybind11 = ">=2.10"
 ruff = "*"
+pre-commit = "*"
 
 [feature.python.pypi-dependencies]
 exporter-core = { path = "./exporter/exporter", editable = true }
@@ -131,12 +134,12 @@ open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html
 
 # ENVIRONMENTS
 [environments]
-python = ["python"]               # Python-only development
-cpp = ["cpp"]                     # C++-only development
-core = ["python", "core"]         # Exporter environment: Python + core functionality
-isaaclab = ["isaaclab", "core"]   # Isaac Lab + core exporter functionality
-controller = ["python", "cpp"]    # Controller environment: Python + C++
-docs = ["docs"]                   # Documentation building
+python = ["python"]             # Python-only development
+cpp = ["cpp"]                   # C++-only development
+core = ["python", "core"]       # Exporter environment: Python + core functionality
+isaaclab = ["isaaclab", "core"] # Isaac Lab + core exporter functionality
+controller = ["python", "cpp"]  # Controller environment: Python + C++
+docs = ["docs"]                 # Documentation building
 
 # Available across all environments
 [tasks]

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 cmake_minimum_required(VERSION 3.20)
 project(exploy LANGUAGES CXX)
 

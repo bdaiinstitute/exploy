@@ -1,4 +1,4 @@
-// Copyright (c) 2024-2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+// Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 #include "components.hpp"
 #include "mock_command_interface.hpp"

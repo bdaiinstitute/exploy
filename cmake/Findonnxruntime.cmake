@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 # This will define the following variables:
 #   onnxruntime_FOUND        -- True if the system has the onnxruntime library
 #   onnxruntime_INCLUDE_DIRS -- The include directories for onnxruntime

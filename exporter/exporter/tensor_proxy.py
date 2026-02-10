@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import typing
 
@@ -71,7 +71,7 @@ class TensorProxy:
             selected = [self._tensors[i][full_index].unsqueeze(self._split_dim) for i in indices]
             return torch.cat(selected, dim=self._split_dim)
 
-        elif isinstance(split_slice, (list, tuple, torch.Tensor)):
+        elif isinstance(split_slice, list | tuple | torch.Tensor):
             if isinstance(split_slice, torch.Tensor):
                 split_slice = split_slice.tolist()
             selected = [
@@ -134,7 +134,7 @@ class TensorProxy:
             kwargs = {}
 
         # Only handle functions that involve TensorProxy or Tensor objects.
-        if not all(issubclass(t, (torch.Tensor, TensorProxy)) for t in types):
+        if not all(issubclass(t, torch.Tensor | TensorProxy) for t in types):
             return NotImplemented
 
         # Convert all `TensorProxy`` elements in `args` to `torch.Tensor` objects.

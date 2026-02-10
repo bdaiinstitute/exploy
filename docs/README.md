@@ -1,6 +1,9 @@
+<!-- Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved. -->
+
 # Documentation
 
-This directory contains the Sphinx documentation for the Exporter project.
+This directory contains the Sphinx documentation for the Exporter
+project.
 
 ## Building the Documentation
 
@@ -10,7 +13,8 @@ To build the documentation, run:
 pixi run docs
 ```
 
-The built HTML documentation will be in `_build/html/`. Open `_build/html/index.html` in a browser to view it.
+The built HTML documentation will be in `_build/html/`. Open
+`_build/html/index.html` in a browser to view it.
 
 To clean the build directory:
 
@@ -23,11 +27,13 @@ pixi run docs-clean
 To host the documentation on GitHub Pages:
 
 1. Build the documentation:
+
    ```bash
    pixi run docs
    ```
 
 2. Create a `.nojekyll` file in the output directory:
+
    ```bash
    touch docs/_build/html/.nojekyll
    ```
@@ -38,6 +44,7 @@ To host the documentation on GitHub Pages:
    - Choose the branch where you'll commit the built docs (e.g., `gh-pages`)
 
 4. Option A: Manual deployment
+
    ```bash
    # Copy _build/html to a gh-pages branch
    git checkout --orphan gh-pages

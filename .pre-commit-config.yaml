@@ -1,0 +1,54 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
+default_stages: [pre-commit]
+default_install_hook_types: [pre-commit]
+
+fail_fast: false
+
+repos:
+  # standard pre-commit hooks for common checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # check for files > 1Mb on commit (ignores git-lfs tracked files)
+      - id: check-added-large-files
+        args: ['--enforce-all', '--maxkb', '1024']
+      # detect any unresolved merge conflicts remaining in files
+      - id: check-merge-conflict
+      # check that executable files have shebangs
+      - id: check-shebang-scripts-are-executable
+      # check for broken symlinks that shouldn't be checked in
+      - id: check-symlinks
+      # check toml files, pretty much only used for pyproject files
+      - id: check-toml
+      # attempt to parse/load yaml files to verify they don't have obvious issues
+      - id: check-yaml
+        args: ['--allow-multiple-documents']
+      # fix end of file inconsistencies caused by different editors
+      - id: end-of-file-fixer
+      # fix trailing whitespace in files of all types
+      - id: trailing-whitespace
+
+  - repo: https://github.com/rai-inst/actions-int
+    rev: v9.7.1
+    hooks:
+    - id: check-copyright
+      name: check and fix copyright
+      entry: copyright-checker/copyright-checker.sh
+      language: script
+      types: [ text ]
+      args: [ --fix ]
+      exclude: >
+        (?x)^(
+          .*gazelle_python.yaml|
+          \.github/pull_request_template.md|
+          tools/deps/unused_packages_ignorelist.yaml|
+          .*\.enc\.ya?ml|
+        )$
+
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]  # apply simple fixes (and report as failure)

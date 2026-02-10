@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 [project]
 name = "exporter-core"
 version = "0.1.0"

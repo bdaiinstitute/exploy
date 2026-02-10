@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 import functools
 
 from exporter_frameworks.isaaclab.utils import get_articulation_actuator_gains

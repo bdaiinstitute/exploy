@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 import torch
 from isaaclab.assets import Articulation
 from isaaclab.managers import ObservationManager
@@ -10,7 +12,7 @@ def get_articulation_actuator_gains(articulation: Articulation) -> dict:
     gains = {}
 
     def _update_dict(gain_cfg: dict | float, gain_name: str):
-        if isinstance(gain_cfg, (float, int)):
+        if isinstance(gain_cfg, (float | int)):
             _, joint_names = articulation.find_joints(actuator_cfg.joint_names_expr)
             for name in joint_names:
                 if name not in gains:

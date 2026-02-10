@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+
 [project]
 name = "exporter_frameworks_isaaclab"
 version = "0.1.0"

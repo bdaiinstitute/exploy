@@ -1,4 +1,4 @@
-# Copyright (c) 2025 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
+# Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 from collections.abc import Sequence
 
