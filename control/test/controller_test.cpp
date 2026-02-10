@@ -281,7 +281,7 @@ TEST_F(OnnxControllerTest, LoadFails) {
   NiceMock<MockDataCollectionInterface> nice_data_collection_mock;
   OnnxRLController oc(strict_state_mock, strict_command_mock, nice_data_collection_mock);
 
-  ASSERT_FALSE(oc.load(""));
+  ASSERT_FALSE(oc.create(""));
 }
 
 TEST_F(OnnxControllerTest, InitWithoutLoad) {
@@ -302,9 +302,9 @@ TEST_F(OnnxControllerTest, Update) {
   ExpectInitCustom();
 
   // Initialize
-  ASSERT_TRUE(oc_.load(model_path));
+  ASSERT_TRUE(oc_.create(model_path));
   ASSERT_TRUE(oc_.init(false));
-  EXPECT_EQ(oc_.updateRate(), 10);
+  EXPECT_EQ(oc_.context().updateRate(), 10);
 
   ExpectReadJointState();
   ExpectReadState();
@@ -325,7 +325,7 @@ TEST_F(OnnxControllerTest, ReadJointFailure) {
   ExpectInitBody();
   ExpectInitCustom();
 
-  ASSERT_TRUE(oc_.load(model_path));
+  ASSERT_TRUE(oc_.create(model_path));
   ASSERT_TRUE(oc_.init(false));
 
   EXPECT_CALL(state_mock_, jointPosition("j1")).WillRepeatedly(Return(std::nullopt));
@@ -351,7 +351,7 @@ TEST_F(OnnxControllerTest, WriteJointFailure) {
   ExpectInitBody();
   ExpectInitCustom();
 
-  ASSERT_TRUE(oc_.load(model_path));
+  ASSERT_TRUE(oc_.create(model_path));
   ASSERT_TRUE(oc_.init(false));
 
   ExpectReadJointState();

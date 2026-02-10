@@ -44,17 +44,16 @@ bool OnnxRLController::create(const std::string& onnx_model_path) {
     GENERIC_LOG_STREAM(ERROR, "Error creating OnnxEvaluator from policy: " << onnx_model_path);
     return false;
   }
+  if (!context_.createContext(onnx_model_)) {
+    GENERIC_LOG_STREAM(ERROR, "Error creating context.");
+    return false;
+  }
   return true;
 }
 
 bool OnnxRLController::init(bool enable_data_collection) {
   if (!onnx_model_.isInitialized()) {
     GENERIC_LOG_STREAM(ERROR, "ONNX model is not initialized.");
-    return false;
-  }
-
-  if (!context_.createContext(onnx_model_)) {
-    GENERIC_LOG_STREAM(ERROR, "Error creating context.");
     return false;
   }
 

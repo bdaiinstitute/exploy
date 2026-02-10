@@ -45,13 +45,6 @@ class OnnxRLController {
    */
   bool create(const std::string& onnx_model_path);
   /**
-   * @brief Load the ONNX model (alias for create method).
-   *
-   * @param onnx_model_path Path to the ONNX model file.
-   * @return True if parsing succeeds, false otherwise.
-   */
-  bool load(const std::string& onnx_model_path) { return create(onnx_model_path); }
-  /**
    * @brief Initialize the controller.
    *
    * @param enable_data_collection Whether to enable data collection.
@@ -70,12 +63,6 @@ class OnnxRLController {
    * @return True if update succeeds, false otherwise.
    */
   bool update(uint64_t time_us);
-  /**
-   * @brief Get the update rate from the ONNX model context.
-   *
-   * @return The update rate in Hz.
-   */
-  int updateRate() const { return context_.updateRate(); }
 
   OnnxContext& context() { return context_; }
 
