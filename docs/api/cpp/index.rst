@@ -1,7 +1,151 @@
-C++ API Reference
+C++ Controller API
 ==================
 
-This section contains the C++ API documentation generated from the source code.
+High-performance C++ controller for real-time policy execution with ONNX Runtime.
 
-.. doxygenindex::
-   :project: Exporter
+Overview
+--------
+
+The C++ controller provides a real-time inference system for deploying RL policies
+exported to ONNX format. It features:
+
+* **ONNX Runtime Integration** - Efficient model execution
+* **Extensible Interface Design** - Easy integration with different robot platforms
+* **Component-Based Architecture** - Modular input/output handling
+* **Automatic Component Matching** - Maps ONNX model I/O to robot interfaces
+
+Core Classes
+------------
+
+Controller
+~~~~~~~~~~
+
+.. doxygenclass:: exploy::control::OnnxRLController
+   :members:
+   :undoc-members:
+
+Context Management
+~~~~~~~~~~~~~~~~~~
+
+.. doxygenclass:: exploy::control::OnnxContext
+   :members:
+   :undoc-members:
+
+ONNX Runtime
+~~~~~~~~~~~~
+
+.. doxygenclass:: exploy::control::OnnxRuntime
+   :members:
+   :undoc-members:
+
+Interfaces
+----------
+
+These abstract interfaces define the contract for robot integration.
+
+State Interface
+~~~~~~~~~~~~~~~
+
+.. doxygenclass:: exploy::control::RobotStateInterface
+   :members:
+   :undoc-members:
+
+Command Interface
+~~~~~~~~~~~~~~~~~
+
+.. doxygenclass:: exploy::control::CommandInterface
+   :members:
+   :undoc-members:
+
+Data Collection Interface
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. doxygenclass:: exploy::control::DataCollectionInterface
+   :members:
+   :undoc-members:
+
+Components
+----------
+
+Input and output components for data flow management.
+
+.. doxygenstruct:: exploy::control::Input
+   :members:
+   :undoc-members:
+
+.. doxygenstruct:: exploy::control::Output
+   :members:
+   :undoc-members:
+
+Data Types
+----------
+
+Core data structures used throughout the controller.
+
+.. doxygenstruct:: exploy::control::Position
+   :members:
+
+.. doxygenstruct:: exploy::control::Quaternion
+   :members:
+
+.. doxygenstruct:: exploy::control::LinearVelocity
+   :members:
+
+.. doxygenstruct:: exploy::control::AngularVelocity
+   :members:
+
+.. doxygenstruct:: exploy::control::SE2Velocity
+   :members:
+
+.. doxygenstruct:: exploy::control::SE3Pose
+   :members:
+
+.. doxygenstruct:: exploy::control::HeightScan
+   :members:
+
+Configuration
+-------------
+
+.. doxygenstruct:: exploy::control::OnnxRuntimeOptions
+   :members:
+
+.. doxygenstruct:: exploy::control::SE2VelocityConfig
+   :members:
+
+.. doxygenstruct:: exploy::control::SE2VelocityRanges
+   :members:
+
+Metadata
+--------
+
+Metadata structures for component configuration.
+
+.. doxygenstruct:: exploy::control::JointMetadata
+   :members:
+
+.. doxygenstruct:: exploy::control::JointOutputMetadata
+   :members:
+
+.. doxygenstruct:: exploy::control::SE2VelocityCommandMetadata
+   :members:
+
+.. doxygenstruct:: exploy::control::HeightScanMetadata
+   :members:
+
+.. doxygenstruct:: exploy::control::RangeImageMetadata
+   :members:
+
+.. doxygenstruct:: exploy::control::DepthImageMetadata
+   :members:
+
+Matchers
+--------
+
+Component matchers for automatic ONNX I/O mapping.
+
+.. doxygenclass:: exploy::control::Matcher
+   :members:
+   :undoc-members:
+
+.. doxygenstruct:: exploy::control::Match
+   :members:

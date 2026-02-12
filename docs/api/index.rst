@@ -1,37 +1,37 @@
 API Reference
 =============
 
-This section contains detailed API documentation for the Exporter project.
+This section contains detailed API documentation for Exploy.
 
-Exporter Core
--------------
+Python Exporter API
+-------------------
 
-The core exporter functionality for ONNX export.
+Core functionality for exporting RL policies to ONNX format.
 
 .. toctree::
    :maxdepth: 2
 
+   exporter/exporter
    exporter/components
    exporter/context_manager
    exporter/evaluator
-   exporter/exporter
    exporter/session_wrapper
    exporter/tensor_proxy
 
-Exporter Frameworks
--------------------
+Framework Integration
+---------------------
 
-Framework-specific implementations.
+Framework-specific implementations for different RL environments.
 
 .. toctree::
    :maxdepth: 2
 
    frameworks/isaaclab
 
-C++ API
--------
+C++ Controller API
+------------------
 
-C++ controller implementation with ONNX Runtime.
+High-performance C++ controller for real-time policy execution.
 
 .. toctree::
    :maxdepth: 2

@@ -119,6 +119,7 @@ sphinx_rtd_theme = "*"
 sphinx-autodoc-typehints = "*"
 doxygen = "*"
 breathe = "*"
+myst-parser = "*"
 
 [feature.docs.pypi-dependencies]
 exporter-core = { path = "./exporter/exporter", editable = true }

@@ -53,6 +53,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_autodoc_typehints",
     "breathe",
+    "myst_parser",
 ]
 
 # Breathe configuration for C++ documentation
