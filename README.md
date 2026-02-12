@@ -90,6 +90,75 @@ exporter = Exporter(env, policy_module)
 exporter.export("my_policy.onnx")
 ```
 
+#### Using the C++ Controller
+
+```cpp
+#include "controller.hpp"
+#include "state_interface.hpp"
+#include "command_interface.hpp"
+#include "data_collection_interface.hpp"
+
+// Implement the required interfaces for your robot
+class MyRobotState : public exploy::control::RobotStateInterface {
+  // Implement joint state, base state, sensor methods...
+};
+
+class MyRobotCommand : public exploy::control::CommandInterface {
+  // Implement SE2 velocity, SE3 pose, and other command methods...
+};
+
+class MyDataCollection : public exploy::control::DataCollectionInterface {
+  // Implement data logging methods...
+};
+
+int main() {
+  // Create interface instances
+  MyRobotState state;
+  MyRobotCommand command;
+  MyDataCollection data_collection;
+
+  // Create the controller
+  exploy::control::OnnxRLController controller(state, command, data_collection);
+
+  // Load the ONNX model
+  if (!controller.create("/path/to/policy.onnx")) {
+    return -1;
+  }
+
+  // Initialize the controller
+  if (!controller.init(false)) {
+    return -1;
+  }
+
+  // Get the update rate from the model metadata (Hz)
+  int update_rate_hz = controller.context().updateRate();
+  uint64_t period_us = 1000000 / update_rate_hz;
+
+  // Control loop
+  uint64_t next_update_us = getCurrentTimeMicroseconds();
+  while (running) {
+    uint64_t now_us = getCurrentTimeMicroseconds();
+
+    // Wait until next update time
+    if (now_us < next_update_us) {
+      sleepUntil(next_update_us);
+      now_us = next_update_us;
+    }
+
+    // Run inference and update commands
+    if (!controller.update(now_us)) {
+      // Handle error
+      break;
+    }
+
+    // Schedule next update
+    next_update_us += period_us;
+  }
+
+  return 0;
+}
+```
+
 #### Running IsaacLab Examples
 
 ```bash
