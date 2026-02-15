@@ -222,6 +222,10 @@ class OnnxEnvironmentExporter(torch.nn.Module):
                 verbose=self.verbose,
                 input_names=input_names,
                 output_names=output_names,
+                # constant folding requires that all tensors are on the same device. as constants
+                # are on cpu, we disable it to allow exporting of models on cuda. constant folding
+                # optimization will be done in the ONNX runtime when we load the model for deployment.
+                do_constant_folding=False,
             )
 
         wrapper_model = construct_decimation_wrapper(
