@@ -33,6 +33,7 @@ jobs:
         with:
           pixi-version: latest
           cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
           environments: core
 
       - name: Run Tests
@@ -57,6 +58,7 @@ jobs:
         with:
           pixi-version: latest
           cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
           environments: controller
 
       - name: Setup Controller Environment
@@ -70,3 +72,25 @@ jobs:
 
       - name: Check Formatting
         run: pixi run -e controller format-check
+
+
+  test-isaaclab-export:
+    name: Test Export IsaacLab
+    runs-on: github-gpu-runner
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.9.4
+        with:
+          pixi-version: latest
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+          environments: isaaclab
+
+      - name: Run Isaac Lab Export Test
+        env:
+          OMNI_KIT_ACCEPT_EULA: yes
+        run: pixi run -e isaaclab export-isaaclab-ci

@@ -15,12 +15,26 @@ if TYPE_CHECKING:
     from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg
 
 
-def make_simulation_app() -> SimulationApp:
+def make_simulation_app() -> tuple[SimulationApp, argparse.Namespace]:
     # Create argument parser for headless mode
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Export Isaac Lab environment to ONNX")
+
+    # Add custom arguments
+    parser.add_argument(
+        "--task",
+        type=str,
+        default="Isaac-Velocity-Rough-G1-Play-v0",
+        help="Name of the Isaac Lab task to export (default: Isaac-Velocity-Rough-G1-Play-v0)",
+    )
+    parser.add_argument(
+        "--pause-on-failure",
+        action="store_true",
+        default=False,
+        help="Pause on evaluation failure (default: False, useful for debugging)",
+    )
 
     AppLauncher.add_app_launcher_args(parser)
-    args_cli = parser.parse_args([])
+    args_cli = parser.parse_args()
     args_cli.headless = True
     args_cli.num_envs = 1
 
@@ -28,10 +42,10 @@ def make_simulation_app() -> SimulationApp:
     app_launcher = AppLauncher(args_cli)
     simulation_app = app_launcher.app
 
-    return simulation_app
+    return simulation_app, args_cli
 
 
-simulation_app = make_simulation_app()
+simulation_app, args = make_simulation_app()
 
 
 # Import tasks to register environments
@@ -47,8 +61,10 @@ from rsl_rl.runners import OnPolicyRunner
 import exporter
 
 
-def main(task_name: str = None):
-    # test_dir = pathlib.Path(tempfile.gettempdir()) / "exporter_tests"
+def export_isaaclab(
+    task_name: str = "Isaac-Velocity-Rough-G1-Play-v0", pause_on_failure: bool = False
+):
+    """Test Isaac Lab ONNX export and evaluation pipeline."""
     test_dir = pathlib.Path(__file__).parent / "exporter_tests"
 
     task_device = "cpu"
@@ -96,12 +112,13 @@ def main(task_name: str = None):
     # Evaluate.
     evaluate_steps = 200
     with torch.inference_mode():
-        exporter.evaluate(
+        export_ok, _ = exporter.evaluate(
             env=exportable_env,
             context_manager=exportable_env.context_manager(),
             session_wrapper=session_wrapper,
             num_steps=evaluate_steps,
             verbose=True,
+            pause_on_failure=pause_on_failure,
         )
 
     # Close simulation app.
@@ -110,10 +127,17 @@ def main(task_name: str = None):
         SimulationContext.clear_instance()
         simulation_app.close()
 
-    print("Done.")
+    assert export_ok, "ONNX export validation failed"
 
 
 if __name__ == "__main__":
-    # main(task_name="Isaac-Velocity-Flat-Anymal-C-Play-v0")
-    # main(task_name="Isaac-Velocity-Rough-Anymal-C-Play-v0")
-    main(task_name="Isaac-Velocity-Rough-G1-Play-v0")
+    import sys
+
+    try:
+        export_isaaclab(task_name=args.task, pause_on_failure=args.pause_on_failure)
+    except Exception as e:
+        print(f"❌ Test ERROR: {e}")
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)

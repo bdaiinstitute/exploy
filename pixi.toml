@@ -94,6 +94,10 @@ python = "3.11.*"
 typing-extensions = "4.12.2.*"
 pillow = "11.3.*"
 packaging = "23.0.*"
+# OpenGL and X11 support for headless rendering
+mesalib = "*"
+xorg-libxt = "*"
+libglu = "*"
 
 [feature.isaaclab.pypi-options]
 extra-index-urls = ["https://pypi.nvidia.com"]
@@ -107,9 +111,11 @@ isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
 test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
 test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
 verify = { depends-on = ["test-import", "test-torch"] }
-export-isaaclab = "python examples/exporter_scripts/export_isaaclab.py"
-test-export-isaaclab = "python exporter/exporter_frameworks/isaaclab/tests/export_isaaclab.py"
-test = { depends-on = ["test-export-isaaclab"] }
+export-isaaclab-g1 = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0 --pause-on-failure"
+export-isaaclab-anymal = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-Anymal-C-Play-v0 --pause-on-failure"
+export-isaaclab = { depends-on = ["export-isaaclab-g1"] }
+export-isaaclab-ci = "python examples/exporter_scripts/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
+
 
 # FEATURE: Documentation - Sphinx documentation building
 [feature.docs.dependencies]

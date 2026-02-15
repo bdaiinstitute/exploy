@@ -1,7 +1,6 @@
 # Pixi & Build
 .pixi/
 build/
-pixi.lock
 
 # python
 __pycache__/
