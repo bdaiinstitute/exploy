@@ -2,32 +2,30 @@
 
 EXport and dePLOY Reinforcement Learning policies.
 
+The core idea lies in a "self-contained" export approach: rather than exporting only the neural network policy, this tool captures the entire environment logic—including observation generation and action processing—into a single ONNX file. By tracing Torch operations from the simulation environment, the exporter embeds the computational layers required to transform raw robot state interfaces into policy inputs and policy outputs into executable commands.
+By encapsulating the environment's "intelligence" within the model file itself, this library minimizes operational effort and maximizes confidence that a policy will behave identically in simulation and on physical hardware
+
 ## Features
 
 - **Environment Exporting**: Export RL environments and policies from
-  simulation frameworks
-- **ONNX Runtime Integration**: Deploy trained policies using ONNX Runtime
-  for efficient inference
+  simulation frameworks in a self-contained ONNX file.
+- **C++ Controller with ONNX Runtime Integration**: Deploy trained policies using ONNX Runtime
+  for real-time policy execution
 - **Multi-Framework Support**: Built-in support for IsaacLab with extensible
   framework integration
-- **C++ Controller**: High-performance C++ controller for real-time policy
-  execution
 
 ## Project Structure
 
 - `control/`: C++ controller library with ONNX Runtime integration
 - `exporter/`: Python exporter package for policy and environment export
-- `examples/`: Usage examples for IsaacLab and ROS2 Control
+- `examples/`: Usage examples for supported frameworks
 - `docs/`: Documentation source files
-- `cmake/`: CMake modules for building the project
 
 ## Getting Started
 
 ### Prerequisites
 
 - [Pixi](https://pixi.sh) installed on your system
-- Linux x86_64 (tested on Ubuntu 22.04 with glibc 2.35)
-- Git
 
 ### Installation
 
@@ -44,15 +42,7 @@ EXport and dePLOY Reinforcement Learning policies.
    pixi install
    ```
 
-3. **Setup dependencies** (includes IsaacLab if using that environment):
-
-   ```bash
-   pixi run setup
-   ```
-
 ### Building the Project
-
-The project uses CMake and Ninja, managed by Pixi.
 
 1. **Configure and Build C++ Library**:
 
@@ -75,19 +65,50 @@ The project uses CMake and Ninja, managed by Pixi.
 
 #### Exporting a Policy from IsaacLab
 
-```python
-from exporter.exporter import Exporter
-from exporter_frameworks.isaaclab import IsaacLabExportableEnvironment
+Run the example export
 
-# Create an exportable environment
-env = IsaacLabExportableEnvironment(
-    task_name="Isaac-Velocity-Flat-Anymal-D-v0",
-    num_envs=1
-)
+```bash
+pixi run export-isaaclab
+```
+
+
+```python
+from exploy import exporter
+from exploy.exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
+
+# Create an exportable environment from a ManagerBasedRLEnv
+exportable_env = IsaacLabExportableEnvironment(env)
 
 # Export the policy
-exporter = Exporter(env, policy_module)
-exporter.export("my_policy.onnx")
+exporter.export_environment_as_onnx(
+    env=exportable_env,
+    actor=actor,
+    normalizer=normalizer,
+    path=onnx_export_dir,
+    filename=onnx_export_file,
+    verbose=False,
+)
+
+# Create a session wrapper to run inference
+session_wrapper = exporter.SessionWrapper(
+    onnx_folder=onnx_export_dir,
+    onnx_file_name=onnx_export_file,
+    policy=policy,
+    optimize=True,
+)
+
+# Evaluate.
+with torch.inference_mode():
+    export_ok, _ = exporter.evaluate(
+        env=exportable_env,
+        context_manager=exportable_env.context_manager(),
+        session_wrapper=session_wrapper,
+        num_steps=200,
+        verbose=True,
+        pause_on_failure=True,
+    )
+
+assert export_ok
 ```
 
 #### Using the C++ Controller
@@ -159,12 +180,6 @@ int main() {
 }
 ```
 
-#### Running IsaacLab Examples
-
-```bash
-pixi run -e isaaclab python examples/exporter_scripts/export_isaaclab.py
-```
-
 ## Versioning
 
 This project uses semantic versioning (MAJOR.MINOR.PATCH). The current version is specified in `pixi.toml`.
@@ -186,10 +201,8 @@ All dependencies are managed through Pixi and specified in `pixi.toml` with vers
 
 - **Python**: 3.11.x
 - **C++ Build Tools**: CMake (3.24), Ninja, GCC/G++
-- **C++ Libraries**: ONNX Runtime (>=1.15), Eigen (>=3.4), fmt (>=9.1),
-  nlohmann_json (>=3.11)
-- **Python Libraries**: PyTorch (via IsaacLab), onnxscript,
-  pybind11 (>=2.10)
+- **C++ Libraries**: ONNX Runtime (>=1.15), Eigen (>=3.4), fmt (>=9.1), nlohmann_json (>=3.11)
+- **Python Libraries**: PyTorch, onnxscript
 - **Testing**: GoogleTest, pytest
 
 See `pixi.toml` for complete dependency specifications with version ranges.
@@ -215,8 +228,8 @@ Specified in `pixi.toml`:
 **Python tasks** (use `-e core` environment):
 
 - `pixi run -e core test`: Run Python tests with pytest
-- `pixi run -e core lint`: Check Python code with ruff
-- `pixi run -e core format`: Format Python code with ruff
+- `pixi run -e core lint-python`: Check Python code with ruff
+- `pixi run -e core format-python`: Format Python code with ruff
 
 **C++ tasks** (use `-e controller` environment):
 
