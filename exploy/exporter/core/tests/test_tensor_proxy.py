@@ -2,7 +2,8 @@
 
 import pytest
 import torch
-from exporter.tensor_proxy import TensorProxy
+
+from exploy.exporter.core.tensor_proxy import TensorProxy
 
 
 class TestTensorProxyInit:

@@ -7,7 +7,8 @@ from isaaclab.managers import CommandManager
 from isaaclab.sensors import RayCaster, SensorBase
 from isaaclab.sensors.ray_caster.patterns.patterns_cfg import GridPatternCfg
 
-from exporter import Connection, ContextManager, Group, Input
+from exploy.exporter.core.components import Connection
+from exploy.exporter.core.context_manager import ContextManager, Group, Input
 
 
 def add_commands(source: CommandManager, context_manager: ContextManager):

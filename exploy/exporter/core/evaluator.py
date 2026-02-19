@@ -7,10 +7,10 @@ import time
 import numpy as np
 import torch
 
-from exporter import ExportableEnvironment
-from exporter.context_manager import ContextManager
-from exporter.session_wrapper import SessionWrapper
-from exporter.utils.math import compare_tensors
+from exploy.exporter.core.context_manager import ContextManager
+from exploy.exporter.core.exportable_environment import ExportableEnvironment
+from exploy.exporter.core.session_wrapper import SessionWrapper
+from exploy.exporter.core.utils.math import compare_tensors
 
 
 def _print_progress_bar(

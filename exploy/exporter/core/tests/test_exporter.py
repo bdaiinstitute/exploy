@@ -7,10 +7,7 @@ from unittest.mock import Mock
 import pytest
 import torch
 
-from exporter.exporter import (
-    ExportMode,
-    OnnxEnvironmentExporter,
-)
+from exploy.exporter.core.exporter import ExportMode, OnnxEnvironmentExporter
 
 
 class TestOnnxEnvironmentExporter:

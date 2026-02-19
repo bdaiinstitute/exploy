@@ -6,7 +6,7 @@ import isaaclab.utils.math as math_utils
 import torch
 from isaaclab.assets import Articulation, ArticulationData
 
-from exporter.tensor_proxy import TensorProxy
+from exploy.exporter.core.tensor_proxy import TensorProxy
 
 
 class ArticulationDataSource:

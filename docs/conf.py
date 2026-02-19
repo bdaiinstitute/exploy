@@ -10,8 +10,8 @@ import sys
 from unittest.mock import MagicMock
 
 # Add the parent directory of exporter packages to the path
-# This allows "import exporter" and "import exporter_frameworks" to work
-sys.path.insert(0, os.path.abspath("../exporter"))
+# This allows "import exploy.exporter.core" and "import exploy.exporter.frameworks" to work
+sys.path.insert(0, os.path.abspath("../exploy"))
 
 
 # Mock isaaclab and isaacsim to avoid import errors

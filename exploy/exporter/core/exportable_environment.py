@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import torch
 
-from exporter.context_manager import ContextManager
+from exploy.exporter.core.context_manager import ContextManager
 
 
 class ExportableEnvironment(abc.ABC):

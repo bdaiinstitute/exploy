@@ -4,7 +4,7 @@ import torch
 from isaaclab.assets import Articulation
 from isaaclab.sensors import RayCaster, RayCasterData
 
-from exporter.tensor_proxy import TensorProxy
+from exploy.exporter.core.tensor_proxy import TensorProxy
 
 
 class RayCasterDataSource:

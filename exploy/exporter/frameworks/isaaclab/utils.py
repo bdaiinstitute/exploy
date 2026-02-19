@@ -1,10 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
-import torch
 from isaaclab.assets import Articulation
 from isaaclab.managers import ObservationManager
-
-from exporter.tensor_proxy import TensorProxy
 
 
 def get_articulation_actuator_gains(articulation: Articulation) -> dict:

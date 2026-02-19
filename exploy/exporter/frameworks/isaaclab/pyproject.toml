@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 [project]
-name = "exporter_frameworks_isaaclab"
+name = "exploy-frameworks-isaaclab"
 version = "0.1.0"
 description = "IsaacLab-specific ONNX environment exporter implementation"
 authors = [{ name = "Robotics and AI Institute LLC dba RAI Institute" }]
@@ -15,6 +15,6 @@ dependencies = [
 isaaclab = ["isaaclab"]
 
 [tool.setuptools.packages.find]
-where = ["../../"]
-include = ["exporter_frameworks.isaaclab*"]
+where = ["../../../../"]
+include = ["exploy.exporter.frameworks.isaaclab*", "exploy.exporter.core*"]
 namespaces = false

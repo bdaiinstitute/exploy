@@ -5,7 +5,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from exporter.components import Connection, Group, Input, Memory, Output
+from exploy.exporter.core.components import Connection, Group, Input, Memory, Output
 
 
 class ContextManager:

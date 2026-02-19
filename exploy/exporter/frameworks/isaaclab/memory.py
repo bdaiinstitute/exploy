@@ -4,7 +4,7 @@ import torch
 from isaaclab.envs import ManagerBasedRLEnv
 from isaaclab.managers.action_manager import ActionTerm
 
-from exporter import ContextManager, Memory
+from exploy.exporter.core.context_manager import ContextManager, Memory
 
 
 def add_memory(

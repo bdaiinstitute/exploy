@@ -8,7 +8,8 @@ import tempfile
 import numpy as np
 import pytest
 import torch
-from exporter.session_wrapper import SessionWrapper
+
+from exploy.exporter.core.session_wrapper import SessionWrapper
 
 
 class TestSessionWrapper:

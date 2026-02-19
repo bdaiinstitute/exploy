@@ -9,9 +9,9 @@ from enum import Enum
 import onnx
 import torch
 
-from .exportable_environment import ExportableEnvironment
-from .utils.onnx import construct_decimation_wrapper
-from .utils.paths import prepare_onnx_paths
+from exploy.exporter.core.exportable_environment import ExportableEnvironment
+from exploy.exporter.core.utils.onnx import construct_decimation_wrapper
+from exploy.exporter.core.utils.paths import prepare_onnx_paths
 
 
 def export_environment_as_onnx(

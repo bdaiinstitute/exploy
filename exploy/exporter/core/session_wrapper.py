@@ -8,7 +8,7 @@ import onnxruntime as ort
 import torch
 from onnx import helper
 
-from exporter.utils.paths import prepare_onnx_paths
+from exploy.exporter.core.utils.paths import prepare_onnx_paths
 
 
 class SessionWrapper:

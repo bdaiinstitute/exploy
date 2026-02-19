@@ -3,9 +3,9 @@
 """Tests for core components."""
 
 import numpy as np
-import pytest
 import torch
-from exporter.components import Group, Input, Memory, Output
+
+from exploy.exporter.core.components import Group, Input, Memory, Output
 
 
 class TestInput:

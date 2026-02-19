@@ -31,7 +31,7 @@ ruff = "*"
 pre-commit = "*"
 
 [feature.python.pypi-dependencies]
-exporter-core = { path = "./exporter/exporter", editable = true }
+exploy-exporter-core = { path = "./exploy/exporter/core", editable = true }
 build = "*"
 
 [feature.python.tasks]
@@ -81,11 +81,11 @@ setup = { depends-on = ["configure"] }
 pytest = "*"
 
 [feature.core.pypi-dependencies]
-exporter-core = { path = "./exporter/exporter", editable = true }
+exploy-exporter-core = { path = "./exploy/exporter/core", editable = true }
 pytest-gitignore = "*"
 
 [feature.core.tasks]
-test-python = "pytest -s ."
+test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s"
 test = { depends-on = ["test-python"] }
 
 [feature.isaaclab.dependencies]
@@ -103,7 +103,7 @@ libglu = "*"
 extra-index-urls = ["https://pypi.nvidia.com"]
 
 [feature.isaaclab.pypi-dependencies]
-exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
+exploy-frameworks-isaaclab = { path = "./exploy/exporter/frameworks/isaaclab", editable = true }
 isaaclab = { version = ">=2,<3", extras = ["all"] }
 isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
 
@@ -128,8 +128,8 @@ breathe = "*"
 myst-parser = "*"
 
 [feature.docs.pypi-dependencies]
-exporter-core = { path = "./exporter/exporter", editable = true }
-exporter-frameworks-isaaclab = { path = "./exporter/exporter_frameworks/isaaclab", editable = true }
+exploy-exporter-core = { path = "./exploy/exporter/core", editable = true }
+exploy-frameworks-isaaclab = { path = "./exploy/exporter/frameworks/isaaclab", editable = true }
 
 [feature.docs.tasks]
 doxygen = "mkdir -p docs/_build/doxygen && doxygen Doxyfile"
@@ -153,7 +153,7 @@ docs = ["docs"]                 # Documentation building
 help = '''echo "Available environments:
   pixi run -e python <task>     - Python development only
   pixi run -e cpp <task>        - C++ development only
-  pixi run -e exporter <task>   - Python + Isaac Lab (model export)
+  pixi run -e exploy <task>     - Python + Isaac Lab (model export)
   pixi run -e controller <task> - Python + C++ (controller dev)
   pixi run -e docs <task>       - Documentation building
 
@@ -169,6 +169,6 @@ Common workflows:
   pixi run -e controller setup  - Setup controller development
   pixi run -e controller build  - Build C++ code
   pixi run -e controller test   - Test both Python and C++
-  pixi run -e exporter setup    - Setup exporter with Isaac Lab"'''
+  pixi run -e exploy setup      - Setup exporter with Isaac Lab"'''
 
 clean = "rm -rf build .pixi pixi.lock"

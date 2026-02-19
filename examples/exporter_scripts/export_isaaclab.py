@@ -52,13 +52,15 @@ simulation_app, args = make_simulation_app()
 import isaaclab_tasks.manager_based.locomotion.velocity.config.anymal_c  # noqa: F401
 import isaaclab_tasks.manager_based.locomotion.velocity.config.g1  # noqa: F401
 import torch
-from exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
 from isaaclab.sim import SimulationContext
 from isaaclab_rl.rsl_rl import RslRlVecEnvWrapper
 from isaaclab_tasks.utils import parse_env_cfg
 from rsl_rl.runners import OnPolicyRunner
 
-import exporter
+from exploy.exporter.core.evaluator import evaluate
+from exploy.exporter.core.exporter import export_environment_as_onnx
+from exploy.exporter.core.session_wrapper import SessionWrapper
+from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
 
 
 def export_isaaclab(
@@ -90,7 +92,7 @@ def export_isaaclab(
 
     exportable_env = IsaacLabExportableEnvironment(env.unwrapped, env_id=env_id)
 
-    exporter.export_environment_as_onnx(
+    export_environment_as_onnx(
         env=exportable_env,
         actor=policy,
         normalizer=normalizer,
@@ -102,7 +104,7 @@ def export_isaaclab(
     exportable_env.cleanup()
 
     # Make a session wrapper.
-    session_wrapper = exporter.SessionWrapper(
+    session_wrapper = SessionWrapper(
         onnx_folder=onnx_export_dir,
         onnx_file_name=onnx_export_file,
         policy=policy,
@@ -112,7 +114,7 @@ def export_isaaclab(
     # Evaluate.
     evaluate_steps = 200
     with torch.inference_mode():
-        export_ok, _ = exporter.evaluate(
+        export_ok, _ = evaluate(
             env=exportable_env,
             context_manager=exportable_env.context_manager(),
             session_wrapper=session_wrapper,

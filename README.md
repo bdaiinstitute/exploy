@@ -80,8 +80,8 @@ pixi run export-isaaclab
 ```
 
 ```python
-from exploy import exporter
-from exploy.exporter_frameworks.isaaclab.env import IsaacLabExportableEnvironment
+import exploy.exporter.core as exporter
+from exploy.exporter.frameworks.isaaclab.env import IsaacLabExportableEnvironment
 
 # Create an exportable environment from a ManagerBasedRLEnv
 exportable_env = IsaacLabExportableEnvironment(env)

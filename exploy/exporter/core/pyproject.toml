@@ -1,7 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 [project]
-name = "exporter-core"
+name = "exploy-exporter-core"
 version = "0.1.0"
 description = "Framework-agnostic ONNX environment exporter core"
 authors = [{ name = "Robotics and AI Institute LLC dba RAI Institute" }]
@@ -9,7 +9,7 @@ requires-python = ">=3.11"
 dependencies = ["torch", "onnx", "onnxruntime", "numpy"]
 
 [tool.setuptools.packages.find]
-where = [".."]
-include = ["exporter*"]
-exclude = ["exporter.tests*"]
+where = ["../.."]
+include = ["exploy.exporter*"]
+exclude = ["exploy.exporter.tests*"]
 namespaces = false
