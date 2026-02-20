@@ -1,17 +1,10 @@
-<!-- Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved. -->
-
-<!-- markdownlint-disable MD003 -->
-
 ---
-
 name: Bug Report
 about: Report a bug or issue with the project
 title: '[BUG] '
 labels: bug
 assignees: ''
 ---
-
-<!-- markdownlint-enable MD003 -->
 
 ## Bug Description
 

@@ -253,14 +253,16 @@ expect an RAI maintainer to respond within a few weeks.
 
 ## Contributing
 
-We welcome bug fixes and improvements! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+We welcome your contributions!
 
-- Reporting issues
-- Submitting pull requests
-- Code style requirements
-- Testing requirements
+To contribute:
 
-All contributions require review and approval from project owners before merging.
+- Report bugs and suggest improvements by opening an issue.
+- Submit pull requests for code changes or documentation updates.
+- Follow the project's code style and testing guidelines (see comments and existing code for reference).
+- Ensure your changes pass all tests and pre-commit checks.
+
+All contributions are reviewed by project maintainers before merging. Thank you for helping improve this project!
 
 ## License
 

@@ -40,10 +40,9 @@ repos:
       args: [ --fix ]
       exclude: >
         (?x)^(
-          .*gazelle_python.yaml|
-          \.github/pull_request_template.md|
-          tools/deps/unused_packages_ignorelist.yaml|
-          .*\.enc\.ya?ml|
+          \.github/PULL_REQUEST_TEMPLATE.md|
+          \.github/ISSUE_TEMPLATE/bug_report.md|
+          \.github/ISSUE_TEMPLATE/feature_request.md|
         )$
 
 

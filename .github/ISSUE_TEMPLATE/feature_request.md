@@ -1,17 +1,10 @@
-<!-- Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved. -->
-
-<!-- markdownlint-disable MD003 -->
-
 ---
-
 name: Feature Request
 about: Suggest a new feature or enhancement
 title: '[FEATURE] '
 labels: enhancement
 assignees: ''
 ---
-
-<!-- markdownlint-enable MD003 -->
 
 ## Feature Description
 
