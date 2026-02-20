@@ -3,6 +3,7 @@
 
 #include <array>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -33,24 +34,24 @@ struct HeightScanConfig {
 };
 
 /**
- * @brief Configuration for range image (LiDAR) sensors.
+ * @brief Configuration for spherical image sensors.
  *
- * Specifies resolution, field of view, and unobserved value sentinel for range images.
+ * Specifies resolution, field of view, and unobserved value sentinel for spherical images.
  */
-struct RangeImageConfig {
+struct SphericalImageConfig {
   int v_res{};                ///< Number of pixels in vertical direction.
   int h_res{};                ///< Number of pixels in horizontal direction.
   double v_fov_min_deg{};     ///< Minimum vertical field of view angle in degrees.
   double v_fov_max_deg{};     ///< Maximum vertical field of view angle in degrees.
-  double unobserved_value{};  ///< Sentinel value for pixels with no LiDAR return.
+  double unobserved_value{};  ///< Sentinel value for pixels with no sensor return.
 };
 
 /**
- * @brief Configuration for depth image (camera) sensors.
+ * @brief Configuration for pinhole camera sensors.
  *
  * Specifies image dimensions and camera intrinsic parameters.
  */
-struct DepthImageConfig {
+struct PinholeImageConfig {
   int width{};   ///< Image width in pixels.
   int height{};  ///< Image height in pixels.
   double fx{};   ///< Focal length in x direction (pixels).
@@ -475,7 +476,7 @@ class RobotStateInterface {
    *
    * @param config The configuration of the range image.
    */
-  virtual bool initRangeImage(const RangeImageConfig& /*config*/) {
+  virtual bool initRangeImage(const SphericalImageConfig& /*config*/) {
     GENERIC_LOG_STREAM(ERROR, "initRangeImage() not implemented");
     return false;
   }
@@ -497,7 +498,7 @@ class RobotStateInterface {
    *
    * @param config The configuration of the depth image.
    */
-  virtual bool initDepthImage(const DepthImageConfig& /*config*/) {
+  virtual bool initDepthImage(const PinholeImageConfig& /*config*/) {
     GENERIC_LOG_STREAM(ERROR, "initDepthImage() not implemented");
     return false;
   }
@@ -510,6 +511,28 @@ class RobotStateInterface {
    */
   virtual std::optional<std::span<const float>> depthImage() {
     GENERIC_LOG_STREAM(ERROR, "depthImage() not implemented");
+    return std::nullopt;
+  }
+  /**
+   * @brief Initialize the traversability image data source.
+   *
+   * Called once during initialization (usually non real-time).
+   *
+   * @param config The configuration of the traversability image.
+   */
+  virtual bool initTraversabilityImage(const PinholeImageConfig& /*config*/) {
+    GENERIC_LOG_STREAM(ERROR, "initTraversabilityImage() not implemented");
+    return false;
+  }
+  /**
+   * @brief Get the traversability image.
+   *
+   * This function returns the image, flattened in row-major storage order.
+   *
+   * @return The flattened traversability image.
+   */
+  virtual std::optional<std::span<const float>> traversabilityImage() {
+    GENERIC_LOG_STREAM(ERROR, "traversabilityImage() not implemented");
     return std::nullopt;
   }
 };

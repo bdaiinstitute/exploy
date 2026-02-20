@@ -30,13 +30,13 @@ INPUT_NAMES = [
     "sensor.imu.torso.w_Q_b",
     "sensor.imu.pelvis.ang_vel_b_rt_w_in_b",
     # sensors
-    "sensor.height_scanner.one.height",
-    "sensor.height_scanner.two.height",
+    "sensor.ray_caster.one.height",
+    "sensor.ray_caster.two.height",
     "sensor.range_image.one",
-    "sensor.height_scanner.trail.height",
-    "sensor.height_scanner.trail.r",
-    "sensor.height_scanner.trail.g",
-    "sensor.height_scanner.trail.b",
+    "sensor.ray_caster.trail.height",
+    "sensor.ray_caster.trail.r",
+    "sensor.ray_caster.trail.g",
+    "sensor.ray_caster.trail.b",
     "sensor.depth_image.one",
     # body
     "obj.box1.bodies.box.pos_b_rt_w_in_w",
@@ -140,7 +140,7 @@ def get_output_metadata() -> dict:
 def get_sensor_metadata() -> dict:
     """Returns metadata for sensor inputs."""
     return {
-        "sensor.height_scanner.one": {
+        "sensor.ray_caster.one": {
             "pattern_type": "grid_pattern",
             "resolution": 0.1,
             "size_x": 1.6,
@@ -148,7 +148,7 @@ def get_sensor_metadata() -> dict:
             "offset_x": 1.0,
             "offset_y": 0.0,
         },
-        "sensor.height_scanner.two": {
+        "sensor.ray_caster.two": {
             "pattern_type": "grid_pattern",
             "resolution": 0.1,
             "size_x": 1.6,
@@ -171,7 +171,7 @@ def get_sensor_metadata() -> dict:
             "cx": 0.5,
             "cy": 0.5,
         },
-        "sensor.height_scanner.trail": {
+        "sensor.ray_caster.trail": {
             "pattern_type": "grid_pattern",
             "resolution": 0.1,
             "size_x": 1.6,

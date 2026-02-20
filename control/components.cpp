@@ -363,7 +363,7 @@ RangeImageInput::RangeImageInput(const std::string& key,
     : key_(key), metadata_(metadata) {}
 
 bool RangeImageInput::init(RobotStateInterface& state, CommandInterface&) {
-  RangeImageConfig config;
+  SphericalImageConfig config;
   config.v_res = static_cast<int>(metadata_.v_res);
   config.h_res = static_cast<int>(metadata_.h_res);
   config.v_fov_min_deg = metadata_.v_fov_min_deg;
@@ -387,7 +387,7 @@ DepthImageInput::DepthImageInput(const std::string& key,
     : key_(key), metadata_(metadata) {}
 
 bool DepthImageInput::init(RobotStateInterface& state, CommandInterface&) {
-  DepthImageConfig config;
+  PinholeImageConfig config;
   config.width = metadata_.width;
   config.height = metadata_.height;
   config.fx = metadata_.fx;

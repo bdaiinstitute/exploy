@@ -59,10 +59,12 @@ class MockRobotStateInterface : public RobotStateInterface {
               (const std::string& sensor_name, const std::unordered_set<std::string>& layer_names,
                const Position& base_pos_w, const Quaternion& base_quat_w),
               (override));
-  MOCK_METHOD(bool, initRangeImage, (const RangeImageConfig& config), (override));
+  MOCK_METHOD(bool, initRangeImage, (const SphericalImageConfig& config), (override));
   MOCK_METHOD(std::optional<std::span<const float>>, rangeImage, (), (override));
-  MOCK_METHOD(bool, initDepthImage, (const DepthImageConfig& config), (override));
+  MOCK_METHOD(bool, initDepthImage, (const PinholeImageConfig& config), (override));
   MOCK_METHOD(std::optional<std::span<const float>>, depthImage, (), (override));
+  MOCK_METHOD(bool, initTraversabilityImage, (const PinholeImageConfig& config), (override));
+  MOCK_METHOD(std::optional<std::span<const float>>, traversabilityImage, (), (override));
 };
 
 }  // namespace exploy::control

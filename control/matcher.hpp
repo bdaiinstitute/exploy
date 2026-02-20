@@ -233,7 +233,7 @@ class HeightScanMatcher : public GroupMatcher {
 
  private:
   const std::regex pattern_ =
-      std::regex(fmt::format("(sensor\\.height_scanner\\.({}))\\.(height|r|g|b)", alphanumeric));
+      std::regex(fmt::format("(sensor\\.ray_caster\\.({}))\\.(height|r|g|b)", alphanumeric));
 };
 
 /**
