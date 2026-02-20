@@ -57,35 +57,54 @@ class TestTensorProxyInit:
             TensorProxy(tensor, split_dim=-1)
 
     def test_cached_tensor_optimization(self):
-        """Test that cached tensors are returned when possible."""
+        """Test that cached tensors or stacked tensors are returned when possible."""
         tensor = torch.rand((2, 3, 4))
         proxy = TensorProxy(tensor, split_dim=1)
 
-        # Direct access to cached tensor
-        cached_tensor_0 = proxy.tensors[0]  # Shape: (2, 4) - split dim removed
-
         # Integer indexing with full slices on other dimensions should return cached tensor
         result_int = proxy[:, 0, :]
-        assert result_int is cached_tensor_0, "Integer indexing should return cached tensor"
+        assert result_int is proxy.tensors[0], "Integer indexing should return cached tensor"
 
-        # Test that single-element slice returns cached tensor when optimization applies
-        result_slice_direct = proxy[:, 0:1, :]  # This should use the optimization path
-        assert result_slice_direct is cached_tensor_0, (
-            "Single-element slice with full slices should return cached tensor"
+        # Test that single-element slice returns stacked tensor
+        result_slice_direct = proxy[:, 0:1, :]
+        expected_slice_direct = torch.stack([proxy.tensors[0]], dim=1)
+        assert torch.equal(result_slice_direct, expected_slice_direct), (
+            "Single-element slice with full slices should return stacked tensor"
         )
 
-        # Test that single-element list returns cached tensor when optimization applies
-        result_list_direct = proxy[:, [0], :]  # This should use the optimization path
-        assert result_list_direct is cached_tensor_0, (
-            "Single-element list with full slices should return cached tensor"
+        # Test that single-element list returns stacked tensor
+        result_list_direct = proxy[:, [0], :]
+        expected_list_direct = torch.stack([proxy.tensors[0]], dim=1)
+        assert torch.equal(result_list_direct, expected_list_direct), (
+            "Single-element list with full slices should return stacked tensor"
         )
 
-        # Test that tensor indexing returns cached tensor when optimization applies
-        result_tensor_direct = proxy[
-            :, torch.tensor([0]), :
-        ]  # This should use the optimization path
-        assert result_tensor_direct is cached_tensor_0, (
-            "Single-element tensor index with full slices should return cached tensor"
+        # Test that tensor indexing returns stacked tensor
+        result_tensor_direct = proxy[:, torch.tensor([0]), :]
+        expected_tensor_direct = torch.stack([proxy.tensors[0]], dim=1)
+        assert torch.equal(result_tensor_direct, expected_tensor_direct), (
+            "Single-element tensor index with full slices should return stacked tensor"
+        )
+
+        # Test that multi-element slice returns stacked tensor
+        result_multi_slice = proxy[:, 1:3, :]
+        expected_multi_slice = torch.stack([proxy.tensors[1], proxy.tensors[2]], dim=1)
+        assert torch.equal(result_multi_slice, expected_multi_slice), (
+            "Multi-element slice with full slices should return stacked tensor"
+        )
+
+        # Test that multi-element list returns stacked tensor
+        result_multi_list = proxy[:, [0, 2], :]
+        expected_multi_list = torch.stack([proxy.tensors[0], proxy.tensors[2]], dim=1)
+        assert torch.equal(result_multi_list, expected_multi_list), (
+            "Multi-element list with full slices should return stacked tensor"
+        )
+
+        # Test that multi-element tensor index returns stacked tensor
+        result_multi_tensor = proxy[:, torch.tensor([1, 2]), :]
+        expected_multi_tensor = torch.stack([proxy.tensors[1], proxy.tensors[2]], dim=1)
+        assert torch.equal(result_multi_tensor, expected_multi_tensor), (
+            "Multi-element tensor index with full slices should return stacked tensor"
         )
 
 
@@ -169,6 +188,16 @@ class TestTensorProxyIndexing:
         # Select specific bodies
         result = proxy[:, [0, 2], :]
         expected = tensor[:, [0, 2], :]
+        assert torch.equal(result, expected)
+
+    def test_list_indexing_with_single_element(self):
+        """Test list indexing on the split dimension."""
+        tensor = torch.rand((1, 3, 4))
+        proxy = TensorProxy(tensor, split_dim=1)
+
+        # Select first body using list indexing
+        result = proxy[:, [0]]
+        expected = tensor[:, [0]]
         assert torch.equal(result, expected)
 
     def test_integer_and_slice_indexing_patterns(self):

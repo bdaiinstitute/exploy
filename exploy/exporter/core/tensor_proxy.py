@@ -58,6 +58,7 @@ class TensorProxy:
                 effective_split_dim -= 1
         split_slice = idx[self._split_dim]
         full_index = idx[: self._split_dim] + idx[self._split_dim + 1 :]
+        use_cache = all(isinstance(i, slice) and i == slice(None) for i in full_index)
 
         def _gather_and_cat(indices, full_index):
             """Helper to stack/concatenate sliced tensors along the split dimension, matching PyTorch indexing semantics."""
@@ -69,31 +70,32 @@ class TensorProxy:
                 stacked = stacked.movedim(0, effective_split_dim)
             return stacked
 
-        def _is_cached(indices):
-            """Return cached tensor if single element with full slices, else None."""
-            if len(indices) == 1 and all(
-                isinstance(i, slice) and i == slice(None) for i in full_index
-            ):
-                return self._tensors[indices[0]]
-            return None
+        def _get_cached_tensor(indices):
+            """Stack the tensors at the given indices along the split dimension when all non-split indices are full slices."""
+            selected = [self._tensors[i] for i in indices]
+            stacked = torch.stack(selected, dim=0)
+            if effective_split_dim != 0:
+                stacked = stacked.movedim(0, effective_split_dim)
+            return stacked
 
         # Handle different split indexing cases
         if isinstance(split_slice, int):
-            if (cached := _is_cached([split_slice])) is not None:
-                return cached
+            indices = [split_slice]
+            if use_cache:
+                return self._tensors[indices[0]]
             return self._tensors[split_slice][full_index]
 
         elif isinstance(split_slice, slice):
-            indices = range(*split_slice.indices(len(self._tensors)))
-            if (cached := _is_cached(list(indices))) is not None:
-                return cached
+            indices = list(range(*split_slice.indices(len(self._tensors))))
+            if use_cache:
+                return _get_cached_tensor(indices)
             return _gather_and_cat(indices, full_index)
 
-        elif isinstance(split_slice, list | tuple | torch.Tensor):
+        elif isinstance(split_slice, (list, tuple, torch.Tensor)):
             if isinstance(split_slice, torch.Tensor):
                 split_slice = split_slice.tolist()
-            if (cached := _is_cached(split_slice)) is not None:
-                return cached
+            if use_cache:
+                return _get_cached_tensor(split_slice)
             return _gather_and_cat(split_slice, full_index)
 
         else:
