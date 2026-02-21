@@ -19,7 +19,6 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
     def __init__(
         self,
         env: ManagerBasedRLEnv,
-        env_id: int,
     ):
         assert type(env) is ManagerBasedRLEnv, (
             "IsaacLabExportableEnvironment only supports ManagerBasedRLEnv environments."
@@ -27,7 +26,6 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
 
         super().__init__()
         self._env = env
-        self._env_id: int = env_id
 
         # The group name of the policy observations in the environment's observation manager.
         self._policy_obs_group_name = "policy"
@@ -112,10 +110,7 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
     def compute_observations(self) -> torch.Tensor:
         """Compute and return the observations of the environment."""
         obs_dict = self._env.observation_manager.compute()
-        observations = obs_dict[self._policy_obs_group_name].view(
-            1,
-            self._env.observation_manager.group_obs_dim[self._policy_obs_group_name][self._env_id],
-        )
+        observations = obs_dict[self._policy_obs_group_name].view(1, -1)
         return observations
 
     def process_actions(self, actions: torch.Tensor):
@@ -220,7 +215,7 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         """Step the environment forward by one step."""
         self._env.scene._sensors["onnx"].sub_step_ctr = 0
         obs, _, dones, timeouts, _ = self._env.step(actions)
-        is_reset: bool = torch.logical_or(dones[self._env_id], timeouts[self._env_id]).any()
+        is_reset: bool = torch.logical_or(dones, timeouts).any()
         obs = obs[self._policy_obs_group_name]
         return obs, is_reset
 

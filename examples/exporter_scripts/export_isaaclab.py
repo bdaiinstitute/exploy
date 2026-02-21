@@ -89,9 +89,8 @@ def export_isaaclab(
     # Export to ONNX.
     onnx_export_dir = test_dir
     onnx_export_file = "test_export.onnx"
-    env_id = 0
 
-    exportable_env = IsaacLabExportableEnvironment(env.unwrapped, env_id=env_id)
+    exportable_env = IsaacLabExportableEnvironment(env.unwrapped)
 
     export_environment_as_onnx(
         env=exportable_env,
