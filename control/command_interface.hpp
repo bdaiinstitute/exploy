@@ -36,7 +36,7 @@ class CommandInterface {
    */
   virtual bool initSe2Velocity(const std::string& command_name,
                                const SE2VelocityConfig& /*config*/) {
-    GENERIC_LOG_STREAM(ERROR, "initSe2Velocity() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "initSe2Velocity() not implemented for command: " << command_name);
     return false;
   }
   /**
@@ -46,7 +46,7 @@ class CommandInterface {
    * @return The commanded se2 velocity (lin x, lin y, ang z).
    */
   virtual std::optional<SE2Velocity> se2Velocity(const std::string& command_name) {
-    GENERIC_LOG_STREAM(ERROR, "se2Velocity() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "se2Velocity() not implemented for command: " << command_name);
     return std::nullopt;
   }
   /**
@@ -57,7 +57,7 @@ class CommandInterface {
    * @param command_name The name of the command.
    */
   virtual bool initSe3Pose(const std::string& command_name) {
-    GENERIC_LOG_STREAM(ERROR, "initSe3Pose() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "initSe3Pose() not implemented for command: " << command_name);
     return false;
   }
   /**
@@ -67,7 +67,7 @@ class CommandInterface {
    * @return The commanded SE3 pose.
    */
   virtual std::optional<SE3Pose> se3Pose(const std::string& command_name) const {
-    GENERIC_LOG_STREAM(ERROR, "se3Pose() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "se3Pose() not implemented for command: " << command_name);
     return std::nullopt;
   }
   /**
@@ -78,8 +78,7 @@ class CommandInterface {
    * @param command_name The name of the command.
    */
   virtual bool initBooleanSelector(const std::string& command_name) {
-    GENERIC_LOG_STREAM(ERROR,
-                       "initBooleanSelector() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "initBooleanSelector() not implemented for command: " << command_name);
     return false;
   }
   /**
@@ -89,7 +88,7 @@ class CommandInterface {
    * @return The commanded bool.
    */
   virtual std::optional<bool> booleanSelector(const std::string& command_name) const {
-    GENERIC_LOG_STREAM(ERROR, "booleanSelector() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "booleanSelector() not implemented for command: " << command_name);
     return std::nullopt;
   }
   /**
@@ -100,7 +99,7 @@ class CommandInterface {
    * @param command_name The name of the command.
    */
   virtual bool initFloatValue(const std::string& command_name) {
-    GENERIC_LOG_STREAM(ERROR, "initFloatValue() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "initFloatValue() not implemented for command: " << command_name);
     return false;
   }
   /**
@@ -110,7 +109,7 @@ class CommandInterface {
    * @return The commanded float.
    */
   virtual std::optional<float> floatValue(const std::string& command_name) const {
-    GENERIC_LOG_STREAM(ERROR, "floatValue() not implemented for command: " << command_name);
+    LOG_STREAM(ERROR, "floatValue() not implemented for command: " << command_name);
     return std::nullopt;
   }
 };

@@ -247,27 +247,27 @@ bool JointTargetOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
     const auto& joint_name = metadata_.names.at(i);
 
     if (!state.setJointPosition(joint_name, maybe_pos_buffer.value()[i])) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to set position of joint '{}'", joint_name));
+      LOG_STREAM(ERROR, fmt::format("Failed to set position of joint '{}'", joint_name));
       return false;
     }
 
     if (!state.setJointVelocity(joint_name, maybe_vel_buffer.value()[i])) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to set velocity of joint '{}'", joint_name));
+      LOG_STREAM(ERROR, fmt::format("Failed to set velocity of joint '{}'", joint_name));
       return false;
     }
 
     if (!state.setJointEffort(joint_name, maybe_eff_buffer.value()[i])) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to set effort of joint '{}'", joint_name));
+      LOG_STREAM(ERROR, fmt::format("Failed to set effort of joint '{}'", joint_name));
       return false;
     }
 
     if (!state.setJointPGain(joint_name, metadata_.stiffness.at(i))) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to set p-gain of joint '{}'", joint_name));
+      LOG_STREAM(ERROR, fmt::format("Failed to set p-gain of joint '{}'", joint_name));
       return false;
     }
 
     if (!state.setJointDGain(joint_name, metadata_.damping.at(i))) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to set d-gain of joint '{}'", joint_name));
+      LOG_STREAM(ERROR, fmt::format("Failed to set d-gain of joint '{}'", joint_name));
       return false;
     }
   }
@@ -295,7 +295,7 @@ bool SE2VelocityOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
 
   if (!state.setSe2Velocity(metadata_.target_frame, {vx, vy, wz})) {
     constexpr auto msg = "Failed to set se(2) target velocity of frame '{}'";
-    GENERIC_LOG_STREAM(ERROR, fmt::format(msg, metadata_.target_frame));
+    LOG_STREAM(ERROR, fmt::format(msg, metadata_.target_frame));
     return false;
   }
 
@@ -319,11 +319,11 @@ bool HeightScanInput::init(RobotStateInterface& state, CommandInterface&) {
       .layer_names = layer_names_,
   };
   if (!state.initBasePosW()) {
-    GENERIC_LOG_STREAM(ERROR, "Failed to initialize base position for HeightScanInput");
+    LOG_STREAM(ERROR, "Failed to initialize base position for HeightScanInput");
     return false;
   };
   if (!state.initBaseQuatW()) {
-    GENERIC_LOG_STREAM(ERROR, "Failed to initialize base orientation for HeightScanInput");
+    LOG_STREAM(ERROR, "Failed to initialize base orientation for HeightScanInput");
     return false;
   };
   return state.initHeightScan(sensor_name_, config);
@@ -332,24 +332,24 @@ bool HeightScanInput::init(RobotStateInterface& state, CommandInterface&) {
 bool HeightScanInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
   auto maybe_base_pos = state.basePosW();
   if (!maybe_base_pos.has_value()) {
-    GENERIC_LOG_STREAM(ERROR, "Failed to get base position for HeightScanInput");
+    LOG_STREAM(ERROR, "Failed to get base position for HeightScanInput");
     return false;
   }
   auto maybe_base_quat = state.baseQuatW();
   if (!maybe_base_quat.has_value()) {
-    GENERIC_LOG_STREAM(ERROR, "Failed to get base orientation for HeightScanInput");
+    LOG_STREAM(ERROR, "Failed to get base orientation for HeightScanInput");
     return false;
   }
   auto maybe_scan =
       state.heightScan(sensor_name_, layer_names_, maybe_base_pos.value(), maybe_base_quat.value());
   if (!maybe_scan.has_value()) {
-    GENERIC_LOG_STREAM(ERROR, "Failed to get height scan data for HeightScanInput");
+    LOG_STREAM(ERROR, "Failed to get height scan data for HeightScanInput");
     return false;
   }
   for (const auto& layer_name : layer_names_) {
     auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, layer_name));
     if (!maybe_buffer.has_value()) {
-      GENERIC_LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, layer_name));
+      LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, layer_name));
       return false;
     }
     copyToBuffer(maybe_scan.value()->layers.at(layer_name), maybe_buffer.value());

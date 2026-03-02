@@ -41,11 +41,11 @@ OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface&
 
 bool OnnxRLController::create(const std::string& onnx_model_path) {
   if (!onnx_model_.initialize(onnx_model_path)) {
-    GENERIC_LOG_STREAM(ERROR, "Error creating OnnxEvaluator from policy: " << onnx_model_path);
+    LOG_STREAM(ERROR, "Error creating OnnxEvaluator from policy: " << onnx_model_path);
     return false;
   }
   if (!context_.createContext(onnx_model_)) {
-    GENERIC_LOG_STREAM(ERROR, "Error creating context.");
+    LOG_STREAM(ERROR, "Error creating context.");
     return false;
   }
   return true;
@@ -53,19 +53,19 @@ bool OnnxRLController::create(const std::string& onnx_model_path) {
 
 bool OnnxRLController::init(bool enable_data_collection) {
   if (!onnx_model_.isInitialized()) {
-    GENERIC_LOG_STREAM(ERROR, "ONNX model is not initialized.");
+    LOG_STREAM(ERROR, "ONNX model is not initialized.");
     return false;
   }
 
   for (const auto& input : context_.getInputs()) {
     if (!input->init(state_, command_)) {
-      GENERIC_LOG_STREAM(ERROR, "Error initializing input.");
+      LOG_STREAM(ERROR, "Error initializing input.");
       return false;
     }
   }
   for (const auto& output : context_.getOutputs()) {
     if (!output->init(state_, command_)) {
-      GENERIC_LOG_STREAM(ERROR, "Error initializing output.");
+      LOG_STREAM(ERROR, "Error initializing output.");
       return false;
     }
   }
@@ -75,7 +75,7 @@ bool OnnxRLController::init(bool enable_data_collection) {
       auto maybe_buffer = onnx_model_.inputBuffer<float>(name);
       if (!maybe_buffer.has_value()) continue;
       if (!data_collection_.registerDataSource("model/input/" + name, maybe_buffer.value())) {
-        GENERIC_LOG_STREAM(ERROR, "Registering data source for model/input/" << name << " failed.");
+        LOG_STREAM(ERROR, "Registering data source for model/input/" << name << " failed.");
         return false;
       }
     }
@@ -83,13 +83,12 @@ bool OnnxRLController::init(bool enable_data_collection) {
       auto maybe_buffer = onnx_model_.outputBuffer<float>(name);
       if (!maybe_buffer.has_value()) continue;
       if (!data_collection_.registerDataSource("model/output/" + name, maybe_buffer.value())) {
-        GENERIC_LOG_STREAM(ERROR,
-                           "Registering data source for model/output/" << name << " failed.");
+        LOG_STREAM(ERROR, "Registering data source for model/output/" << name << " failed.");
         return false;
       }
     }
     if (!data_collection_.registerDataSource("model/inference/duration_s", inference_duration_s_)) {
-      GENERIC_LOG(ERROR, "Registering data source for inference duration failed.");
+      LOG(ERROR, "Registering data source for inference duration failed.");
       return false;
     }
   }
@@ -106,14 +105,14 @@ void OnnxRLController::reset() {
 bool OnnxRLController::update(uint64_t time_us) {
   for (const auto& input : context_.getInputs()) {
     if (!input->read(onnx_model_, state_, command_)) {
-      GENERIC_LOG_STREAM(ERROR, "Failed to read input");
+      LOG_STREAM(ERROR, "Failed to read input");
       return false;
     }
   }
 
   auto start_time = std::chrono::high_resolution_clock::now();
   if (!onnx_model_.evaluate()) {
-    GENERIC_LOG_STREAM(ERROR, "Policy evaluation failed.");
+    LOG_STREAM(ERROR, "Policy evaluation failed.");
     return false;
   }
   auto end_time = std::chrono::high_resolution_clock::now();
@@ -121,13 +120,13 @@ bool OnnxRLController::update(uint64_t time_us) {
 
   for (const auto& output : context_.getOutputs()) {
     if (!output->write(onnx_model_, state_, command_)) {
-      GENERIC_LOG_STREAM(ERROR, "Failed to write output");
+      LOG_STREAM(ERROR, "Failed to write output");
       return false;
     }
   }
 
   if (!data_collection_.collectData(time_us)) {
-    GENERIC_LOG(WARN, "Data collection failed.");
+    LOG(WARN, "Data collection failed.");
   }
 
   return true;

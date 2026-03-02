@@ -78,7 +78,7 @@ class RobotStateInterface {
    * Called once during initialization (usually non real-time).
    */
   virtual bool initBasePosW() {
-    GENERIC_LOG_STREAM(ERROR, "initBasePosW() not implemented");
+    LOG_STREAM(ERROR, "initBasePosW() not implemented");
     return false;
   }
   /**
@@ -87,7 +87,7 @@ class RobotStateInterface {
    * Called once during initialization (usually non real-time).
    */
   virtual bool initBaseQuatW() {
-    GENERIC_LOG_STREAM(ERROR, "initBaseQuatW() not implemented");
+    LOG_STREAM(ERROR, "initBaseQuatW() not implemented");
     return false;
   }
   /**
@@ -96,7 +96,7 @@ class RobotStateInterface {
    * @return The base position in world frame (x,y,z).
    */
   virtual std::optional<Position> basePosW() const {
-    GENERIC_LOG_STREAM(ERROR, "basePosW() not implemented");
+    LOG_STREAM(ERROR, "basePosW() not implemented");
     return std::nullopt;
   }
   /**
@@ -105,7 +105,7 @@ class RobotStateInterface {
    * @return The base orientation in world frame (w,x,y,z).
    */
   virtual std::optional<Quaternion> baseQuatW() const {
-    GENERIC_LOG_STREAM(ERROR, "baseQuatW() not implemented");
+    LOG_STREAM(ERROR, "baseQuatW() not implemented");
     return std::nullopt;
   }
   /**
@@ -114,7 +114,7 @@ class RobotStateInterface {
    * Called once during initialization (usually non real-time).
    */
   virtual bool initBaseLinVelB() {
-    GENERIC_LOG_STREAM(ERROR, "initBaseLinVelB() not implemented");
+    LOG_STREAM(ERROR, "initBaseLinVelB() not implemented");
     return false;
   }
   /**
@@ -123,7 +123,7 @@ class RobotStateInterface {
    * Called once during initialization (usually non real-time).
    */
   virtual bool initBaseAngVelB() {
-    GENERIC_LOG_STREAM(ERROR, "initBaseAngVelB() not implemented");
+    LOG_STREAM(ERROR, "initBaseAngVelB() not implemented");
     return false;
   }
   /**
@@ -132,7 +132,7 @@ class RobotStateInterface {
    * @return The linear base velocity in base frame (vx, vy, vz).
    */
   virtual std::optional<LinearVelocity> baseLinVelB() const {
-    GENERIC_LOG_STREAM(ERROR, "baseLinVelB() not implemented");
+    LOG_STREAM(ERROR, "baseLinVelB() not implemented");
     return std::nullopt;
   }
   /**
@@ -141,7 +141,7 @@ class RobotStateInterface {
    * @return The angular base velocity in base frame (ωx, ωy, ωz).
    */
   virtual std::optional<AngularVelocity> baseAngVelB() const {
-    GENERIC_LOG_STREAM(ERROR, "baseAngVelB() not implemented");
+    LOG_STREAM(ERROR, "baseAngVelB() not implemented");
     return std::nullopt;
   }
   /**
@@ -152,7 +152,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    */
   virtual bool initJointPosition(const std::string& joint_name) {
-    GENERIC_LOG_STREAM(ERROR, "initJointPosition() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "initJointPosition() not implemented for joint: " << joint_name);
     return false;
   }
   /**
@@ -163,7 +163,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    */
   virtual bool initJointVelocity(const std::string& joint_name) {
-    GENERIC_LOG_STREAM(ERROR, "initJointVelocity() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "initJointVelocity() not implemented for joint: " << joint_name);
     return false;
   }
   /**
@@ -174,7 +174,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    */
   virtual bool initJointEffort(const std::string& joint_name) {
-    GENERIC_LOG_STREAM(ERROR, "initJointEffort() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "initJointEffort() not implemented for joint: " << joint_name);
     return false;
   }
   /**
@@ -185,7 +185,7 @@ class RobotStateInterface {
    * @param joint_name The name of the joint.
    */
   virtual bool initJointOutput(const std::string& joint_name) {
-    GENERIC_LOG_STREAM(ERROR, "initJointOutput() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "initJointOutput() not implemented for joint: " << joint_name);
     return false;
   }
   /**
@@ -195,7 +195,7 @@ class RobotStateInterface {
    * @return The position of the joint.
    */
   virtual std::optional<double> jointPosition(const std::string& joint_name) const {
-    GENERIC_LOG_STREAM(ERROR, "jointPosition() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "jointPosition() not implemented for joint: " << joint_name);
     return std::nullopt;
   }
   /**
@@ -205,7 +205,7 @@ class RobotStateInterface {
    * @return The velocity of the joint.
    */
   virtual std::optional<double> jointVelocity(const std::string& joint_name) const {
-    GENERIC_LOG_STREAM(ERROR, "jointVelocity() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "jointVelocity() not implemented for joint: " << joint_name);
     return std::nullopt;
   }
   /**
@@ -215,7 +215,7 @@ class RobotStateInterface {
    * @return The effort of the joint.
    */
   virtual std::optional<double> jointEffort(const std::string& joint_name) const {
-    GENERIC_LOG_STREAM(ERROR, "jointEffort() not implemented for joint: " << joint_name);
+    LOG_STREAM(ERROR, "jointEffort() not implemented for joint: " << joint_name);
     return std::nullopt;
   }
   /**
@@ -229,8 +229,8 @@ class RobotStateInterface {
    * @param position The joint position to be set.
    */
   virtual bool setJointPosition(const std::string& joint_name, double position) {
-    GENERIC_LOG_STREAM(ERROR, "setJointPosition() not implemented for joint: "
-                                  << joint_name << ", position: " << position);
+    LOG_STREAM(ERROR, "setJointPosition() not implemented for joint: "
+                          << joint_name << ", position: " << position);
     return false;
   }
   /**
@@ -244,8 +244,8 @@ class RobotStateInterface {
    * @param velocity The joint velocity to be set.
    */
   virtual bool setJointVelocity(const std::string& joint_name, double velocity) {
-    GENERIC_LOG_STREAM(ERROR, "setJointVelocity() not implemented for joint: "
-                                  << joint_name << ", velocity: " << velocity);
+    LOG_STREAM(ERROR, "setJointVelocity() not implemented for joint: "
+                          << joint_name << ", velocity: " << velocity);
     return false;
   }
   /**
@@ -259,8 +259,8 @@ class RobotStateInterface {
    * @param effort The joint effort to be set.
    */
   virtual bool setJointEffort(const std::string& joint_name, double effort) {
-    GENERIC_LOG_STREAM(ERROR, "setJointEffort() not implemented for joint: "
-                                  << joint_name << ", effort: " << effort);
+    LOG_STREAM(ERROR, "setJointEffort() not implemented for joint: " << joint_name
+                                                                     << ", effort: " << effort);
     return false;
   }
   /**
@@ -274,8 +274,8 @@ class RobotStateInterface {
    * @param p_gain The p-gain to be set.
    */
   virtual bool setJointPGain(const std::string& joint_name, double p_gain) {
-    GENERIC_LOG_STREAM(ERROR, "setJointPGain() not implemented for joint: "
-                                  << joint_name << ", p_gain: " << p_gain);
+    LOG_STREAM(ERROR, "setJointPGain() not implemented for joint: " << joint_name
+                                                                    << ", p_gain: " << p_gain);
     return false;
   }
   /**
@@ -289,8 +289,8 @@ class RobotStateInterface {
    * @param d_gain The d-gain to be set.
    */
   virtual bool setJointDGain(const std::string& joint_name, double d_gain) {
-    GENERIC_LOG_STREAM(ERROR, "setJointDGain() not implemented for joint: "
-                                  << joint_name << ", d_gain: " << d_gain);
+    LOG_STREAM(ERROR, "setJointDGain() not implemented for joint: " << joint_name
+                                                                    << ", d_gain: " << d_gain);
     return false;
   }
   /**
@@ -301,7 +301,7 @@ class RobotStateInterface {
    * @param frame_name The name of the considered frame.
    */
   virtual bool initSe2Velocity(const std::string& frame_name) {
-    GENERIC_LOG_STREAM(ERROR, "initSe2Velocity() not implemented for frame: " << frame_name);
+    LOG_STREAM(ERROR, "initSe2Velocity() not implemented for frame: " << frame_name);
     return false;
   }
   /**
@@ -312,7 +312,7 @@ class RobotStateInterface {
    * @param frame_name The name of the considered frame.
    */
   virtual bool setSe2Velocity(const std::string& frame_name, const SE2Velocity& /*velocity*/) {
-    GENERIC_LOG_STREAM(ERROR, "setSe2Velocity() not implemented for frame: " << frame_name);
+    LOG_STREAM(ERROR, "setSe2Velocity() not implemented for frame: " << frame_name);
     return false;
   }
   /**
@@ -323,7 +323,7 @@ class RobotStateInterface {
    * @param imu_name The name of the IMU.
    */
   virtual bool initImuAngularVelocityImu(const std::string& imu_name) {
-    GENERIC_LOG_STREAM(ERROR, "initImuAngularVelocityImu() not implemented for IMU: " << imu_name);
+    LOG_STREAM(ERROR, "initImuAngularVelocityImu() not implemented for IMU: " << imu_name);
     return false;
   }
   /**
@@ -334,7 +334,7 @@ class RobotStateInterface {
    * @param imu_name The name of the IMU.
    */
   virtual bool initImuOrientationW(const std::string& imu_name) {
-    GENERIC_LOG_STREAM(ERROR, "initImuOrientationW() not implemented for IMU: " << imu_name);
+    LOG_STREAM(ERROR, "initImuOrientationW() not implemented for IMU: " << imu_name);
     return false;
   }
   /**
@@ -344,7 +344,7 @@ class RobotStateInterface {
    * @return The angular velocity of the IMU in world frame (x,y,z) .
    */
   virtual std::optional<AngularVelocity> imuAngularVelocityImu(const std::string& imu_name) const {
-    GENERIC_LOG_STREAM(ERROR, "imuAngularVelocityImu() not implemented for IMU: " << imu_name);
+    LOG_STREAM(ERROR, "imuAngularVelocityImu() not implemented for IMU: " << imu_name);
     return std::nullopt;
   }
   /**
@@ -354,7 +354,7 @@ class RobotStateInterface {
    * @return The orientation of the IMU in world frame represented as a unit quaternion (w,x,y,z).
    */
   virtual std::optional<Quaternion> imuOrientationW(const std::string& imu_name) const {
-    GENERIC_LOG_STREAM(ERROR, "imuOrientationW() not implemented for IMU: " << imu_name);
+    LOG_STREAM(ERROR, "imuOrientationW() not implemented for IMU: " << imu_name);
     return std::nullopt;
   }
   /**
@@ -365,7 +365,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    */
   virtual bool initBodyPositionW(const std::string& body_name) {
-    GENERIC_LOG_STREAM(ERROR, "initBodyPositionW() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "initBodyPositionW() not implemented for body: " << body_name);
     return false;
   }
   /**
@@ -376,7 +376,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    */
   virtual bool initBodyOrientationW(const std::string& body_name) {
-    GENERIC_LOG_STREAM(ERROR, "initBodyOrientationW() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "initBodyOrientationW() not implemented for body: " << body_name);
     return false;
   }
   /**
@@ -387,7 +387,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    */
   virtual bool initBodyLinearVelocityB(const std::string& body_name) {
-    GENERIC_LOG_STREAM(ERROR, "initBodyLinearVelocityB() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "initBodyLinearVelocityB() not implemented for body: " << body_name);
     return false;
   }
   /**
@@ -398,7 +398,7 @@ class RobotStateInterface {
    * @param body_name The name of the body.
    */
   virtual bool initBodyAngularVelocityB(const std::string& body_name) {
-    GENERIC_LOG_STREAM(ERROR, "initBodyAngularVelocityB() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "initBodyAngularVelocityB() not implemented for body: " << body_name);
     return false;
   }
   /**
@@ -408,7 +408,7 @@ class RobotStateInterface {
    * @return The position of the body in world frame.
    */
   virtual std::optional<Position> bodyPositionW(const std::string& body_name) const {
-    GENERIC_LOG_STREAM(ERROR, "bodyPositionW() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "bodyPositionW() not implemented for body: " << body_name);
     return std::nullopt;
   }
   /**
@@ -418,7 +418,7 @@ class RobotStateInterface {
    * @return The orientation of the body in world frame.
    */
   virtual std::optional<Quaternion> bodyOrientationW(const std::string& body_name) const {
-    GENERIC_LOG_STREAM(ERROR, "bodyOrientationW() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "bodyOrientationW() not implemented for body: " << body_name);
     return std::nullopt;
   }
   /**
@@ -428,7 +428,7 @@ class RobotStateInterface {
    * @return The linear velocity of the body in body frame.
    */
   virtual std::optional<LinearVelocity> bodyLinearVelocityB(const std::string& body_name) const {
-    GENERIC_LOG_STREAM(ERROR, "bodyLinearVelocityB() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "bodyLinearVelocityB() not implemented for body: " << body_name);
     return std::nullopt;
   }
   /**
@@ -438,7 +438,7 @@ class RobotStateInterface {
    * @return The angular velocity of the body in body frame.
    */
   virtual std::optional<AngularVelocity> bodyAngularVelocityB(const std::string& body_name) const {
-    GENERIC_LOG_STREAM(ERROR, "bodyAngularVelocityB() not implemented for body: " << body_name);
+    LOG_STREAM(ERROR, "bodyAngularVelocityB() not implemented for body: " << body_name);
     return std::nullopt;
   }
   /**
@@ -450,7 +450,7 @@ class RobotStateInterface {
    */
   virtual bool initHeightScan(const std::string& /*sensor_name*/,
                               const HeightScanConfig& /*config*/) {
-    GENERIC_LOG_STREAM(ERROR, "initHeightScan() not implemented");
+    LOG_STREAM(ERROR, "initHeightScan() not implemented");
     return false;
   }
   /**
@@ -466,7 +466,7 @@ class RobotStateInterface {
   virtual std::optional<HeightScan*> heightScan(
       const std::string& /*sensor_name*/, const std::unordered_set<std::string>& /*layer_names*/,
       const Position& /*base_pos_w*/, const Quaternion& /*base_quat_w*/) {
-    GENERIC_LOG_STREAM(ERROR, "heightScan() not implemented");
+    LOG_STREAM(ERROR, "heightScan() not implemented");
     return std::nullopt;
   }
   /**
@@ -477,7 +477,7 @@ class RobotStateInterface {
    * @param config The configuration of the range image.
    */
   virtual bool initRangeImage(const SphericalImageConfig& /*config*/) {
-    GENERIC_LOG_STREAM(ERROR, "initRangeImage() not implemented");
+    LOG_STREAM(ERROR, "initRangeImage() not implemented");
     return false;
   }
   /**
@@ -488,7 +488,7 @@ class RobotStateInterface {
    * @return The flattened range image.
    */
   virtual std::optional<std::span<const float>> rangeImage() {
-    GENERIC_LOG_STREAM(ERROR, "rangeImage() not implemented");
+    LOG_STREAM(ERROR, "rangeImage() not implemented");
     return std::nullopt;
   }
   /**
@@ -499,7 +499,7 @@ class RobotStateInterface {
    * @param config The configuration of the depth image.
    */
   virtual bool initDepthImage(const PinholeImageConfig& /*config*/) {
-    GENERIC_LOG_STREAM(ERROR, "initDepthImage() not implemented");
+    LOG_STREAM(ERROR, "initDepthImage() not implemented");
     return false;
   }
   /**
@@ -510,7 +510,7 @@ class RobotStateInterface {
    * @return The flattened depth image.
    */
   virtual std::optional<std::span<const float>> depthImage() {
-    GENERIC_LOG_STREAM(ERROR, "depthImage() not implemented");
+    LOG_STREAM(ERROR, "depthImage() not implemented");
     return std::nullopt;
   }
   /**
@@ -521,7 +521,7 @@ class RobotStateInterface {
    * @param config The configuration of the traversability image.
    */
   virtual bool initTraversabilityImage(const PinholeImageConfig& /*config*/) {
-    GENERIC_LOG_STREAM(ERROR, "initTraversabilityImage() not implemented");
+    LOG_STREAM(ERROR, "initTraversabilityImage() not implemented");
     return false;
   }
   /**
@@ -532,7 +532,7 @@ class RobotStateInterface {
    * @return The flattened traversability image.
    */
   virtual std::optional<std::span<const float>> traversabilityImage() {
-    GENERIC_LOG_STREAM(ERROR, "traversabilityImage() not implemented");
+    LOG_STREAM(ERROR, "traversabilityImage() not implemented");
     return std::nullopt;
   }
 };

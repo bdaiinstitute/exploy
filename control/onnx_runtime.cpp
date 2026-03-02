@@ -31,7 +31,7 @@ void resetTensorBuffer(Ort::Value& tensor, ONNXTensorElementDataType data_type) 
       break;
     }
     default:
-      GENERIC_LOG_STREAM(ERROR, "Unsupported tensor type for reset: " << data_type);
+      LOG_STREAM(ERROR, "Unsupported tensor type for reset: " << data_type);
       break;
   }
 }
@@ -83,7 +83,7 @@ OrtCUDAProviderOptions createCudaProviderOptions() {
 
 bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOptions& options) {
   if (not std::filesystem::exists(model_path)) {
-    GENERIC_LOG_STREAM(WARN, "model file not found " << model_path)
+    LOG_STREAM(WARN, "model file not found " << model_path)
     return false;
   }
 
@@ -101,8 +101,8 @@ bool OnnxRuntime::initialize(const std::string& model_path, const OnnxRuntimeOpt
         session_options.AppendExecutionProvider_CUDA(createCudaProviderOptions());
         session_ = std::make_unique<Ort::Session>(*env_, model_path.c_str(), session_options);
       } catch (const Ort::Exception& e) {
-        GENERIC_LOG_STREAM(WARN, "Failed to enable CUDA execution provider: "
-                                     << e.what() << ". Falling back to CPU.");
+        LOG_STREAM(WARN, "Failed to enable CUDA execution provider: " << e.what()
+                                                                      << ". Falling back to CPU.");
         OnnxRuntimeOptions fallback_options = options;
         fallback_options.provider = OnnxRuntimeOptions::ExecutionProvider::CPU;
         return initialize(model_path, fallback_options);
@@ -127,7 +127,7 @@ bool OnnxRuntime::evaluate() {
     session_->Run(run_options_, input_.names.data(), input_.tensors.data(), input_.size,
                   output_.names.data(), output_.tensors.data(), output_.size);
   } catch (const Ort::Exception& e) {
-    GENERIC_LOG_STREAM(ERROR, "ONNX Runtime evaluation failed: " << e.what());
+    LOG_STREAM(ERROR, "ONNX Runtime evaluation failed: " << e.what());
     return false;
   }
   return true;
@@ -159,19 +159,19 @@ std::unordered_set<std::string> OnnxRuntime::outputNames() const {
 
 bool OnnxRuntime::copyOutputToInput(const std::string& output_name, const std::string& input_name) {
   if (!output_names_to_index_.contains(output_name)) {
-    GENERIC_LOG_STREAM(ERROR, "Output name not found in model: " + output_name);
+    LOG_STREAM(ERROR, "Output name not found in model: " + output_name);
     return false;
   }
   if (!input_names_to_index_.contains(input_name)) {
-    GENERIC_LOG_STREAM(ERROR, "Input name not found in model: " + input_name);
+    LOG_STREAM(ERROR, "Input name not found in model: " + input_name);
     return false;
   }
 
   auto output_index = output_names_to_index_[output_name];
   auto input_index = input_names_to_index_[input_name];
   if (output_.data_types[output_index] != input_.data_types[input_index]) {
-    GENERIC_LOG_STREAM(
-        ERROR, "Data type mismatch for output " << output_name << " and input " << input_name);
+    LOG_STREAM(ERROR,
+               "Data type mismatch for output " << output_name << " and input " << input_name);
     return false;
   }
 
@@ -194,7 +194,7 @@ bool OnnxRuntime::copyOutputToInput(const std::string& output_name, const std::s
       copyTensorData.template operator()<bool>();
       break;
     default:
-      GENERIC_LOG_STREAM(ERROR, "Unsupported tensor type for copy: " << data_type);
+      LOG_STREAM(ERROR, "Unsupported tensor type for copy: " << data_type);
       return false;
   }
 

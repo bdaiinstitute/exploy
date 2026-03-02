@@ -20,7 +20,7 @@ namespace {
 std::optional<int> parseUpdateRate(OnnxRuntime& onnx_model) {
   const auto maybe_update_rate = onnx_model.getCustomMetadata("update_rate");
   if (!maybe_update_rate.has_value()) {
-    GENERIC_LOG(ERROR, "Failed to get update_rate metadata");
+    LOG(ERROR, "Failed to get update_rate metadata");
     return std::nullopt;
   }
   return static_cast<int>(std::stod(maybe_update_rate.value()));
@@ -40,14 +40,13 @@ void OnnxContext::registerGroupMatcher(std::unique_ptr<GroupMatcher> matcher) {
 bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   // Check if ONNX model is properly loaded before accessing its properties
   if (!onnx_model.isInitialized()) {
-    GENERIC_LOG_STREAM(ERROR, "ONNX model not properly loaded, skipping context creation");
+    LOG_STREAM(ERROR, "ONNX model not properly loaded, skipping context creation");
     return false;
   }
 
   // Matchers should now be registered before calling createContext
   if (matchers_.empty() && group_matchers_.empty()) {
-    GENERIC_LOG_STREAM(ERROR,
-                       "No matchers registered. Please register matchers before creating context.");
+    LOG_STREAM(ERROR, "No matchers registered. Please register matchers before creating context.");
     return false;
   }
 
@@ -68,7 +67,7 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
       found_match |= matchers->matches(maybe_match);
     }
     if (!found_match) {
-      GENERIC_LOG_STREAM(WARNING, fmt::format("No matcher found for input '{}'", input_name));
+      LOG_STREAM(WARNING, fmt::format("No matcher found for input '{}'", input_name));
       if (strict) {
         return false;
       }
@@ -89,7 +88,7 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
       found_match |= matchers->matches(maybe_match);
     }
     if (!found_match) {
-      GENERIC_LOG_STREAM(WARNING, fmt::format("No matcher found for output '{}'", output_name));
+      LOG_STREAM(WARNING, fmt::format("No matcher found for output '{}'", output_name));
       if (strict) return false;
     }
   }

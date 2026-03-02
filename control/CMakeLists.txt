@@ -52,6 +52,7 @@ add_executable(exploy_test
     test/controller_test.cpp
     test/components_test.cpp
     test/context_test.cpp
+    test/logging_test.cpp
     test/onnx_runtime_test.cpp
     "${GEN_OUTPUT}"
 )

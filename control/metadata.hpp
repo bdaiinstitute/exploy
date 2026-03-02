@@ -65,7 +65,7 @@ std::optional<T> safe_json_get(const std::string& str) {
     nlohmann::json j = nlohmann::json::parse(str);
     return j.get<T>();
   } catch (const std::exception& e) {
-    GENERIC_LOG_STREAM(ERROR, "Failed to parse JSON: " << e.what());
+    LOG_STREAM(ERROR, "Failed to parse JSON: " << e.what());
     return std::nullopt;
   }
 }
