@@ -45,14 +45,20 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         self.cleanup()
 
     def cleanup(self):
-        for i_articulation, articulation in enumerate(self._env.scene.articulations.values()):
-            articulation._data = self._art_data_list[i_articulation]
+        try:
+            for i_articulation, articulation in enumerate(self._env.scene.articulations.values()):
+                articulation._data = self._art_data_list[i_articulation]
 
-        for i_rigid_object, rigid_object in enumerate(self._env.scene.rigid_objects.values()):
-            rigid_object._data = self._rigid_object_list[i_rigid_object]
+            for i_rigid_object, rigid_object in enumerate(self._env.scene.rigid_objects.values()):
+                rigid_object._data = self._rigid_object_list[i_rigid_object]
 
-        for sensor_name, original_data in self._raycaster_data_list:
-            self._env.scene.sensors[sensor_name]._data = original_data
+            for sensor_name, original_data in self._raycaster_data_list:
+                self._env.scene.sensors[sensor_name]._data = original_data
+        except AttributeError:
+            # In case the environment is already cleaned up by IsaacLab, we might get attribute errors
+            # when trying to restore the original data sources. We can ignore these errors since the
+            # environment is being cleaned up anyway.
+            return
 
     def _get_robots_dict(self) -> dict[str, Any]:
         return self._env.scene.articulations
