@@ -56,6 +56,65 @@ def add_commands(
             context_manager.add_component(onnx_input)
 
 
+def add_body_pos(
+    articulations: dict[str, Articulation],
+    context_manager: ContextManager,
+):
+    """Add body position inputs for all articulations.
+
+    For each articulation, this function adds inputs for the position
+    of each body belonging to that articulation.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body pose inputs to.
+    """
+
+    # Add inputs for all body positions in world frame
+    for obj_name, articulation in articulations.items():
+        for body_name in articulation.data.body_names:
+            body_ids, _ = articulation.find_bodies(body_name)
+            assert len(body_ids) == 1, (
+                f"Body name {body_name} is not unique in articulation {obj_name}. "
+                f"Found body IDs: {body_ids}"
+            )
+            body_idx = body_ids[0]
+            pos_b_rt_w_in_w = Input(
+                name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.pos_b_rt_w_in_w",
+                get_from_env_cb=lambda art=articulation, idx=body_idx: art.data.body_pos_w[:, idx],
+            )
+            context_manager.add_component(pos_b_rt_w_in_w)
+
+
+def add_body_quat(
+    articulations: dict[str, Articulation],
+    context_manager: ContextManager,
+):
+    """Add body orientation inputs for all articulations.
+
+    For each articulation, this function adds inputs for the quaternion
+    of each body belonging to that articulation.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body pose inputs to.
+    """
+    # Add inputs for all body quaternions in world frame
+    for obj_name, articulation in articulations.items():
+        for body_name in articulation.data.body_names:
+            body_ids, _ = articulation.find_bodies(body_name)
+            assert len(body_ids) == 1, (
+                f"Body name {body_name} is not unique in articulation {obj_name}. "
+                f"Found body IDs: {body_ids}"
+            )
+            body_idx = body_ids[0]
+            w_Q_b = Input(
+                name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.w_Q_b",
+                get_from_env_cb=lambda art=articulation, idx=body_idx: art.data.body_quat_w[:, idx],
+            )
+            context_manager.add_component(w_Q_b)
+
+
 def add_body_pos_and_quat(
     articulations: dict[str, Articulation],
     context_manager: ContextManager,
@@ -63,25 +122,21 @@ def add_body_pos_and_quat(
     """Add body position and orientation inputs for all articulations.
 
     For each articulation, this function adds inputs for the position and quaternion
-    of each body in the world frame.
+    of each body belonging to that articulation.
 
     Args:
         articulations: Dictionary mapping object names to Articulation instances.
         context_manager: The context manager to add body pose inputs to.
     """
     # Add inputs for all body positions and quaternions in world frame
-    for obj_name, articulation in articulations.items():
-        for i, body_name in enumerate(articulation.data.body_names):
-            pos_b_rt_w_in_w = Input(
-                name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.pos_b_rt_w_in_w",
-                get_from_env_cb=lambda art=articulation, idx=i: art.data.body_pos_w[:, idx],
-            )
-            w_Q_b = Input(
-                name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.w_Q_b",
-                get_from_env_cb=lambda art=articulation, idx=i: art.data.body_quat_w[:, idx],
-            )
-            context_manager.add_component(pos_b_rt_w_in_w)
-            context_manager.add_component(w_Q_b)
+    add_body_pos(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+    add_body_quat(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
 
 
 def add_base_vel(
