@@ -108,6 +108,11 @@ def export_isaaclab(
         context_manager=context_manager,
     )
 
+    inputs.add_base_pose(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+
     inputs.add_body_pos_and_quat(
         articulations=articulations,
         context_manager=context_manager,
@@ -168,13 +173,13 @@ def export_isaaclab(
             pause_on_failure=pause_on_failure,
         )
 
+    assert export_ok, "ONNX export validation failed"
+
     # Close simulation app.
     if simulation_app:
         print("Closing simulation app...")
         SimulationContext.clear_instance()
         simulation_app.close()
-
-    assert export_ok, "ONNX export validation failed"
 
 
 if __name__ == "__main__":
