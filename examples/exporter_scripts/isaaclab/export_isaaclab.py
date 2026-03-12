@@ -149,6 +149,7 @@ def export_isaaclab(
         path=onnx_export_dir,
         filename=onnx_export_file,
         verbose=False,
+        ir_version=10,
     )
 
     exportable_env.cleanup()

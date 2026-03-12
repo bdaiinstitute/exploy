@@ -75,7 +75,7 @@ jobs:
 
 
   test-isaaclab-export:
-    name: Test Export IsaacLab
+    name: Test Export IsaacLab and Controller Example
     runs-on: github-gpu-runner
     timeout-minutes: 60
     steps:
@@ -88,12 +88,17 @@ jobs:
           pixi-version: latest
           cache: true
           cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: isaaclab
+          environments: >-
+            isaaclab
+            controller
 
       - name: Run Isaac Lab Export Test
         env:
           OMNI_KIT_ACCEPT_EULA: yes
         run: pixi run -e isaaclab export-isaaclab-ci
+
+      - name: Run Controller Loopback Example
+        run: pixi run -e controller run-example
 
 
   test-frameworks-isaaclab:

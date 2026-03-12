@@ -289,37 +289,51 @@ inline std::optional<Version> parseVersion(const std::string& s) {
  *
  * @param maybe_version_str The value of the "exploy_version" metadata key, or std::nullopt if
  * absent.
+ * @param strict If true, treat mismatch as a failure. If false, only log a warning and return true.
  * @return true if the version is present and within the supported range, false otherwise.
  */
-inline bool checkExployVersion(const std::optional<std::string>& maybe_version_str) {
+inline bool checkExployVersion(const std::optional<std::string>& maybe_version_str,
+                               bool strict = true) {
+  const auto log = [&](const std::string& msg) {
+    if (strict) {
+      LOG_STREAM(ERROR, msg);
+    } else {
+      LOG_STREAM(WARN, msg);
+    }
+  };
+
   if (!maybe_version_str.has_value()) {
-    LOG(ERROR,
-        "ONNX model does not contain 'exploy_version' metadata. The ONNX file is not "
-        "compatible with this controller.");
-    return false;
+    log("ONNX model does not contain 'exploy_version' metadata. "
+        "The ONNX file might not be compatible with this controller.");
+    return !strict;
   }
 
   std::string version_str;
   try {
     version_str = json::parse(maybe_version_str.value()).get<std::string>();
   } catch (const json::exception&) {
-    LOG_STREAM(ERROR, "Failed to parse exploy_version: '" << maybe_version_str.value() << "'.");
-    return false;
+    log(
+        fmt::format("Failed to JSON parse exploy_version: '{}'. "
+                    "The ONNX file might not be compatible with this controller.",
+                    maybe_version_str.value()));
+    return !strict;
   }
 
   auto maybe_version = parseVersion(version_str);
   if (!maybe_version.has_value()) {
-    LOG_STREAM(ERROR, "Failed to parse exploy_version: '" << version_str << "'.");
-    return false;
+    log(
+        fmt::format("Failed to parse exploy_version: '{}'. "
+                    "The ONNX file might not be compatible with this controller.",
+                    version_str));
+    return !strict;
   }
 
   const auto& v = maybe_version.value();
   const bool in_range = kMinSupportedExployVersion <= v && v <= kMaxSupportedExployVersion;
   if (!in_range) {
-    LOG_STREAM(ERROR, "exploy_version '" << version_str << "' is outside the supported range ["
-                                         << kMinSupportedExployVersion.toString() << ", "
-                                         << kMaxSupportedExployVersion.toString() << "].");
-    return false;
+    log(fmt::format("exploy_version '{}' is outside the supported range [{}, {}].", version_str,
+                    kMinSupportedExployVersion.toString(), kMaxSupportedExployVersion.toString()));
+    return !strict;
   }
   return true;
 }

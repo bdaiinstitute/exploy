@@ -62,10 +62,19 @@ clang-format = "*"
 
 [feature.cpp.tasks]
 # C++ build and testing
-configure = "cmake -S control -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_MODULE_PATH=$PIXI_PROJECT_ROOT/cmake"
-build = "cmake --build build"
-test-cpp = "ctest --test-dir build --output-on-failure"
+configure = "cmake -S control -B build/control -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_MODULE_PATH=$PIXI_PROJECT_ROOT/cmake"
+build = { cmd = "cmake --build build/control", depends-on = ["configure"] }
+test-cpp = "ctest --test-dir build/control --output-on-failure"
 test = { depends-on = ["test-cpp"] }
+
+# Controller example
+configure-example = "cmake -S examples/controller -B build/examples/controller -G Ninja -DCMAKE_MODULE_PATH=$PIXI_PROJECT_ROOT/cmake -DEXPLOY_ROOT_DIR=$PIXI_PROJECT_ROOT"
+build-example = { cmd = "cmake --build build/examples/controller", depends-on = [
+  "configure-example",
+] }
+run-example = { cmd = "build/examples/controller/loopback_controller_example examples/exporter_scripts/isaaclab/exporter_tests/test_export.onnx --cycles 100", depends-on = [
+  "build-example",
+] }
 
 # C++ formatting and linting
 format-cpp = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i"
