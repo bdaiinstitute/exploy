@@ -159,12 +159,13 @@ class TensorProxy:
         # Convert all `TensorProxy`` elements in `args` to `torch.Tensor` objects.
         new_args = args_to_tensor(args=args)
 
-        # todo: Convert TensorProxy to Tensor in kwargs.
+        # Convert TensorProxy to Tensor in kwargs.
+        new_kwargs = {k: args_to_tensor(args=(v,))[0] for k, v in kwargs.items()}
 
         return (
-            func.__wrapped__(*new_args, **kwargs)
+            func.__wrapped__(*new_args, **new_kwargs)
             if hasattr(func, "__wrapped__")
-            else func(*new_args, **kwargs)
+            else func(*new_args, **new_kwargs)
         )
 
     def __repr__(self):

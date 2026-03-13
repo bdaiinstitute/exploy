@@ -366,6 +366,17 @@ class TestTensorProxyTorchFunction:
         expected = torch.cat([tensor1, tensor2], dim=0)
         assert torch.equal(result, expected)
 
+    def test_torch_cat_with_kwargs(self):
+        """Test using TensorProxy with torch.cat using keyword arguments."""
+        tensor1 = torch.rand((2, 3))
+        tensor2 = torch.rand((2, 3))
+        proxy1 = TensorProxy(tensor1, split_dim=0)
+        proxy2 = TensorProxy(tensor2, split_dim=0)
+
+        result = torch.cat(tensors=[proxy1, proxy2], dim=0)
+        expected = torch.cat([tensor1, tensor2], dim=0)
+        assert torch.equal(result, expected)
+
     def test_repr(self):
         """Test string representation."""
         tensor = torch.rand((2, 3, 4))
