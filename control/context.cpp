@@ -120,27 +120,18 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
     });
   }
 
-  for (auto& matcher : matchers_) {
-    auto inputs = matcher->createInputs();
-    inputs_.insert(inputs_.end(), std::make_move_iterator(inputs.begin()),
-                   std::make_move_iterator(inputs.end()));
-  }
-  for (auto& group_matcher : group_matchers_) {
-    auto inputs = group_matcher->createInputs();
-    inputs_.insert(inputs_.end(), std::make_move_iterator(inputs.begin()),
-                   std::make_move_iterator(inputs.end()));
-  }
+  auto collect_components = [](auto& components, auto& matchers, auto creator_fn) {
+    for (auto& matcher : matchers) {
+      auto items = (matcher.get()->*creator_fn)();
+      components.insert(components.end(), std::make_move_iterator(items.begin()),
+                        std::make_move_iterator(items.end()));
+    }
+  };
 
-  for (auto& matcher : matchers_) {
-    auto outputs = matcher->createOutputs();
-    outputs_.insert(outputs_.end(), std::make_move_iterator(outputs.begin()),
-                    std::make_move_iterator(outputs.end()));
-  }
-  for (auto& group_matcher : group_matchers_) {
-    auto outputs = group_matcher->createOutputs();
-    outputs_.insert(outputs_.end(), std::make_move_iterator(outputs.begin()),
-                    std::make_move_iterator(outputs.end()));
-  }
+  collect_components(inputs_, matchers_, &Matcher::createInputs);
+  collect_components(inputs_, group_matchers_, &GroupMatcher::createInputs);
+  collect_components(outputs_, matchers_, &Matcher::createOutputs);
+  collect_components(outputs_, group_matchers_, &GroupMatcher::createOutputs);
 
   return true;
 }
