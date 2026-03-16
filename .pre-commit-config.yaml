@@ -29,21 +29,16 @@ repos:
       # fix trailing whitespace in files of all types
       - id: trailing-whitespace
 
-  - repo: https://github.com/rai-inst/actions-int
-    rev: v9.7.1
+  # check (or insert) new license headers on standard file extensions we use
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.5
     hooks:
-    - id: check-copyright
-      name: check and fix copyright
-      entry: copyright-checker/copyright-checker.sh
-      language: script
-      types: [ text ]
-      args: [ --fix ]
-      exclude: >
-        (?x)^(
-          \.github/PULL_REQUEST_TEMPLATE.md|
-          \.github/ISSUE_TEMPLATE/bug_report.md|
-          \.github/ISSUE_TEMPLATE/feature_request.md|
-        )$
+      - id: insert-license
+        files: (\.cpp|\.cc|\.c|\.hpp|\.h)$
+        args: [--comment-style, //, --license-filepath, .copyright.txt, --allow-past-years, --use-current-year, --no-extra-eol]
+      - id: insert-license
+        files: (\.sh|\.bash|\.py|CMakeLists\.txt|\.cmake|\.cmake\.in|\.yaml|\.yml|\.toml)$
+        args: [--license-filepath, .copyright.txt, --allow-past-years, --use-current-year, --no-extra-eol]
 
 
   - repo: https://github.com/igorshubovych/markdownlint-cli

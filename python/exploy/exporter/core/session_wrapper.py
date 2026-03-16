@@ -42,12 +42,10 @@ class SessionWrapper:
         if optimize:
             sess_options = ort.SessionOptions()
             sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_EXTENDED
-            # Setting `optimized_model_filepath` tells ONNX to store the optimized graph to a file.
-            # This additional optimized ONNX file is useful for inspection with Netron (see https://github.com/lutzroeder/netron),
-            # since the computational graph is optimized and cleaned up.
-            # The optimization of the computational graph depends on additional features in ONNX and version control of
-            # the ONNX dependencies, which are not correctly managed in control. For this reason, this file
-            # is to be used, at the moment, only for debugging.
+            # Setting `optimized_model_filepath` tells ONNX Runtime to write the optimized graph to a file
+            # as part of `InferenceSession` creation in this process. The resulting optimized ONNX file is
+            # primarily useful for inspection/debugging with tools like Netron (see https://github.com/lutzroeder/netron),
+            # while deployment on the target hardware may still apply its own optimizations when loading the model.
             sess_options.optimized_model_filepath = str(session_paths.get_debug_path("optimized"))
 
         self._onnx_file_path = session_paths.main
