@@ -206,9 +206,9 @@ class OnnxControllerTest : public ::testing::Test {
         .WillOnce(Return(true));
     EXPECT_CALL(command_mock_, initSe2Velocity("vel_with_range", HasRanges(kRanges)))
         .WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initSe3Pose("pose")).WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initBooleanSelector("selector")).WillOnce(Return(true));
-    EXPECT_CALL(command_mock_, initFloatValue("value")).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initSe3Pose("pose", _)).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initBooleanSelector("selector", _)).WillOnce(Return(true));
+    EXPECT_CALL(command_mock_, initFloatValue("value", _)).WillOnce(Return(true));
   }
 
   void ExpectInitCustom() {

@@ -397,7 +397,13 @@ bool CommandFloatMatcher::matches(const Match& maybe_match) {
 std::vector<std::unique_ptr<Input>> CommandFloatMatcher::createInputs() const {
   std::vector<std::unique_ptr<Input>> inputs;
   for (const auto& [name, match] : found_matches_) {
-    inputs.push_back(std::make_unique<CommandFloatInput>(match.name, name));
+    metadata::FloatCommandMetadata metadata;
+    if (match.metadata.has_value()) {
+      auto maybe_metadata =
+          metadata::safe_json_get<metadata::FloatCommandMetadata>(match.metadata.value());
+      if (maybe_metadata.has_value()) metadata = maybe_metadata.value();
+    }
+    inputs.push_back(std::make_unique<CommandFloatInput>(match.name, name, metadata));
   }
   return inputs;
 }
@@ -415,12 +421,13 @@ bool CommandSE2VelocityMatcher::matches(const Match& maybe_match) {
 std::vector<std::unique_ptr<Input>> CommandSE2VelocityMatcher::createInputs() const {
   std::vector<std::unique_ptr<Input>> inputs;
   for (const auto& [name, match] : found_matches_) {
-    if (!match.metadata.has_value()) continue;
-    auto maybe_metadata =
-        metadata::safe_json_get<metadata::SE2VelocityCommandMetadata>(match.metadata.value());
-    if (!maybe_metadata.has_value()) continue;
-    inputs.push_back(
-        std::make_unique<CommandSE2VelocityInput>(match.name, name, maybe_metadata.value()));
+    metadata::SE2VelocityCommandMetadata metadata;
+    if (match.metadata.has_value()) {
+      auto maybe_metadata =
+          metadata::safe_json_get<metadata::SE2VelocityCommandMetadata>(match.metadata.value());
+      if (maybe_metadata.has_value()) metadata = maybe_metadata.value();
+    }
+    inputs.push_back(std::make_unique<CommandSE2VelocityInput>(match.name, name, metadata));
   }
   return inputs;
 }

@@ -411,7 +411,7 @@ CommandSE3PoseInput::CommandSE3PoseInput(const std::string& key, const std::stri
     : key_(key), command_name_(command_name) {}
 
 bool CommandSE3PoseInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  return command.initSe3Pose(command_name_);
+  return command.initSe3Pose(command_name_, SE3PoseConfig{});
 }
 
 bool CommandSE3PoseInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
@@ -451,7 +451,7 @@ CommandBooleanInput::CommandBooleanInput(const std::string& key, const std::stri
     : key_(key), command_name_(command_name) {}
 
 bool CommandBooleanInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  return command.initBooleanSelector(command_name_);
+  return command.initBooleanSelector(command_name_, BooleanSelectorConfig{});
 }
 
 bool CommandBooleanInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
@@ -465,11 +465,12 @@ bool CommandBooleanInput::read(OnnxRuntime& runtime, RobotStateInterface& /*stat
 }
 
 // Implementation of CommandFloatInput methods
-CommandFloatInput::CommandFloatInput(const std::string& key, const std::string& command_name)
-    : key_(key), command_name_(command_name) {}
+CommandFloatInput::CommandFloatInput(const std::string& key, const std::string& command_name,
+                                     const metadata::FloatCommandMetadata& metadata)
+    : key_(key), command_name_(command_name), metadata_(metadata) {}
 
 bool CommandFloatInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
-  return command.initFloatValue(command_name_);
+  return command.initFloatValue(command_name_, FloatScalarConfig{.range = metadata_.range});
 }
 
 bool CommandFloatInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,

@@ -98,6 +98,31 @@ inline void from_json(const json& j, SE2VelocityCommandMetadata& cmd) {
 }
 
 /**
+ * @brief Metadata for float scalar commands.
+ *
+ * Specifies optional range constraints for float scalar commands.
+ */
+struct FloatCommandMetadata {
+  std::optional<Range> range{};  ///< Optional range constraint for the float command.
+};
+
+/**
+ * @brief Parse FloatCommandMetadata from JSON.
+ *
+ * @param j JSON object optionally containing "range" field.
+ * @param cmd FloatCommandMetadata object to populate.
+ */
+inline void from_json(const json& j, FloatCommandMetadata& cmd) {
+  if (j.contains("range") && j["range"].is_array() && j["range"].size() == 2) {
+    Range range;
+    j.at("range").get_to(range);
+    cmd.range = range;
+  } else {
+    cmd.range = std::nullopt;
+  }
+}
+
+/**
  * @brief Metadata for height scan sensors.
  *
  * Specifies the grid pattern configuration for terrain height scanning including

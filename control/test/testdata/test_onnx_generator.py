@@ -199,6 +199,7 @@ def get_command_metadata() -> dict:
                 "ang_vel_z": [-2.5, 2.5],
             },
         },
+        "cmd.float.value": {},
     }
 
 

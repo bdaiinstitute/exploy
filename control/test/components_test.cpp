@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 #include "components.hpp"
+#include "matcher.hpp"
 #include "mock_command_interface.hpp"
 #include "mock_state_interface.hpp"
 #include "onnx_runtime.hpp"
@@ -209,6 +210,51 @@ TEST_F(OnnxComponentsTest, MemoryOutput_WithRealRuntime) {
   }
 
   EXPECT_TRUE(memory_was_overwritten) << "Memory should be overwritten with new output data";
+}
+
+// ---------------  Matcher tests for default metadata --------------------------------
+
+TEST(CommandFloatMatcherTest, CreatesInputWithoutMetadata) {
+  CommandFloatMatcher matcher;
+  Match match_without_metadata{.name = "cmd.float.gain"};
+  ASSERT_TRUE(matcher.matches(match_without_metadata));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u) << "Should create input even without metadata";
+}
+
+TEST(CommandFloatMatcherTest, CreatesInputWithMetadata) {
+  CommandFloatMatcher matcher;
+  Match match_with_metadata{
+      .name = "cmd.float.scale",
+      .metadata = R"({"range": [-1.0, 1.0]})",
+  };
+  ASSERT_TRUE(matcher.matches(match_with_metadata));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u);
+}
+
+TEST(CommandSE2VelocityMatcherTest, CreatesInputWithoutMetadata) {
+  CommandSE2VelocityMatcher matcher;
+  Match match_without_metadata{.name = "cmd.se2_velocity.vel"};
+  ASSERT_TRUE(matcher.matches(match_without_metadata));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u) << "Should create input even without metadata";
+}
+
+TEST(CommandSE2VelocityMatcherTest, CreatesInputWithMetadata) {
+  CommandSE2VelocityMatcher matcher;
+  Match match_with_metadata{
+      .name = "cmd.se2_velocity.vel",
+      .metadata =
+          R"({"ranges": {"lin_vel_x": [-1.0, 1.0], "lin_vel_y": [-0.5, 0.5], "ang_vel_z": [-2.0, 2.0]}})",
+  };
+  ASSERT_TRUE(matcher.matches(match_with_metadata));
+
+  auto inputs = matcher.createInputs();
+  ASSERT_EQ(inputs.size(), 1u);
 }
 
 }  // namespace exploy::control

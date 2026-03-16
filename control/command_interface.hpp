@@ -18,6 +18,29 @@ struct SE2VelocityConfig {
 };
 
 /**
+ * @brief Configuration for SE3 pose commands.
+ */
+struct SE3PoseConfig {
+  // Currently no configuration options, but this struct is defined for consistency and future
+  // extensibility.
+};
+
+/**
+ * @brief Configuration for boolean selector commands.
+ */
+struct BooleanSelectorConfig {
+  // Currently no configuration options, but this struct is defined for consistency and future
+  // extensibility.
+};
+
+/**
+ * @brief Configuration for float scalar commands.
+ */
+struct FloatScalarConfig {
+  std::optional<Range> range{};
+};
+
+/**
  * @class CommandInterface
  *
  * @brief Interface which provides methods to send commands to the controllers.
@@ -33,6 +56,7 @@ class CommandInterface {
    *
    * @param command_name The name of the command.
    * @param config The configuration for the commanded se2 velocity.
+   * @return True if initialization succeeded, false otherwise.
    */
   virtual bool initSe2Velocity(const std::string& command_name,
                                const SE2VelocityConfig& /*config*/) {
@@ -55,8 +79,10 @@ class CommandInterface {
    * Called once during initialization (usually non real-time).
    *
    * @param command_name The name of the command.
+   * @param config The configuration for the commanded SE3 pose.
+   * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initSe3Pose(const std::string& command_name) {
+  virtual bool initSe3Pose(const std::string& command_name, const SE3PoseConfig& /*config*/) {
     LOG_STREAM(ERROR, "initSe3Pose() not implemented for command: " << command_name);
     return false;
   }
@@ -76,8 +102,11 @@ class CommandInterface {
    * Called once during initialization (usually non real-time).
    *
    * @param command_name The name of the command.
+   * @param config The configuration for the commanded boolean selector.
+   * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initBooleanSelector(const std::string& command_name) {
+  virtual bool initBooleanSelector(const std::string& command_name,
+                                   const BooleanSelectorConfig& /*config*/) {
     LOG_STREAM(ERROR, "initBooleanSelector() not implemented for command: " << command_name);
     return false;
   }
@@ -97,8 +126,11 @@ class CommandInterface {
    * Called once during initialization (usually non real-time).
    *
    * @param command_name The name of the command.
+   * @param config The configuration for the commanded float scalar.
+   * @return True if initialization succeeded, false otherwise.
    */
-  virtual bool initFloatValue(const std::string& command_name) {
+  virtual bool initFloatValue(const std::string& command_name,
+                              const FloatScalarConfig& /*config*/) {
     LOG_STREAM(ERROR, "initFloatValue() not implemented for command: " << command_name);
     return false;
   }

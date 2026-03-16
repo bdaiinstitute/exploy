@@ -483,15 +483,18 @@ class CommandFloatInput : public Input {
    *
    * @param key ONNX input tensor name (e.g., "commands.speed_scale").
    * @param command_name Name of the float command to read.
+   * @param metadata Float command metadata containing optional value range.
    */
-  CommandFloatInput(const std::string& key, const std::string& command_name);
+  CommandFloatInput(const std::string& key, const std::string& command_name,
+                    const metadata::FloatCommandMetadata& metadata);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;           ///< ONNX input tensor name.
-  std::string command_name_;  ///< Float command name.
+  std::string key_;                          ///< ONNX input tensor name.
+  std::string command_name_;                 ///< Float command name.
+  metadata::FloatCommandMetadata metadata_;  ///< Float command configuration.
 };
 
 /**
