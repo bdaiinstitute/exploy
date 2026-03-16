@@ -18,15 +18,8 @@ select = [
 ]
 
 ignore = [
-    "E501",  # line-too-long (formatter handles this)
-    "E402",  # module-level-import-not-at-top-of-file (needed for some frameworks)
-    "F401",  # unused-import (may be for re-export)
-    "F841",  # unused-variable (sometimes intentional)
+    "E501", # line-too-long (formatter handles code lines; comments/docstrings must be manual)
 ]
-
-[lint.per-file-ignores]
-"__init__.py" = ["F401"]  # Allow unused imports in __init__.py
-"examples/exporter_scripts/export_isaaclab.py" = ["E402", "F401", "F403"]  # Allow import flexibility for isaaclab
 
 [format]
 quote-style = "double"
