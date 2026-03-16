@@ -163,7 +163,7 @@ class LoopbackRobotStateInterface : public RobotStateInterface {
 
     HeightScan scan;
     for (const auto& layer : config.layer_names) {
-      scan.layers[layer] = std::vector<double>(n, 0.0);
+      scan.float_layers[layer] = std::vector<float>(n, 0.0);
     }
     height_scans_[sensor_name] = std::move(scan);
     return true;

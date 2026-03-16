@@ -127,10 +127,10 @@ Metadata structures for component configuration.
 .. doxygenstruct:: exploy::control::metadata::HeightScanMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::metadata::RangeImageMetadata
+.. doxygenstruct:: exploy::control::metadata::SphericalImageMetadata
    :members:
 
-.. doxygenstruct:: exploy::control::metadata::DepthImageMetadata
+.. doxygenstruct:: exploy::control::metadata::PinholeImageMetadata
    :members:
 
 Matchers

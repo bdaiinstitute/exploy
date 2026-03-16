@@ -33,12 +33,13 @@ INPUT_NAMES = [
     # sensors
     "sensor.ray_caster.one.height",
     "sensor.ray_caster.two.height",
-    "sensor.range_image.one",
+    "sensor.spherical_image.one.range",
+    "sensor.spherical_image.one.risk",
     "sensor.ray_caster.trail.height",
     "sensor.ray_caster.trail.r",
     "sensor.ray_caster.trail.g",
     "sensor.ray_caster.trail.b",
-    "sensor.depth_image.one",
+    "sensor.pinhole_image.one.depth",
     # body
     "obj.box1.bodies.box.pos_b_rt_w_in_w",
     "obj.box1.bodies.box.w_Q_b",
@@ -85,6 +86,7 @@ class FullTestModel(torch.nn.Module):
         heightscan,
         another_heightscan,
         range_image,
+        range_image_risk,
         trail_scan_height,
         trail_scan_r,
         trail_scan_g,
@@ -155,7 +157,7 @@ def get_sensor_metadata() -> dict:
             "size_x": 1.6,
             "size_y": 1.0,
         },
-        "sensor.range_image.one": {
+        "sensor.spherical_image.one": {
             "pattern_type": "lidar_pattern",
             "v_res": 128,
             "h_res": 1024,
@@ -163,7 +165,7 @@ def get_sensor_metadata() -> dict:
             "v_fov_max_deg": 45.0,
             "unobserved_value": -2.0,
         },
-        "sensor.depth_image.one": {
+        "sensor.pinhole_image.one": {
             "pattern_type": "grid_pattern",
             "height": 1,
             "width": 1,
@@ -285,6 +287,7 @@ def create_dummy_inputs() -> tuple:
         heightscan,
         heightscan,
         range_image,
+        range_image,  # risk
         trail_scan,  # height
         trail_scan,  # r
         trail_scan,  # g

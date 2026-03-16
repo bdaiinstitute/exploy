@@ -23,8 +23,6 @@ OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface&
   context_.registerMatcher(std::make_unique<SE2VelocityMatcher>());
   context_.registerMatcher(std::make_unique<IMUAngularVelocityMatcher>());
   context_.registerMatcher(std::make_unique<IMUOrientationMatcher>());
-  context_.registerMatcher(std::make_unique<RangeImageMatcher>());
-  context_.registerMatcher(std::make_unique<DepthImageMatcher>());
   context_.registerMatcher(std::make_unique<BodyPositionMatcher>());
   context_.registerMatcher(std::make_unique<BodyOrientationMatcher>());
   context_.registerMatcher(std::make_unique<CommandSE3PoseMatcher>());
@@ -36,6 +34,8 @@ OnnxRLController::OnnxRLController(RobotStateInterface& state, CommandInterface&
   context_.registerGroupMatcher(std::make_unique<JointMatcher>());
   context_.registerGroupMatcher(std::make_unique<JointTargetMatcher>());
   context_.registerGroupMatcher(std::make_unique<HeightScanMatcher>());
+  context_.registerGroupMatcher(std::make_unique<SphericalImageMatcher>());
+  context_.registerGroupMatcher(std::make_unique<PinholeImageMatcher>());
   context_.registerGroupMatcher(std::make_unique<MemoryMatcher>());
 }
 

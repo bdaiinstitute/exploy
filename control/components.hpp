@@ -299,52 +299,67 @@ class HeightScanInput : public Input {
 };
 
 /**
- * @brief Input component that reads range/depth image from LiDAR sensor.
+ * @brief Input component that reads spherical image data with multiple channels.
  *
- * Reads range image data (distances) from a LiDAR sensor and copies it to the
- * ONNX input buffer. Configuration includes resolution, field of view, and
- * sentinel value for unobserved points.
+ * Reads spherical image data from a named sensor with configurable channels (e.g., range,
+ * risk). Each channel is written to a separate ONNX input buffer with the
+ * naming pattern "key.channel_name".
  */
-class RangeImageInput : public Input {
+class SphericalImageInput : public Input {
  public:
   /**
-   * @brief Construct a range image input component.
+   * @brief Construct a spherical image input component.
    *
-   * @param key ONNX input tensor name (e.g., "sensors.lidar.range").
-   * @param metadata Range image metadata containing resolution, FOV, and sentinel value.
+   * @param key ONNX input tensor base name (e.g., "sensor.spherical_image.lidar1").
+   * @param sensor_name Name of the spherical image sensor to read from.
+   * @param channel_names Set of channel names to include (each creates a buffer
+   * "key.channel_name").
+   * @param metadata Spherical image metadata containing resolution, FOV, and sentinel value.
    */
-  RangeImageInput(const std::string& key, const metadata::RangeImageMetadata& metadata);
+  SphericalImageInput(const std::string& key, const std::string& sensor_name,
+                      const std::unordered_set<std::string>& channel_names,
+                      const metadata::SphericalImageMetadata& metadata);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;                        ///< ONNX input tensor name.
-  metadata::RangeImageMetadata metadata_;  ///< Range image configuration.
+  std::string key_;                                ///< ONNX input tensor base name.
+  std::string sensor_name_;                        ///< Spherical image sensor name.
+  std::unordered_set<std::string> channel_names_;  ///< Channel names to read.
+  metadata::SphericalImageMetadata metadata_;      ///< Spherical image configuration.
 };
 
 /**
- * @brief Input component that reads depth image from camera sensor.
+ * @brief Input component that reads pinhole camera image data with multiple channels.
  *
- * Reads depth image data from a camera sensor and copies it to the ONNX input
- * buffer. Configuration includes image dimensions and camera intrinsic parameters.
+ * Reads pinhole image data from a named sensor with configurable channels (e.g., depth,
+ * risk). Each channel is written to a separate ONNX input buffer with the
+ * naming pattern "key.channel_name".
  */
-class DepthImageInput : public Input {
+class PinholeImageInput : public Input {
  public:
   /**
-   * @brief Construct a depth image input component.
+   * @brief Construct a pinhole image input component.
    *
-   * @param key ONNX input tensor name (e.g., "sensors.camera.depth").
-   * @param metadata Depth image metadata containing width, height, and camera intrinsics.
+   * @param key ONNX input tensor base name (e.g., "sensor.pinhole_image.cam1").
+   * @param sensor_name Name of the pinhole image sensor to read from.
+   * @param channel_names Set of channel names to include (each creates a buffer
+   * "key.channel_name").
+   * @param metadata Pinhole image metadata containing width, height, and camera intrinsics.
    */
-  DepthImageInput(const std::string& key, const metadata::DepthImageMetadata& metadata);
+  PinholeImageInput(const std::string& key, const std::string& sensor_name,
+                    const std::unordered_set<std::string>& channel_names,
+                    const metadata::PinholeImageMetadata& metadata);
 
   bool init(RobotStateInterface& state, CommandInterface& command) override;
   bool read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface& command) override;
 
  private:
-  std::string key_;                        ///< ONNX input tensor name.
-  metadata::DepthImageMetadata metadata_;  ///< Depth image configuration.
+  std::string key_;                                ///< ONNX input tensor base name.
+  std::string sensor_name_;                        ///< Pinhole image sensor name.
+  std::unordered_set<std::string> channel_names_;  ///< Channel names to read.
+  metadata::PinholeImageMetadata metadata_;        ///< Pinhole image configuration.
 };
 
 /**

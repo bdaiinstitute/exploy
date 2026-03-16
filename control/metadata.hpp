@@ -153,13 +153,13 @@ inline void from_json(const json& j, HeightScanMetadata& hs) {
 }
 
 /**
- * @brief Metadata for LiDAR range image sensors.
+ * @brief Metadata for spherical image sensors (e.g., LiDAR).
  *
- * Specifies the configuration for range images including resolution, field of view,
+ * Specifies the configuration for spherical images including resolution, field of view,
  * and sentinel value for unobserved points.
  */
-struct RangeImageMetadata {
-  std::string pattern_type{};  ///< Range image pattern type.
+struct SphericalImageMetadata {
+  std::string pattern_type{};  ///< Spherical image pattern type.
   int v_res{};                 ///< Vertical resolution (number of vertical scan lines).
   int h_res{};                 ///< Horizontal resolution (points per scan line).
   double v_fov_min_deg{};      ///< Minimum vertical field of view in degrees.
@@ -168,27 +168,27 @@ struct RangeImageMetadata {
 };
 
 /**
- * @brief Parse RangeImageMetadata from JSON.
+ * @brief Parse SphericalImageMetadata from JSON.
  *
- * @param j JSON object containing range image configuration.
- * @param ri RangeImageMetadata object to populate.
+ * @param j JSON object containing spherical image configuration.
+ * @param si SphericalImageMetadata object to populate.
  */
-inline void from_json(const json& j, RangeImageMetadata& ri) {
-  j.at("pattern_type").get_to(ri.pattern_type);
-  j.at("v_res").get_to(ri.v_res);
-  j.at("h_res").get_to(ri.h_res);
-  j.at("v_fov_min_deg").get_to(ri.v_fov_min_deg);
-  j.at("v_fov_max_deg").get_to(ri.v_fov_max_deg);
-  j.at("unobserved_value").get_to(ri.unobserved_value);
+inline void from_json(const json& j, SphericalImageMetadata& si) {
+  j.at("pattern_type").get_to(si.pattern_type);
+  j.at("v_res").get_to(si.v_res);
+  j.at("h_res").get_to(si.h_res);
+  j.at("v_fov_min_deg").get_to(si.v_fov_min_deg);
+  j.at("v_fov_max_deg").get_to(si.v_fov_max_deg);
+  j.at("unobserved_value").get_to(si.unobserved_value);
 }
 
 /**
- * @brief Metadata for camera depth image sensors.
+ * @brief Metadata for pinhole camera image sensors.
  *
  * Specifies camera configuration including image dimensions and intrinsic parameters.
  */
-struct DepthImageMetadata {
-  std::string pattern_type{};  ///< Depth image pattern type.
+struct PinholeImageMetadata {
+  std::string pattern_type{};  ///< Pinhole image pattern type.
   int width{};                 ///< Image width in pixels.
   int height{};                ///< Image height in pixels.
   double fx{};                 ///< Focal length in x direction (pixels).
@@ -198,19 +198,19 @@ struct DepthImageMetadata {
 };
 
 /**
- * @brief Parse DepthImageMetadata from JSON.
+ * @brief Parse PinholeImageMetadata from JSON.
  *
- * @param j JSON object containing depth image configuration.
- * @param di DepthImageMetadata object to populate.
+ * @param j JSON object containing pinhole image configuration.
+ * @param pi PinholeImageMetadata object to populate.
  */
-inline void from_json(const json& j, DepthImageMetadata& di) {
-  j.at("pattern_type").get_to(di.pattern_type);
-  j.at("width").get_to(di.width);
-  j.at("height").get_to(di.height);
-  j.at("fx").get_to(di.fx);
-  j.at("fy").get_to(di.fy);
-  j.at("cx").get_to(di.cx);
-  j.at("cy").get_to(di.cy);
+inline void from_json(const json& j, PinholeImageMetadata& pi) {
+  j.at("pattern_type").get_to(pi.pattern_type);
+  j.at("width").get_to(pi.width);
+  j.at("height").get_to(pi.height);
+  j.at("fx").get_to(pi.fx);
+  j.at("fy").get_to(pi.fy);
+  j.at("cx").get_to(pi.cx);
+  j.at("cy").get_to(pi.cy);
 }
 
 /**

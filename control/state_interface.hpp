@@ -44,6 +44,8 @@ struct SphericalImageConfig {
   double v_fov_min_deg{};     ///< Minimum vertical field of view angle in degrees.
   double v_fov_max_deg{};     ///< Maximum vertical field of view angle in degrees.
   double unobserved_value{};  ///< Sentinel value for pixels with no sensor return.
+  std::unordered_set<std::string>
+      channel_names{};  ///< Set of channel names to include (e.g., "range", "risk").
 };
 
 /**
@@ -58,6 +60,8 @@ struct PinholeImageConfig {
   double fy{};   ///< Focal length in y direction (pixels).
   double cx{};   ///< Principal point x-coordinate (pixels).
   double cy{};   ///< Principal point y-coordinate (pixels).
+  std::unordered_set<std::string>
+      channel_names{};  ///< Set of channel names to include (e.g., "depth", "risk").
 };
 
 /**
@@ -470,69 +474,61 @@ class RobotStateInterface {
     return std::nullopt;
   }
   /**
-   * @brief Initialize the LiDAR range image data source.
+   * @brief Initialize the spherical image data source.
    *
    * Called once during initialization (usually non real-time).
    *
-   * @param config The configuration of the range image.
+   * @param sensor_name The name of the spherical image sensor.
+   * @param config The configuration of the spherical image.
    */
-  virtual bool initRangeImage(const SphericalImageConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initRangeImage() not implemented");
+  virtual bool initSphericalImage(const std::string& /*sensor_name*/,
+                                  const SphericalImageConfig& /*config*/) {
+    LOG_STREAM(ERROR, "initSphericalImage() not implemented");
     return false;
   }
   /**
-   * @brief Get the range image.
+   * @brief Get the spherical image with multiple channels.
    *
-   * This function returns the image, flattened in row-major storage order.
+   * This function returns the multi-channel spherical image data, with each channel
+   * flattened in row-major storage order.
    *
-   * @return The flattened range image.
+   * @param sensor_name The name of the spherical image sensor.
+   * @param channel_names The set of channel names to retrieve.
+   * @return Pointer to the spherical image data.
    */
-  virtual std::optional<std::span<const float>> rangeImage() {
-    LOG_STREAM(ERROR, "rangeImage() not implemented");
+  virtual std::optional<MultiChannelImage*> sphericalImage(
+      const std::string& /*sensor_name*/,
+      const std::unordered_set<std::string>& /*channel_names*/) {
+    LOG_STREAM(ERROR, "sphericalImage() not implemented");
     return std::nullopt;
   }
   /**
-   * @brief Initialize the depth image data source.
+   * @brief Initialize the pinhole image data source.
    *
    * Called once during initialization (usually non real-time).
    *
-   * @param config The configuration of the depth image.
+   * @param sensor_name The name of the pinhole image sensor.
+   * @param config The configuration of the pinhole image.
    */
-  virtual bool initDepthImage(const PinholeImageConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initDepthImage() not implemented");
+  virtual bool initPinholeImage(const std::string& /*sensor_name*/,
+                                const PinholeImageConfig& /*config*/) {
+    LOG_STREAM(ERROR, "initPinholeImage() not implemented");
     return false;
   }
   /**
-   * @brief Get the depth image.
+   * @brief Get the pinhole image with multiple channels.
    *
-   * This function returns the image, flattened in row-major storage order.
+   * This function returns the multi-channel pinhole image data, with each channel
+   * flattened in row-major storage order.
    *
-   * @return The flattened depth image.
+   * @param sensor_name The name of the pinhole image sensor.
+   * @param channel_names The set of channel names to retrieve.
+   * @return Pointer to the pinhole image data.
    */
-  virtual std::optional<std::span<const float>> depthImage() {
-    LOG_STREAM(ERROR, "depthImage() not implemented");
-    return std::nullopt;
-  }
-  /**
-   * @brief Initialize the traversability image data source.
-   *
-   * Called once during initialization (usually non real-time).
-   *
-   * @param config The configuration of the traversability image.
-   */
-  virtual bool initTraversabilityImage(const PinholeImageConfig& /*config*/) {
-    LOG_STREAM(ERROR, "initTraversabilityImage() not implemented");
-    return false;
-  }
-  /**
-   * @brief Get the traversability image.
-   *
-   * This function returns the image, flattened in row-major storage order.
-   *
-   * @return The flattened traversability image.
-   */
-  virtual std::optional<std::span<const float>> traversabilityImage() {
-    LOG_STREAM(ERROR, "traversabilityImage() not implemented");
+  virtual std::optional<MultiChannelImage*> pinholeImage(
+      const std::string& /*sensor_name*/,
+      const std::unordered_set<std::string>& /*channel_names*/) {
+    LOG_STREAM(ERROR, "pinholeImage() not implemented");
     return std::nullopt;
   }
 };

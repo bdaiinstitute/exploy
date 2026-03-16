@@ -19,7 +19,7 @@ namespace exploy::control {
  * Pattern string used in regex expressions to match alphanumeric identifiers
  * including underscores.
  */
-constexpr std::string_view alphanumeric = "[a-zA-Z0-9_]+";
+constexpr std::string_view kAlphanumeric = "[a-zA-Z0-9_]+";
 
 /**
  * @brief Represents a single matched ONNX tensor.
@@ -144,7 +144,7 @@ class JointMatcher : public GroupMatcher {
 
  private:
   const std::regex pattern_ =
-      std::regex(fmt::format("(obj\\.{}\\.joints)\\.(pos|vel)", alphanumeric));
+      std::regex(fmt::format("(obj\\.{}\\.joints)\\.(pos|vel)", kAlphanumeric));
 };
 // ---------------------------------------------------------------
 
@@ -234,29 +234,39 @@ class HeightScanMatcher : public GroupMatcher {
 
  private:
   const std::regex pattern_ =
-      std::regex(fmt::format("(sensor\\.ray_caster\\.({}))\\.(height|r|g|b)", alphanumeric));
+      std::regex(fmt::format("(sensor\\.ray_caster\\.({}))\\.(height|r|g|b)", kAlphanumeric));
 };
 
 /**
- * @brief Matcher for LiDAR range image input tensors.
+ * @brief Matcher for spherical image sensor input tensors.
  *
- * Matches patterns for range images and creates RangeImageInput components.
+ * Matches patterns for spherical image channels (e.g., range, risk) and creates
+ * SphericalImageInput components with multi-channel support.
  */
-class RangeImageMatcher : public Matcher {
+class SphericalImageMatcher : public GroupMatcher {
  public:
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
+
+ private:
+  const std::regex pattern_ = std::regex(
+      fmt::format("(sensor\\.spherical_image\\.({}))\\.({})", kAlphanumeric, kAlphanumeric));
 };
 
 /**
- * @brief Matcher for camera depth image input tensors.
+ * @brief Matcher for pinhole camera image input tensors.
  *
- * Matches patterns for depth images and creates DepthImageInput components.
+ * Matches patterns for pinhole image channels (e.g., depth, risk) and creates
+ * PinholeImageInput components with multi-channel support.
  */
-class DepthImageMatcher : public Matcher {
+class PinholeImageMatcher : public GroupMatcher {
  public:
   bool matches(const Match& maybe_match) override;
   std::vector<std::unique_ptr<Input>> createInputs() const override;
+
+ private:
+  const std::regex pattern_ = std::regex(
+      fmt::format("(sensor\\.pinhole_image\\.({}))\\.({})", kAlphanumeric, kAlphanumeric));
 };
 
 /**

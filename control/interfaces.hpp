@@ -5,8 +5,10 @@
 #include <Eigen/Geometry>
 
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 /**
@@ -101,12 +103,28 @@ struct SE2VelocityRanges {
  */
 struct HeightScan {
   /**
-   * @brief Map of layer names to their data vectors.
+   * @brief Map of layer names to their data spans.
    *
-   * Each entry maps a layer name (e.g., "height", "color") to a vector of
-   * double values representing the flattened grid data for that layer.
+   * Each entry maps a layer name (e.g., "height", "color") to a span of
+   * float values representing the flattened grid data for that layer.
    */
-  std::unordered_map<std::string, std::vector<double>> layers;
+  std::unordered_map<std::string, std::span<const float>> float_layers;
+};
+
+/**
+ * @brief A flattened multi-channel image.
+ *
+ * Each channel represents a different data type (e.g., depth, range, risk).
+ * All channels share the same projection and must have the same length.
+ */
+struct MultiChannelImage {
+  /**
+   * @brief Map of channel names to their data spans.
+   *
+   * Each entry maps a channel name to a span of float values representing the flattened image data
+   * for that channel.
+   */
+  std::unordered_map<std::string, std::span<const float>> float_channels;
 };
 
 }  // namespace exploy::control

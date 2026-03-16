@@ -352,41 +352,53 @@ bool HeightScanInput::read(OnnxRuntime& runtime, RobotStateInterface& state, Com
       LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, layer_name));
       return false;
     }
-    copyToBuffer(maybe_scan.value()->layers.at(layer_name), maybe_buffer.value());
+    copyToBuffer(maybe_scan.value()->float_layers.at(layer_name), maybe_buffer.value());
   }
   return true;
 }
 
-// Implementation of RangeImageInput methods
-RangeImageInput::RangeImageInput(const std::string& key,
-                                 const metadata::RangeImageMetadata& metadata)
-    : key_(key), metadata_(metadata) {}
+// Implementation of SphericalImageInput methods
+SphericalImageInput::SphericalImageInput(const std::string& key, const std::string& sensor_name,
+                                         const std::unordered_set<std::string>& channel_names,
+                                         const metadata::SphericalImageMetadata& metadata)
+    : key_(key), sensor_name_(sensor_name), channel_names_(channel_names), metadata_(metadata) {}
 
-bool RangeImageInput::init(RobotStateInterface& state, CommandInterface&) {
+bool SphericalImageInput::init(RobotStateInterface& state, CommandInterface&) {
   SphericalImageConfig config;
   config.v_res = static_cast<int>(metadata_.v_res);
   config.h_res = static_cast<int>(metadata_.h_res);
   config.v_fov_min_deg = metadata_.v_fov_min_deg;
   config.v_fov_max_deg = metadata_.v_fov_max_deg;
   config.unobserved_value = metadata_.unobserved_value;
-  return state.initRangeImage(config);
+  config.channel_names = channel_names_;
+  return state.initSphericalImage(sensor_name_, config);
 }
 
-bool RangeImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
-  auto maybe_buffer = runtime.inputBuffer<float>(key_);
-  if (!maybe_buffer.has_value()) return false;
-  auto maybe_image = state.rangeImage();
-  if (!maybe_image.has_value()) return false;
-  copyToBuffer(maybe_image.value(), maybe_buffer.value());
+bool SphericalImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
+                               CommandInterface&) {
+  auto maybe_image = state.sphericalImage(sensor_name_, channel_names_);
+  if (!maybe_image.has_value()) {
+    LOG_STREAM(ERROR, "Failed to get spherical image data for SphericalImageInput");
+    return false;
+  }
+  for (const auto& channel_name : channel_names_) {
+    auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, channel_name));
+    if (!maybe_buffer.has_value()) {
+      LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, channel_name));
+      return false;
+    }
+    copyToBuffer(maybe_image.value()->float_channels.at(channel_name), maybe_buffer.value());
+  }
   return true;
 }
 
-// Implementation of DepthImageInput methods
-DepthImageInput::DepthImageInput(const std::string& key,
-                                 const metadata::DepthImageMetadata& metadata)
-    : key_(key), metadata_(metadata) {}
+// Implementation of PinholeImageInput methods
+PinholeImageInput::PinholeImageInput(const std::string& key, const std::string& sensor_name,
+                                     const std::unordered_set<std::string>& channel_names,
+                                     const metadata::PinholeImageMetadata& metadata)
+    : key_(key), sensor_name_(sensor_name), channel_names_(channel_names), metadata_(metadata) {}
 
-bool DepthImageInput::init(RobotStateInterface& state, CommandInterface&) {
+bool PinholeImageInput::init(RobotStateInterface& state, CommandInterface&) {
   PinholeImageConfig config;
   config.width = metadata_.width;
   config.height = metadata_.height;
@@ -394,15 +406,24 @@ bool DepthImageInput::init(RobotStateInterface& state, CommandInterface&) {
   config.fy = metadata_.fy;
   config.cx = metadata_.cx;
   config.cy = metadata_.cy;
-  return state.initDepthImage(config);
+  config.channel_names = channel_names_;
+  return state.initPinholeImage(sensor_name_, config);
 }
 
-bool DepthImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
-  auto maybe_buffer = runtime.inputBuffer<float>(key_);
-  if (!maybe_buffer.has_value()) return false;
-  auto maybe_image = state.depthImage();
-  if (!maybe_image.has_value()) return false;
-  copyToBuffer(maybe_image.value(), maybe_buffer.value());
+bool PinholeImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, CommandInterface&) {
+  auto maybe_image = state.pinholeImage(sensor_name_, channel_names_);
+  if (!maybe_image.has_value()) {
+    LOG_STREAM(ERROR, "Failed to get pinhole image data for PinholeImageInput");
+    return false;
+  }
+  for (const auto& channel_name : channel_names_) {
+    auto maybe_buffer = runtime.inputBuffer<float>(fmt::format("{}.{}", key_, channel_name));
+    if (!maybe_buffer.has_value()) {
+      LOG_STREAM(ERROR, fmt::format("Failed to get input buffer {}.{}", key_, channel_name));
+      return false;
+    }
+    copyToBuffer(maybe_image.value()->float_channels.at(channel_name), maybe_buffer.value());
+  }
   return true;
 }
 

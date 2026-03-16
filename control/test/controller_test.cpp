@@ -57,17 +57,33 @@ const std::string model_path = (std::filesystem::path(TEST_DATA_DIR) / "test_exp
 std::unique_ptr<HeightScan> createTestHeightScan(int size) {
   const std::vector<double> data(size, 0.0);
   auto scan = std::make_unique<HeightScan>();
-  scan->layers["height"] = std::vector<double>(data.begin(), data.end());
-  scan->layers["r"] = std::vector<double>(data.begin(), data.end());
-  scan->layers["g"] = std::vector<double>(data.begin(), data.end());
-  scan->layers["b"] = std::vector<double>(data.begin(), data.end());
+  scan->float_layers["height"] = std::vector<float>(data.begin(), data.end());
+  scan->float_layers["r"] = std::vector<float>(data.begin(), data.end());
+  scan->float_layers["g"] = std::vector<float>(data.begin(), data.end());
+  scan->float_layers["b"] = std::vector<float>(data.begin(), data.end());
   return scan;
 };
 
 auto kHeightScanData = createTestHeightScan(4);
 auto kTrailScanData = createTestHeightScan(8);
-auto kRangeImageData = std::vector<float>{0, 0, 0, 0};
-auto kDepthImageData = std::vector<float>{0, 0, 0, 0};
+
+std::unique_ptr<MultiChannelImage> createTestSphericalImage(int size) {
+  std::vector<float> data(size, 0.0f);
+  auto image = std::make_unique<MultiChannelImage>();
+  image->float_channels["range"] = std::vector<float>(data.begin(), data.end());
+  image->float_channels["risk"] = std::vector<float>(data.begin(), data.end());
+  return image;
+}
+
+std::unique_ptr<MultiChannelImage> createTestPinholeImage(int size) {
+  std::vector<float> data(size, 0.0f);
+  auto image = std::make_unique<MultiChannelImage>();
+  image->float_channels["depth"] = std::vector<float>(data.begin(), data.end());
+  return image;
+}
+
+auto kSphericalImageData = createTestSphericalImage(4);
+auto kPinholeImageData = createTestPinholeImage(4);
 const auto kPositionData = std::make_optional(Position{0, 0, 0});
 const auto kQuaternionData = std::make_optional(Quaternion{1, 0, 0, 0});  // w x y z
 const auto kLinearVelocityData = std::make_optional(LinearVelocity{0, 0, 0});
@@ -188,8 +204,8 @@ class OnnxControllerTest : public ::testing::Test {
 
   void ExpectInitSensors() {
     EXPECT_CALL(state_mock_, initHeightScan(_, _)).Times(3).WillRepeatedly(Return(true));
-    EXPECT_CALL(state_mock_, initRangeImage(_)).WillOnce(Return(true));
-    EXPECT_CALL(state_mock_, initDepthImage(_)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initSphericalImage(_, _)).WillOnce(Return(true));
+    EXPECT_CALL(state_mock_, initPinholeImage(_, _)).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initImuAngularVelocityImu("pelvis")).WillOnce(Return(true));
     EXPECT_CALL(state_mock_, initImuOrientationW("torso")).WillOnce(Return(true));
   }
@@ -253,10 +269,10 @@ class OnnxControllerTest : public ::testing::Test {
     EXPECT_CALL(state_mock_, baseQuatW()).WillRepeatedly(Return(kQuaternionData));
     EXPECT_CALL(state_mock_, baseLinVelB()).WillRepeatedly(Return(kLinearVelocityData));
     EXPECT_CALL(state_mock_, baseAngVelB()).WillRepeatedly(Return(kAngularVelocityData));
-    EXPECT_CALL(state_mock_, rangeImage())
-        .WillRepeatedly(Return(std::make_optional(std::span<float>(kRangeImageData))));
-    EXPECT_CALL(state_mock_, depthImage())
-        .WillRepeatedly(Return(std::make_optional(std::span<float>(kDepthImageData))));
+    EXPECT_CALL(state_mock_, sphericalImage("one", _))
+        .WillRepeatedly(Return(std::make_optional(kSphericalImageData.get())));
+    EXPECT_CALL(state_mock_, pinholeImage("one", _))
+        .WillRepeatedly(Return(std::make_optional(kPinholeImageData.get())));
   }
 
   void ExpectReadCommands() {
