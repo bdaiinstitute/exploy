@@ -148,8 +148,27 @@ def add_eigen_links(app, doctree, docname):
                         break
 
 
+def fix_readme_doc_links(app, doctree):
+    """Strip the leading 'docs/' from doc links included from outside the Sphinx source tree.
+
+    Files like README.md use paths relative to the repo root (e.g. docs/tutorial/foo.md),
+    but Sphinx resolves links relative to the docs/ source directory, so the
+    prefix needs to be removed for internal cross-references to work.
+    """
+    from sphinx.addnodes import pending_xref
+
+    for node in doctree.traverse(pending_xref):
+        target = node.get("reftarget", "")
+        if target.startswith("docs/"):
+            target = target[len("docs/") :]
+            if target.endswith(".md"):
+                target = target[: -len(".md")]
+            node["reftarget"] = target
+
+
 def setup(app):
     app.connect("autodoc-skip-member", autodoc_skip_member)
+    app.connect("doctree-read", fix_readme_doc_links)
     app.connect("doctree-resolved", add_eigen_links)
 
 
@@ -183,6 +202,17 @@ myst_heading_anchors = 4
 # Suppress cross-reference warnings for links that are valid on GitHub but cannot
 # resolve inside the Sphinx doc tree (e.g., README links to files at the repo root).
 suppress_warnings = ["myst.xref_missing"]
+
+# Links that are valid but not yet publicly available (e.g. unreleased paths on GitHub)
+linkcheck_ignore = [
+    # The repository is private; GitHub returns 404 for unauthenticated requests.
+    r"https://github\.com/bdaiinstitute/exploy/",
+]
+
+# GitHub renders anchors client-side, so Sphinx linkcheck cannot verify them.
+linkcheck_anchors_ignore_for_url = [
+    r"https://github\.com/",
+]
 
 # Note: Eigen uses Doxygen, not Sphinx, so intersphinx won't work.
 # For Eigen cross-references, use direct links or configure Doxygen tag files in breathe_doxygen_config_options

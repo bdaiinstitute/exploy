@@ -49,6 +49,9 @@ jobs:
       - name: Build Documentation
         run: pixi run -e docs build
 
+      - name: Check Links
+        run: pixi run -e docs linkcheck
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:

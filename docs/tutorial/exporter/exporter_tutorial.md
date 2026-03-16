@@ -18,7 +18,7 @@ By the end of this tutorial you will know how to:
 6. Validate the export by comparing ONNX outputs against the original environment.
 
 > **Note:** A complete, runnable version of the code in this tutorial is available as a test in
-> [`exploy/exporter/core/tests/test_export_environment.py`](https://github.com/bdaiinstitute/exploy/blob/main/exploy/exporter/core/tests/test_export_environment.py).
+> [`python/exploy/exporter/core/tests/test_export_environment.py`](https://github.com/bdaiinstitute/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py).
 > This tutorial explains the details behind that test step by step.
 
 ## Prerequisites

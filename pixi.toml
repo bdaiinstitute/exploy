@@ -146,6 +146,9 @@ doxygen = "mkdir -p docs/_build/doxygen && doxygen Doxyfile"
 build = { cmd = "sphinx-build -b html docs docs/_build/html", depends-on = [
   "doxygen",
 ] }
+linkcheck = { cmd = "sphinx-build -b linkcheck docs docs/_build/linkcheck", depends-on = [
+   "doxygen",
+]}
 clean = "rm -rf docs/_build"
 open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html"
 
