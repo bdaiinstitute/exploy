@@ -135,7 +135,7 @@ sphinx = "*"
 furo = "*"
 sphinx-autodoc-typehints = "*"
 doxygen = "*"
-breathe = "*"
+breathe = ">=4.35.0"
 myst-parser = "*"
 
 [feature.docs.pypi-dependencies]
