@@ -101,7 +101,7 @@ We use [Pixi](https://pixi.sh) to build this repository. See the
    target_link_libraries(my_controller PRIVATE exploy)
    ```
 
-  See [`examples/controller/`](examples/controller/) for a complete working example.
+  See [`examples/controller/`](https://github.com/bdaiinstitute/exploy/blob/main/examples/controller) for a complete working example.
 
 #### Initialize the environment and install dependencies
 
