@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+    <name>exploy</name>
+    <version>0.1.0</version>
+    <description>EXport and dePLOY Reinforcement Learning policies.</description>
+    <maintainer email="dbellicoso@rai-inst.com">Dario Bellicoso</maintainer>
+    <maintainer email="awollschlaeger@rai-inst.com">Annika Wollschläger</maintainer>
+    <license>MIT</license>
+
+    <buildtool_depend>cmake</buildtool_depend>
+
+    <depend>eigen</depend>
+    <depend>fmt</depend>
+    <depend>nlohmann-json-dev</depend>
+
+    <!-- Not part of rosdistro yet, system-wide installation expected. -->
+    <!-- <depend>onnxruntime</depend> -->
+
+    <export>
+        <build_type>cmake</build_type>
+    </export>
+</package>
