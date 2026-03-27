@@ -33,18 +33,16 @@ jobs:
         with:
           pixi-version: latest
           frozen: true
-          cache: true
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: core
+          cache: false
 
       - name: Run Tests
-        run: pixi run -e core test
+        run: pixi run test-python-core --capture=no
 
       - name: Run Python Linting
-        run: pixi run -e core lint
+        run: pixi run lint-python
 
       - name: Check Python Formatting
-        run: pixi run -e core format-python-check
+        run: pixi run format-python-check
 
   test-controller:
     name: Test Controller Environment
@@ -59,22 +57,16 @@ jobs:
         with:
           pixi-version: latest
           frozen: true
-          cache: true
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: controller
-
-      - name: Setup Controller Environment
-        run: pixi run -e controller setup
+          cache: false
 
       - name: Build Controller
-        run: pixi run -e controller build
+        run: pixi run build-cpp
 
       - name: Run Controller Tests
-        run: pixi run -e controller test
+        run: pixi run test-cpp
 
       - name: Check Formatting
-        run: pixi run -e controller format-check
-
+        run: pixi run format-cpp-check
 
   test-isaaclab-export:
     name: Test Export IsaacLab and Controller Example
@@ -89,25 +81,16 @@ jobs:
         with:
           pixi-version: latest
           frozen: true
-          cache: true
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: >-
-            isaaclab
-            controller
+          cache: false
 
       - name: Run Isaac Lab Export Test
-        env:
-          OMNI_KIT_ACCEPT_EULA: yes
-        run: pixi run -e isaaclab export-isaaclab-ci
+        run: pixi run export-isaaclab-ci
 
       - name: Build Exploy Library
-        run: |
-          pixi run -e controller setup
-          pixi run -e controller build
+        run: pixi run build-cpp
 
       - name: Run Controller Loopback Example
-        run: pixi run -e controller run-example
-
+        run: pixi run run-cpp-example
 
   test-frameworks-isaaclab:
     name: Test Frameworks - IsaacLab
@@ -122,11 +105,7 @@ jobs:
         with:
           pixi-version: latest
           frozen: true
-          cache: true
-          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
-          environments: isaaclab
+          cache: false
 
       - name: Run Frameworks IsaacLab Tests
-        env:
-          OMNI_KIT_ACCEPT_EULA: yes
-        run: pixi run -e isaaclab test
+        run: pixi run test-python-isaaclab --capture=no

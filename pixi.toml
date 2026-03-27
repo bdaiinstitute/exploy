@@ -1,195 +1,353 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 [workspace]
-name = "exporter"
+name = "exploy"
 version = "0.1.0"
-description = "A development environment for a C++ library with Python bindings, integrated with ONNX Runtime and PyTorch."
+description = "EXport and dePLOY Reinforcement Learning policies."
 authors = ["TODO"]
 channels = ["conda-forge"]
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 
-[system-requirements]
-libc = { family = "glibc", version = "2.35" }
+# ================
+# Feature: default
+# ================
 
-[activation.env]
-LD_LIBRARY_PATH = "$CONDA_PREFIX/lib:$LD_LIBRARY_PATH"
-CPATH = "$CONDA_PREFIX/include:$CONDA_PREFIX/include/c++/v1"
-LIBRARY_PATH = "$CONDA_PREFIX/lib"
-PKG_CONFIG_PATH = "$CONDA_PREFIX/lib/pkgconfig"
-
-# Core dependencies (minimal base)
+# Core dependencies (minimal base).
 [dependencies]
 git = "*"
-pip = "*"
 
-# FEATURE: Python Development - Python tools, linting, formatting, testing
-[feature.python.dependencies]
-python = "3.11.*"
-onnx = "*"
-onnxscript = "*"
-pybind11 = ">=2.10"
-ruff = "*"
-pre-commit = "*"
+[tasks.check]
+description = "Check all code without making changes."
+depends-on = [
+  { task = "format-python-check", environment = "python" },
+  { task = "format-cpp-check", environment = "cpp" },
+]
 
-[feature.python.pypi-dependencies]
-exploy = { path = ".", editable = true }
-build = "*"
+[tasks.format]
+description = "Format all code."
+depends-on = [
+  { task = "format-python", environment = "python" },
+  { task = "format-cpp", environment = "cpp" },
+]
 
-[feature.python.tasks]
-# Python linting and formatting
+[tasks.lint]
+description = "Lint all code."
+depends-on = [{ task = "lint-python", environment = "python" }]
+
+[tasks.build]
+description = "Build all C++ code."
+depends-on = [
+  { task = "build-cpp", environment = "cpp" },
+  { task = "build-cpp-example", environment = "cpp" },
+]
+
+[tasks.test]
+description = "Run all tests."
+depends-on = [
+  { task = "test-python", environment = "python" },
+  { task = "test-cpp", environment = "cpp" },
+]
+
+[tasks.clean]
+description = "Clean all build artifacts and caches."
+cmd = "rm -rf $PIXI_PROJECT_ROOT/build $PIXI_PROJECT_ROOT/.pixi"
+
+# ============
+# Environments
+# ============
+
+# Environments are defined as sets of features.
+# Here below a quick overview of the main features and their intended use:
+#
+# - The 'default' feature is included in all environments, and can be used for shared dependencies.
+# - The 'env-*' features are used to specify environment-specific dependencies and tasks.
+# - The '*-dev' features are used to specify development dependencies and tasks that are not needed for runtime.
+# - The 'exploy-*-runtime' features are used to specify runtime dependencies.
+
+# -------------------
+# Environment: python
+# -------------------
+
+# Python development (exploy.core).
+[environments.python]
+features = [
+  # Specific features.
+  "env-python",
+  # Common features.
+  "default",
+  "python-dev",
+  "exploy-python-runtime",
+  "editable-exploy-python",
+]
+solve-group = "exploy"
+
+[feature.env-python.tasks]
 lint-python = "ruff check ."
 lint-python-fix = "ruff check --fix ."
 format-python = "ruff format ."
 format-python-check = "ruff format --check ."
-lint = { depends-on = ["lint-python"] }
-format = { depends-on = ["format-python"] }
-check = { depends-on = ["lint", "format"] }
+test-python = "pytest"
+test-python-core = "pytest -m core"
 
-# FEATURE: C++ Development - Build tools, native libraries, C++ linting/testing
-[feature.cpp.dependencies]
-cmake = ">=3.23"
-extra-cmake-modules = "*"
-ninja = "*"
-eigen = ">=3.4"
-nlohmann_json = ">=3.11"
-fmt = ">=9.1"
-gtest = "*"
-gmock = "*"
-# This should be >=1.15 but we need 1.24.2 for OOTB CMake support.
-onnxruntime-cpp = ">=1.24.2"
-gcc_linux-64 = "*"
-gxx_linux-64 = "*"
-libstdcxx-ng = "*"
+# This task checks whether the pyproject.toml is properly configured for uv.
+[feature.env-python.tasks.run-uv-export]
+cmd = "uv export --quiet --extra all --no-hashes --no-header --no-annotate"
+
+# ----------------
+# Environment: cpp
+# ----------------
+
+# C++ development (controller).
+# Note: Python features are needed for the tests.
+[environments.cpp]
+features = [
+  # Specific features.
+  "env-cpp",
+  "exploy-cpp-runtime",
+  # Common features.
+  "default",
+  "cpp-dev",
+  "exploy-python-runtime",
+]
+solve-group = "exploy"
+
+[feature.cpp-dev.dependencies]
 clang-format = "*"
+cmake = ">=3.23"
+compilers = "*"
+gmock = "*"
+gtest = "*"
+ninja = "*"
+[feature.cpp-dev.target.linux-64.dependencies]
+extra-cmake-modules = "*"
 
-[feature.cpp.tasks]
-# C++ build and testing
-configure = "cmake -S control -B build/control -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-build = { cmd = "cmake --build build/control", depends-on = ["configure"] }
-test-cpp = "ctest --test-dir build/control --output-on-failure"
-test = { depends-on = ["test-cpp"] }
+[feature.env-cpp.tasks.configure-cpp]
+cmd = """
+cmake \
+  -S control \
+  -B build/control \
+  -G Ninja \
+  -DBUILD_TESTING:BOOL=ON \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=ON
+"""
 
-# Controller example
-configure-example = "cmake -S examples/controller -B build/examples/controller -G Ninja"
-build-example = { cmd = "cmake --build build/examples/controller", depends-on = [
-  "configure-example",
-] }
-run-example = { cmd = "build/examples/controller/loopback_controller_example examples/exporter_scripts/isaaclab/exporter_tests/test_export.onnx --cycles 100", depends-on = [
-  "build-example",
-] }
+[feature.env-cpp.tasks.build-cpp]
+cmd = "cmake --build build/control"
+depends-on = ["configure-cpp"]
+
+[feature.env-cpp.tasks.test-cpp]
+cmd = "ctest --test-dir build/control --output-on-failure"
 
 # C++ formatting and linting
-format-cpp = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i"
-format-cpp-check = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror"
-format = { depends-on = ["format-cpp"] }
-format-check = { depends-on = ["format-python-check", "format-cpp-check"] }
-check = { depends-on = ["format-check"] }
+[feature.env-cpp.tasks.format-cpp]
+cmd = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format -i"
 
-# C++ setup
-setup = { depends-on = ["configure"] }
+[feature.env-cpp.tasks.format-cpp-check]
+cmd = "find control -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror"
 
-[feature.core.dependencies]
-pytest = "*"
+# Controller example
+[feature.env-cpp.tasks.configure-cpp-example]
+cmd = """
+cmake \
+  -S examples/controller \
+  -B build/examples/controller \
+  -G Ninja
+"""
 
-[feature.core.pypi-dependencies]
-exploy = { path = ".", editable = true }
-pytest-gitignore = "*"
+[feature.env-cpp.tasks.build-cpp-example]
+cmd = "cmake --build build/examples/controller"
+depends-on = ["configure-cpp-example"]
 
-[feature.core.tasks]
-test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/python/exploy/exporter/core"
-test = { depends-on = ["test-python"] }
+[feature.env-cpp.tasks.run-cpp-example]
+cmd = """
+build/examples/controller/loopback_controller_example \
+  $PIXI_PROJECT_ROOT/examples/exporter_scripts/isaaclab/exporter_tests/test_export.onnx \
+  --cycles 100
+"""
+depends-on = [
+  { task = "build-cpp-example", environment = "cpp" },
+  { task = "export-isaaclab-ci", environment = "isaaclab" },
+]
 
-[feature.isaaclab.dependencies]
-python = "3.11.*"
-# Pinning due to isaacsim/isaaclab requirements
-typing-extensions = "4.12.2.*"
-pillow = "11.3.*"
-packaging = "23.0.*"
-# OpenGL and X11 support for headless rendering
-mesalib = "*"
-xorg-libxt = "*"
-libglu = "*"
+# -----------------
+# Environment: docs
+# -----------------
 
-[feature.isaaclab.pypi-options]
-extra-index-urls = ["https://pypi.nvidia.com"]
+# Documentation building.
+[environments.docs]
+features = [
+  # Specific features.
+  "env-docs",
+  # Common features.
+  "default",
+  "exploy-python-runtime",
+  "editable-exploy-python",
+]
+solve-group = "exploy"
 
-[feature.isaaclab.pypi-dependencies]
-exploy = { path = ".", editable = true }
-isaaclab = { version = ">=2,<3", extras = ["all"] }
-isaacsim = { extras = ["all", "extscache"], version = ">=5,<6" }
+[feature.env-docs.dependencies]
+breathe = "*"
+doxygen = "*"
+furo = "*"
+myst-parser = "*"
+python = "*"
+sphinx = "*"
+sphinx-autodoc-typehints = "*"
 
-[feature.isaaclab.tasks]
+[feature.env-docs.tasks]
+clean-docs = "rm -rf docs/_build"
+doxygen = "mkdir -p docs/_build/doxygen && doxygen Doxyfile"
+open-docs = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html"
+
+[feature.env-docs.tasks.build-docs]
+cmd = "sphinx-build -b html docs docs/_build/html"
+depends-on = ["doxygen"]
+
+[feature.env-docs.tasks.linkcheck]
+cmd = "sphinx-build -b linkcheck docs docs/_build/linkcheck"
+depends-on = ["doxygen"]
+
+# ---------------------
+# Environment: isaaclab
+# ---------------------
+
+# Due to strict dependency pinnings of IsaacSim and IsaacLab, merging this environment into
+# the main 'exploy' solve group causes dependency conflicts. For now, we keep it separate.
+# Note: this environment is not using on purpose 'exploy-python-runtime' since delicate dependencies
+# that are shared with Isaac* are handled directly in the 'isaaclab-*' feature.
+[environments.isaaclab]
+features = [
+  # Specific features.
+  "env-isaaclab",
+  "isaaclab-232",
+  "editable-exploy-python-isaaclab",
+  # Common features.
+  "python-dev",
+]
+no-default-feature = true
+
+[feature.env-isaaclab.tasks]
+# Tasks to export policies for Isaac Lab.
 export-isaaclab-g1 = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0 --pause-on-failure"
 export-isaaclab-g1-rnn = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Exploy-Velocity-Flat-G1-RNN-Play-v0 --pause-on-failure"
 export-isaaclab-anymal = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-Anymal-C-Play-v0 --pause-on-failure"
 export-isaaclab = { depends-on = ["export-isaaclab-g1"] }
-export-isaaclab-ci = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
-test-import = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
-test-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
-test-python = "PYTHONPATH=$PIXI_PROJECT_ROOT:$PYTHONPATH pytest -s $PIXI_PROJECT_ROOT/python/exploy/exporter/frameworks/isaaclab/tests"
-test = { depends-on = ["test-python", "verify"] }
-verify = { depends-on = ["test-import", "test-torch"] }
 
-# FEATURE: Documentation - Sphinx documentation building
-[feature.docs.dependencies]
-python = "3.11.*"
-sphinx = "*"
-furo = "*"
-sphinx-autodoc-typehints = "*"
-doxygen = "*"
-breathe = ">=4.35.0"
-myst-parser = "*"
+test-python-isaaclab = "pytest python/exploy/exporter/frameworks/isaaclab"
+test-isaaclab = { depends-on = ["verify-isaaclab", "test-python-isaaclab"] }
 
-[feature.docs.pypi-dependencies]
+test-import-isaaclab = "python -c \"import isaaclab; print('Isaac Lab installed:', isaaclab.__file__)\""
+test-import-torch = "python -c \"import torch; print('CUDA available:', torch.cuda.is_available())\""
+verify-isaaclab = { depends-on = ["test-import-isaaclab", "test-import-torch"] }
+
+# Tasks to test Isaac Lab installation.
+[feature.env-isaaclab.tasks.export-isaaclab-ci]
+cmd = "python examples/exporter_scripts/isaaclab/export_isaaclab.py --task Isaac-Velocity-Rough-G1-Play-v0"
+inputs = [
+  "python/exploy/exporter/core/*",
+  "python/exploy/exporter/frameworks/isaaclab/*",
+  "examples/exporter_scripts/isaaclab/export_isaaclab.py",
+]
+outputs = ["examples/exporter_scripts/isaaclab/exporter_tests/test_export.onnx"]
+
+# ========
+# Features
+# ========
+
+# Features are used to specify sets of dependencies and tasks that can be shared across environments.
+
+# ---------------------------------------
+# Features: exploy-* runtime dependencies
+# ---------------------------------------
+
+# Keep this in sync with CMake runtime requirements.
+[feature.exploy-cpp-runtime.dependencies]
+eigen = ">=3.4"
+fmt = ">=9.1"
+nlohmann_json = ">=3.11"
+# This should be >=1.15 but we need 1.24.2 for OOTB CMake support in conda-forge.
+onnxruntime-cpp = ">=1.24.2"
+
+# Keep this in sync with pyproject.toml.
+[feature.exploy-python-runtime.dependencies]
+numpy = "<2"
+onnx = "*"
+onnxruntime = "*"
+onnxscript = "*"
+pytorch = "*"
+
+# -----------------------------------------
+# Features: editable-exploy-* installations
+# -----------------------------------------
+
+# Editable installation of: exploy.
+[feature.editable-exploy-python.pypi-dependencies]
 exploy = { path = ".", editable = true }
 
-[feature.docs.tasks]
-doxygen = "mkdir -p docs/_build/doxygen && doxygen Doxyfile"
-build = { cmd = "sphinx-build -b html docs docs/_build/html", depends-on = [
-  "doxygen",
-] }
-linkcheck = { cmd = "sphinx-build -b linkcheck docs docs/_build/linkcheck", depends-on = [
-  "doxygen",
-] }
-clean = "rm -rf docs/_build"
-open = "xdg-open docs/_build/html/index.html || open docs/_build/html/index.html"
+# Editable installation of: exploy[isaaclab].
+[feature.editable-exploy-python-isaaclab.pypi-dependencies]
+exploy = { path = ".", extras = ["isaaclab"], editable = true }
 
-# ENVIRONMENTS
-[environments]
-python = ["python"]             # Python-only development
-cpp = ["cpp"]                   # C++-only development
-core = ["python", "core"]       # Exporter environment: Python + core functionality
-isaaclab = ["isaaclab", "core"] # Isaac Lab + core exporter functionality
-controller = ["python", "cpp"]  # Controller environment: Python + C++
-docs = ["docs"]                 # Documentation building
+# -------------------
+# Feature: python-dev
+# -------------------
 
-# Available across all environments
-[tasks]
-help = '''echo "Available environments:
-  pixi run -e python <task>     - Python development only
-  pixi run -e cpp <task>        - C++ development only
-  pixi run -e core <task>       - Exporter core (Python + tests)
-  pixi run -e isaaclab <task>   - Isaac Lab exporter workflows
-  pixi run -e controller <task> - Python + C++ (controller dev)
-  pixi run -e docs <task>       - Documentation building
+[feature.python-dev.dependencies]
+hatch = "*"
+hatch-vcs = "*"
+ipython = "*"
+pip = "*"
+pre-commit = "*"
+pybind11 = ">=2.10"
+pytest = "*"
+python = "*"
+python-build = "*"
+ruff = "*"
+uv = "*"
 
-Feature-specific tasks:
-  Python: lint-python, lint-python-fix, format-python, format-python-check
-  Core: test-python, test
-  C++: configure, build, test-cpp, test, format-cpp, format-cpp-check
-  Isaac Lab: export-isaaclab-*, test-import, test-torch, verify, test
-  Docs: doxygen, build, linkcheck, clean, open
+[feature.python-dev.pypi-dependencies]
+pytest-gitignore = "*"
 
-Common workflows:
-  pixi install -e core          - Install exporter core environment
-  pixi run -e core test         - Run exporter core tests
-  pixi run -e docs build        - Build documentation
-  pixi run -e docs open         - Open documentation
-  pixi install -e controller    - Install controller environment
-  pixi run -e controller setup  - Setup controller development
-  pixi run -e controller build  - Build C++ code
-  pixi run -e controller test   - Run C++ controller tests
-  pixi install -e isaaclab      - Install exporter with Isaac Lab
-  pixi run -e isaaclab export-isaaclab-g1 - Export Isaac Lab policy"'''
+# -----------------
+# Feature: isaaclab
+# -----------------
 
-clean = "rm -rf build .pixi pixi.lock"
+[feature.isaaclab-232]
+platforms = ["linux-64"]
+
+[feature.isaaclab-232.activation.env]
+LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:$CONDA_PREFIX/lib"
+OMNI_KIT_ACCEPT_EULA = "yes"
+
+[feature.isaaclab-232.system-requirements]
+cuda = "13"
+libc = { family = "glibc", version = "2.35" }
+
+[feature.isaaclab-232.pypi-options]
+no-build-isolation = true
+extra-index-urls = ["https://pypi.nvidia.com"]
+
+[feature.isaaclab-232.dependencies]
+click = "==8.1.7"
+cryptography = "==44.0.0"
+filelock = "==3.13.1"
+fsspec = "==2024.6.1"
+gymnasium = "==1.2.0"
+idna = "==3.10"
+numpy = "==1.26.0"
+networkx = "==3.3"
+markupsafe = "==2.1.3"
+packaging = "==23.0"
+pillow = "==11.3.0"
+pytorch = { version = "==2.7.0", build = "*cuda*" }
+python = "3.11.*"
+pyyaml = "==6.0.2"
+rsl-rl-lib = "<4"
+sympy = "==1.13.3"
+torchvision = "==0.22.0"
+typing-extensions = "==4.12.2"
+# Headless rendering.
+libglu = "*"
+
+[feature.isaaclab-232.pypi-dependencies]
+isaacsim = { extras = ["all"], version = "==5.1.0.0" }

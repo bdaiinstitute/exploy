@@ -4,6 +4,7 @@ description = "EXport and dePLOY Reinforcement Learning policies."
 name = "exploy"
 requires-python = ">=3.11"
 
+# Keep this aligned with the C++ version defined in control/CMakeLists.txt.
 version = "0.1.0"
 
 authors = [
@@ -52,20 +53,36 @@ dependencies = [
     "numpy",
     "onnx",
     "onnxruntime",
+    "onnxscript",
     "torch",
 ]
 
 [project.optional-dependencies]
-all = ["exploy[isaaclab,style,testing]"]
-isaaclab = ["isaaclab"]
-style = ["flake8", "pre-commit", "ruff"]
-testing = ["pytest"]
+all = ["exploy[isaaclab]"]
+isaaclab = ["isaaclab~=2.3"]
 
 [project.urls]
 Changelog = "https://github.com/bdaiinstitute/exploy/releases"
 Documentation = "https://bdaiinstitute.github.io/exploy"
 Source = "https://github.com/bdaiinstitute/exploy"
 Tracker = "https://github.com/bdaiinstitute/exploy/issues"
+
+# ==========
+# uv support
+# ==========
+
+[tool.uv]
+# Limit the output of `uv export` to only Python 3.11 (compatible with isaac*).
+environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.11'",
+]
+
+[[tool.uv.index]]
+name = "nvidia"
+url = "https://pypi.nvidia.com/"
+
+[tool.uv.sources]
+isaaclab = { index = "nvidia" }
 
 # ===========
 # Build tools

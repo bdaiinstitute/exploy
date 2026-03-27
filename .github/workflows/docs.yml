@@ -48,10 +48,10 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build Documentation
-        run: pixi run -e docs build
+        run: pixi run build-docs
 
       - name: Check Links
-        run: pixi run -e docs linkcheck
+        run: pixi run linkcheck
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4

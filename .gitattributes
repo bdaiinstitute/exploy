@@ -1,0 +1,3 @@
+# Mark pixi.lock as a binary file to prevent merge conflicts
+# and to indicate that it is a generated file.
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true

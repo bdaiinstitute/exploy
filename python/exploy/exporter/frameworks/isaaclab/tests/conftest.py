@@ -1,13 +1,48 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
 import logging
+import pathlib
 
 import pytest
 
-# 1. The Launcher must be initialized before any other omni imports
-from isaaclab.app import AppLauncher
+try:
+    from isaaclab.app import AppLauncher
+
+    HAS_ISAACLAB = True
+except ImportError:
+    HAS_ISAACLAB = False
 
 logger = logging.getLogger(__name__)
+
+
+def pytest_collection_modifyitems(
+    session: pytest.Session,
+    config: pytest.Config,
+    items: list[pytest.Item],
+) -> None:
+    """
+    Modify collected test items to add custom markers based on their file paths.
+
+    Note:
+        Isaaclab tests are skipped in the global test suite if `isaaclab` is not found.
+    """
+
+    # Add 'isaaclab' marker to tests in the same directory as this conftest.py.
+    for item in items:
+        if str(pathlib.Path(__file__).parent) in str(item.path):
+            item.add_marker(marker="isaaclab")
+
+    if HAS_ISAACLAB:
+        return
+
+    skip_isaaclab = pytest.mark.skip(
+        reason="Optional dependency 'isaaclab' not found, skipping test",
+    )
+
+    # Skip tests with 'isaaclab' mark.
+    for item in items:
+        if "isaaclab" in item.keywords:
+            item.add_marker(skip_isaaclab)
 
 
 @pytest.fixture(scope="session")
