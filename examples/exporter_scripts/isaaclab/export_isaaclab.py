@@ -88,7 +88,7 @@ def export_isaaclab(
     # create isaac environment
     # wrap around environment for rsl-rl
     env = RslRlVecEnvWrapper(gym.make(task_name, cfg=env_cfg, render_mode=None))
-    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=test_dir, device=agent_cfg.device)
+    runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
 
     # Export to ONNX.
     onnx_export_dir = test_dir

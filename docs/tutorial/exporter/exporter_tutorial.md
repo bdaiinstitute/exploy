@@ -127,10 +127,10 @@ class Environment:
 
     def process_actions(self, actions: torch.Tensor):
         self._actions[:] = actions
-        self._processed_action = 3 * actions
+        self._processed_action[:] = 3 * actions
 
     def apply_actions(self):
-        self._output = self._processed_action + 2
+        self._output[:] = self._processed_action + 2
 
     def step(self, actions: torch.Tensor) -> tuple[torch.Tensor, bool]:
         done = False
@@ -149,7 +149,8 @@ class Environment:
             self._actions[:] = torch.zeros_like(self._actions)
             done = True
 
-        return self.compute_obs(), done
+        obs = self.compute_obs()
+        return obs, done
 ```
 
 Note that `compute_obs()` uses only torch operations — it concatenates tensors from the data
@@ -301,6 +302,12 @@ exp_env.context_manager().add_components(
         Memory(
             name="actions",
             get_from_env_cb=lambda: exp_env.env._actions,
+        ),
+        # processed_action is memory: it is updated in-place by apply_actions() and must
+        # persist across inference calls.
+        Memory(
+            name="process_actions",
+            get_from_env_cb=lambda: exp_env.env._processed_action,
         ),
     ]
 )
@@ -686,6 +693,10 @@ def export_and_evaluate(
             Memory(
                 name="actions",
                 get_from_env_cb=lambda: exp_env.env._actions,
+            ),
+            Memory(
+                name="process_actions",
+                get_from_env_cb=lambda: exp_env.env._processed_action,
             ),
         ]
     )

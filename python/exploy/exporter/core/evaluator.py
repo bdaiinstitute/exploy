@@ -43,7 +43,7 @@ def _print_progress_bar(
 
     print(
         f"\r{status_emoji} {bar} {step_ctr + 1}/{num_steps} | Failed: {failed_steps} | {extra_str}",
-        end="\n" if not step_export_ok else "",
+        end="",
         flush=True,
     )
 
@@ -78,7 +78,7 @@ def _compare_step_outputs(
         A tuple of (is_step_export_ok, message), where `is_step_export_ok` is a boolean indicating whether the step's outputs are close within the specified tolerances, and `message` is a string describing the comparison results, including details of any mismatches and troubleshooting checklists.
     """
     step_export_ok = True
-    msg = ""
+    msg = "\n"
 
     # Check observation comparison
     obs_env = env_obs.view(1, -1)
@@ -95,7 +95,7 @@ def _compare_step_outputs(
     )
 
     if not obs_ok:
-        msg += "\n\n📋 Observation comparison failed!"
+        msg += "\n📋 Observation comparison failed!"
         msg += f"\n{obs_message}"
         msg += "\n📋 Observation Troubleshooting Checklist:"
         msg += "\n  • Verify all observation data sources have corresponding input components"
@@ -125,7 +125,7 @@ def _compare_step_outputs(
     )
 
     if not actions_ok:
-        msg += "\n\n🎯 Actions comparison failed!"
+        msg += "\n🎯 Actions comparison failed!"
         msg += f"\n{actions_message}"
         msg += "\n📋 Actions Troubleshooting Checklist:"
         msg += "\n  • Verify actor network matches between env and ONNX"
@@ -164,7 +164,7 @@ def _compare_step_outputs(
         )
 
         if not outputs_ok:
-            msg += "\n\n📊 Outputs comparison failed!"
+            msg += "\n📊 Outputs comparison failed!"
             msg += f"\n{outputs_message}"
             msg += "\n📋 Outputs Troubleshooting Checklist:"
             msg += "\n  • Verify output components are registered for all expected outputs"
@@ -240,6 +240,10 @@ def evaluate(
             rtol=rtol,
             pause_on_failure=pause_on_failure,
         )
+
+    if verbose:
+        print("\nEvaluation complete.")
+
     return export_ok, final_obs
 
 
@@ -394,14 +398,6 @@ def evaluate_episode(
         ort_observations = torch.from_numpy(session_wrapper.get_output_value("obs")).clone()
         ort_actions = torch.from_numpy(session_wrapper.get_output_value("actions")).clone()
 
-        if not env_outputs:
-            # The env_outputs dict is empty. This happens if the exportable environment
-            # does not register its evaluation hooks. Populate the environment outputs here.
-            env_outputs = {
-                component.output_name: component.get_from_env_cb().clone().cpu()
-                for component in context_manager.get_output_components()
-            }
-
         # Compute actions from the new observations.
         env_actions = actor(obs)
 
@@ -442,6 +438,5 @@ def evaluate_episode(
             input()
 
         step_ctr += 1
-    if verbose:
-        print("\nEvaluation complete.")
+
     return export_ok, next_obs

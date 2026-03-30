@@ -62,7 +62,7 @@ class Input:
 
     def read(self) -> None:
         """Get the latest data from the environment by calling the callback."""
-        self._data = self._get_from_env_cb()
+        self._data = self._get_from_env_cb().clone()
 
     @property
     def get_from_env_cb(self) -> Callable[[], torch.Tensor]:

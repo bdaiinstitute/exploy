@@ -15,6 +15,7 @@ exported ONNX graph.
 
 import pathlib
 import tempfile
+from collections.abc import Callable
 
 import torch
 
@@ -69,8 +70,13 @@ class Environment:
         self._processed_action = torch.zeros_like(self._actions)
         self._output = torch.zeros_like(self._actions)
 
+        self._post_substep_callbacks = {}
+
         self._reset_after_steps = 10
         self._step_count = 0
+
+    def add_post_substep_callback(self, name: str, cb: Callable[[], None]):
+        self._post_substep_callbacks[name] = cb
 
     @property
     def num_act(self) -> int:
@@ -107,11 +113,11 @@ class Environment:
             actions (torch.Tensor): The actions to be processed.
         """
         self._actions[:] = actions
-        self._processed_action = 3 * actions
+        self._processed_action[:] = 3 * actions
 
     def apply_actions(self):
         """Apply the processed actions to the environment."""
-        self._output = self._processed_action + 2
+        self._output[:] = self._processed_action + 2
 
     def step(self, actions: torch.Tensor) -> tuple[torch.Tensor, bool]:
         """Perform a step in the environment.
@@ -132,6 +138,8 @@ class Environment:
         for _ in range(self._decimation):
             self.apply_actions()
             self.data_source.step()
+            for cb in self._post_substep_callbacks.values():
+                cb()
 
         self._step_count += 1
 
@@ -183,6 +191,22 @@ class EnvironmentWithTorchModule(Environment):
         )
 
 
+class PostSubstepUpdater:
+    """A class used to inject evaluation callbacks at the end of each substep during environment
+    stepping, to test that the ONNX graph stays in sync with the environment across substeps.
+    """
+
+    def __init__(self, evaluate_substep: Callable[[int], None], update: Callable[[], None]):
+        self.sub_step_ctr = 0
+        self._evaluate_substep = evaluate_substep
+        self._update = update
+
+    def __call__(self, *args, **kwargs):
+        self._evaluate_substep(self.sub_step_ctr)
+        self.sub_step_ctr += 1
+        self._update()
+
+
 class ExportableEnv(ExportableEnvironment):
     """A wrapper for an environment that makes it exportable to ONNX."""
 
@@ -214,7 +238,13 @@ class ExportableEnv(ExportableEnvironment):
         return self.env.compute_obs()
 
     def register_evaluation_hooks(self, update, evaluate_substep):
-        pass
+        self._env.add_post_substep_callback(
+            name="onnx_evaluator_callback",
+            cb=PostSubstepUpdater(
+                evaluate_substep=evaluate_substep,
+                update=update,
+            ),
+        )
 
     def metadata(self) -> dict:
         return {
@@ -236,6 +266,7 @@ class ExportableEnv(ExportableEnvironment):
         return self.env.process_actions(actions)
 
     def step(self, actions: torch.Tensor) -> tuple[torch.Tensor, bool]:
+        self._env._post_substep_callbacks["onnx_evaluator_callback"].sub_step_ctr = 0
         return self.env.step(actions)
 
 
@@ -311,6 +342,7 @@ def export_and_evaluate_env(
     onnx_file_name: str,
     num_eval_episodes: int,
     max_eval_steps_per_episode: int,
+    verbose: bool = False,
 ) -> bool:
     """Helper function to export an environment and evaluate it using the exported ONNX graph."""
     exp_env.context_manager().add_components(
@@ -331,6 +363,10 @@ def export_and_evaluate_env(
             Memory(
                 name="actions",
                 get_from_env_cb=lambda: exp_env.env._actions,
+            ),
+            Memory(
+                name="process_actions",
+                get_from_env_cb=lambda: exp_env.env._processed_action,
             ),
         ]
     )
@@ -361,7 +397,7 @@ def export_and_evaluate_env(
             actor=actor,
             path=onnx_path,
             filename=onnx_file_name,
-            verbose=False,
+            verbose=verbose,
         )
 
         # Make a session wrapper.
@@ -380,7 +416,7 @@ def export_and_evaluate_env(
                 session_wrapper=session_wrapper,
                 num_episodes=num_eval_episodes,
                 max_episode_steps=max_eval_steps_per_episode,
-                verbose=False,
+                verbose=verbose,
                 pause_on_failure=False,
             )
     return export_ok
