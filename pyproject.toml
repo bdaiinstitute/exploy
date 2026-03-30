@@ -59,7 +59,7 @@ dependencies = [
 
 [project.optional-dependencies]
 all = ["exploy[isaaclab]"]
-isaaclab = ["isaaclab~=2.3"]
+isaaclab = ["isaaclab"]
 
 [project.urls]
 Changelog = "https://github.com/bdaiinstitute/exploy/releases"
