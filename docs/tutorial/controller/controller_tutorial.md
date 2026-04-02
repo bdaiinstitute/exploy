@@ -321,9 +321,7 @@ matches the training configuration.
 
 ---
 
-## Advanced Topics
-
-### Custom matchers
+## Advanced: Custom Matchers
 
 The built-in matchers cover the standard IsaacLab tensor naming conventions.
 If your model uses a different naming scheme you can register additional matchers
@@ -364,7 +362,7 @@ tensors that the defaults don't cover.
 
 ---
 
-### Custom logging backend
+## Advanced: Custom Logging Backend
 
 By default the controller logs to stdout. To redirect log messages to your own
 logging system, implement `LoggingInterface` and call `setLogger()`:
@@ -409,3 +407,171 @@ exploy::control::setLogger(&adapter);
 
 `setLogger()` stores a raw pointer, so the adapter must outlive the controller.
 Pass `nullptr` to revert to the built-in stdout logger.
+
+---
+
+## Advanced: Custom Commands
+
+The built-in `CommandInterface` covers standard command types (SE2 velocity,
+SE3 pose, boolean selectors, float values, joint positions). If your policy
+consumes a tensor that doesn't match any of those — for example an arbitrary
+vector produced by a higher-level planner — you can feed it in by registering
+a custom `Matcher` and `Input` pair.
+
+### How it works
+
+When `controller.create()` loads the ONNX model it iterates over every input
+and output tensor and calls `matches()` on each registered matcher. If your
+matcher claims a tensor, `createInputs()` is later called to instantiate the
+component that will populate it every cycle.
+
+The pattern therefore involves three pieces:
+
+| Piece | Responsibility |
+|-------|---------------|
+| Your data-source class | Owns the data and exposes `init` / `read` methods; independent of `CommandInterface` |
+| `CustomInput : public Input` | Bridges your data source to an ONNX input buffer |
+| `CustomMatcher : public Matcher` | Recognises the tensor by name, stores the match, and constructs `CustomInput` instances |
+
+### Example — feeding an arbitrary vector command
+
+Suppose your model has an input tensor named `custom.planner.output` of shape
+`[1, N]` that should be filled from a motion planner. The naming convention
+`custom.<type>.<name>` groups tensors by type and identifies each by name.
+The built-in matchers ignore tensors with the `custom.*` prefix, so you need a
+custom matcher.
+
+**Step 1 — define an interface for your data source**
+
+```cpp
+// Your own header — no dependency on exploy.
+class PlannerInterface {
+ public:
+  // Called once during init; return false to abort controller init.
+  virtual bool initPlannerOutput(const std::string& output_name) = 0;
+
+  // Called every cycle; return std::nullopt when data is not yet available.
+  virtual std::optional<std::vector<double>>
+      plannerOutput(const std::string& output_name) const = 0;
+};
+```
+
+**Step 2 — implement `Input`**
+
+```cpp
+#include "exploy/components.hpp"  // Input, OnnxRuntime
+#include "exploy/interfaces.hpp"
+
+class PlannerInput : public exploy::control::Input {
+ public:
+  PlannerInput(const std::string& tensor_key,
+               const std::string& output_name,
+               PlannerInterface& planner)
+      : tensor_key_(tensor_key),
+        output_name_(output_name),
+        planner_(planner) {}
+
+  // Called once by controller.init() — non-real-time.
+  bool init(exploy::control::RobotStateInterface& /*state*/,
+            exploy::control::CommandInterface& /*command*/) override {
+    return planner_.initPlannerOutput(output_name_);
+  }
+
+  // Called every cycle by controller.update() — real-time.
+  bool read(exploy::control::OnnxRuntime& runtime,
+            exploy::control::RobotStateInterface& /*state*/,
+            exploy::control::CommandInterface& /*command*/) override {
+    auto maybe_data = planner_.plannerOutput(output_name_);
+    if (!maybe_data) return false;
+
+    auto maybe_buffer = runtime.inputBuffer<float>(tensor_key_);
+    if (!maybe_buffer) return false;
+
+    if (maybe_buffer->size() != maybe_data->size()) return false;
+    std::copy(maybe_data->begin(), maybe_data->end(), maybe_buffer->begin());
+    return true;
+  }
+
+ private:
+  std::string tensor_key_;
+  std::string output_name_;
+  PlannerInterface& planner_;
+};
+```
+
+**Step 3 — implement `Matcher`**
+
+The matcher uses the `custom.<type>.<name>` pattern. The regex captures the
+type segment (group 1) and the name segment (group 2). Here the matcher
+only handles the `planner` type; extend `matches()` to cover additional types
+as needed.
+
+```cpp
+#include "exploy/matcher.hpp"
+#include <regex>
+
+class PlannerMatcher : public exploy::control::Matcher {
+ public:
+  explicit PlannerMatcher(PlannerInterface& planner) : planner_(planner) {}
+
+  // Called by controller.create() for every tensor in the ONNX model.
+  bool matches(const exploy::control::Match& maybe_match) override {
+    // Matches tensors of the form custom.<type>.<name>.
+    static const std::regex kPattern(R"(custom\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+))");
+    std::smatch m;
+    if (std::regex_match(maybe_match.name, m, kPattern) && m.size() > 2) {
+      const std::string& type = m[1].str();  // e.g. "planner"
+      const std::string& name = m[2].str();  // e.g. "output"
+      if (type == "planner") {
+        found_matches_[name] = maybe_match;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Called after create() to instantiate inputs for every claimed tensor.
+  std::vector<std::unique_ptr<exploy::control::Input>> createInputs() const override {
+    std::vector<std::unique_ptr<exploy::control::Input>> inputs;
+    for (const auto& [name, match] : found_matches_) {
+      inputs.push_back(
+          std::make_unique<PlannerInput>(match.name, name, planner_));
+    }
+    return inputs;
+  }
+
+ private:
+  PlannerInterface& planner_;
+  // found_matches_ is inherited from exploy::control::Matcher
+};
+```
+
+**Step 4 — register the matcher before `controller.create()`**
+
+```cpp
+MyMotionPlanner planner;           // implements PlannerInterface
+
+exploy::control::OnnxRLController controller(state, command, data_collection);
+
+// Must be registered before create() — matchers are evaluated inside create().
+controller.context().registerMatcher(std::make_unique<PlannerMatcher>(planner));
+
+controller.create("/path/to/policy.onnx");
+controller.init(/*enable_data_collection=*/false);
+```
+
+After this, every tensor matching `custom.planner.<name>` is claimed by your
+matcher. For each such tensor `read()` is called once per `controller.update()`
+cycle, immediately before ONNX inference.
+
+### Key constraints
+
+- **Register before `create()`** — matchers are only consulted during model
+  loading. Registering after `create()` has no effect.
+- **Buffer element type** — use `runtime.inputBuffer<float>(key)` for `float`
+  tensors. The ONNX runtime buffer type must match the tensor's element type in
+  the model.
+- **Return value** — returning `false` from `read()` causes `controller.update()`
+  to return `false` for that cycle, signalling a failed update to the caller.
+- **Custom matchers are evaluated after built-ins** — if a tensor name matches a
+  built-in matcher it is claimed first and your matcher will not see it.
