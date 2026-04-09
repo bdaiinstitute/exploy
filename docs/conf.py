@@ -204,10 +204,7 @@ myst_heading_anchors = 4
 suppress_warnings = ["myst.xref_missing"]
 
 # Links that are valid but not yet publicly available (e.g. unreleased paths on GitHub)
-linkcheck_ignore = [
-    # The repository is private; GitHub returns 404 for unauthenticated requests.
-    r"https://github\.com/rai-opensource/exploy/",
-]
+linkcheck_ignore = []
 
 # GitHub renders anchors client-side, so Sphinx linkcheck cannot verify them.
 linkcheck_anchors_ignore_for_url = [
