@@ -18,7 +18,7 @@ By the end of this tutorial you will know how to:
 6. Validate the export by comparing ONNX outputs against the original environment.
 
 > **Note:** A complete, runnable version of the code in this tutorial is available as a test in
-> [`python/exploy/exporter/core/tests/test_export_environment.py`](https://github.com/bdaiinstitute/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py).
+> [`python/exploy/exporter/core/tests/test_export_environment.py`](https://github.com/rai-opensource/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py).
 > This tutorial explains the details behind that test step by step.
 
 ## Prerequisites
@@ -435,7 +435,7 @@ debugging and visual inspection.
 You can inspect the exported ONNX file using [Netron](https://github.com/lutzroeder/netron), an
 open-source viewer for neural network models. The screenshots below show the computational graphs
 produced by the export steps in this tutorial.
-The [unit test](https://github.com/bdaiinstitute/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py)
+The [unit test](https://github.com/rai-opensource/exploy/blob/main/python/exploy/exporter/core/tests/test_export_environment.py)
 runs on three different environments:
 
 - an environment that computes observations and uses an MLP actor

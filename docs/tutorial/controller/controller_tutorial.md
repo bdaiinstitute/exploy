@@ -16,7 +16,7 @@ By the end of this tutorial you will know how to:
 4. Load the ONNX model and run the closed-loop control cycle.
 
 > **Note:** A complete, runnable version of the code in this tutorial is available in
-> [`examples/controller/`](https://github.com/bdaiinstitute/exploy/tree/main/examples/controller/).
+> [`examples/controller/`](https://github.com/rai-opensource/exploy/tree/main/examples/controller/).
 > This tutorial explains the details behind that example step by step.
 >
 > **See also:** If you haven't exported your model yet, start with the

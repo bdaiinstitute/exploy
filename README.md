@@ -55,7 +55,7 @@ exploy/
 
 ## Documentation
 
-Exploy's documentation is available at [bdaiinstitute.github.io/exploy][docs].
+Exploy's documentation is available at [rai-opensource.github.io/exploy][docs].
 To get started with the core concepts, refer to our step-by-step guides:
 
 - [**Exporter**][tutorial_exporter]:
@@ -63,9 +63,9 @@ To get started with the core concepts, refer to our step-by-step guides:
 - [**Controller**][tutorial_controller]:
   Learn to deploy a trained policy on a robot using the C++ controller with ONNX Runtime integration.
 
-[docs]: https://bdaiinstitute.github.io/exploy
-[tutorial_exporter]: https://bdaiinstitute.github.io/exploy/tutorial/exporter/exporter_tutorial.html
-[tutorial_controller]: https://bdaiinstitute.github.io/exploy/tutorial/controller/controller_tutorial.html
+[docs]: https://rai-opensource.github.io/exploy
+[tutorial_exporter]: https://rai-opensource.github.io/exploy/tutorial/exporter/exporter_tutorial.html
+[tutorial_controller]: https://rai-opensource.github.io/exploy/tutorial/controller/controller_tutorial.html
 
 ## Installation and Usage
 
@@ -75,13 +75,13 @@ To consume the Python package in your own project,
 the recommended approach is to install it directly from the git repository using `pip`:
 
 ```bash
-pip install git+https://github.com/bdaiinstitute/exploy.git
+pip install git+https://github.com/rai-opensource/exploy.git
 ```
 
 To install with additional dependencies for `IsaacLab` integration:
 
 ```bash
-pip install "exploy[isaaclab]@git+https://github.com/bdaiinstitute/exploy.git"
+pip install "exploy[isaaclab]@git+https://github.com/rai-opensource/exploy.git"
 ```
 
 ### C++ Controller Library
@@ -89,7 +89,7 @@ pip install "exploy[isaaclab]@git+https://github.com/bdaiinstitute/exploy.git"
 To consume the C++ controller library, use plain CMake commands to build and install it on your system (or to a custom prefix):
 
 ```bash
-git clone https://github.com/bdaiinstitute/exploy.git
+git clone https://github.com/rai-opensource/exploy.git
 cd exploy
 cmake -S control/ -B build/ -DCMAKE_INSTALL_PREFIX=/path/to/install
 cmake --build build/ --parallel
@@ -159,7 +159,7 @@ See the [Pixi installation guide][pixi_setup] for initial setup instructions.
 #### 1. Clone the repository
 
 ```bash
-git clone https://github.com/bdaiinstitute/exploy.git
+git clone https://github.com/rai-opensource/exploy.git
 cd exploy
 ```
 
@@ -293,6 +293,6 @@ button in the sidebar, or using the following BibTeX entry:
   title = {Exploy: EXport and dePLOY Reinforcement Learning policies},
   month = {March},
   year = {2026},
-  url = {https://github.com/bdaiinstitute/exploy}
+  url = {https://github.com/rai-opensource/exploy}
 }
 ```
