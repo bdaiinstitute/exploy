@@ -1,5 +1,8 @@
 # Exploy
 
+> [!IMPORTANT]
+> This repository has moved from [`bdaiinstitute/exploy`](https://github.com/bdaiinstitute/exploy) to [`rai-opensource/exploy`](https://github.com/rai-opensource/exploy).
+
 **EX**port and de**PLOY** reinforcement learning policies.
 
 Exploy is a library that packages complex reinforcement learning environment logic and policies into a single,
