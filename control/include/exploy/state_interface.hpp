@@ -172,12 +172,11 @@ struct HeightScanInfo {
 /// @brief Arguments for RobotStateInterface::initSphericalImage and
 ///        RobotStateInterface::sphericalImage.
 struct SphericalImageInfo {
-  std::string sensor_name;    ///< Name of the spherical image sensor.
-  int v_res{};                ///< Number of pixels in vertical direction (used by init).
-  int h_res{};                ///< Number of pixels in horizontal direction (used by init).
-  double v_fov_min_deg{};     ///< Minimum vertical field of view angle in degrees (used by init).
-  double v_fov_max_deg{};     ///< Maximum vertical field of view angle in degrees (used by init).
-  double unobserved_value{};  ///< Sentinel value for pixels with no sensor return (used by init).
+  std::string sensor_name;  ///< Name of the spherical image sensor.
+  int v_res{};              ///< Number of pixels in vertical direction (used by init).
+  int h_res{};              ///< Number of pixels in horizontal direction (used by init).
+  double v_fov_min_deg{};   ///< Minimum vertical field of view angle in degrees (used by init).
+  double v_fov_max_deg{};   ///< Maximum vertical field of view angle in degrees (used by init).
   std::unordered_set<std::string> channel_names{};  ///< Channel names to include / retrieve.
 };
 

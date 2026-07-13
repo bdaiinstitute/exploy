@@ -424,7 +424,6 @@ SphericalImageInput::SphericalImageInput(const std::string& key, const std::stri
           .h_res = static_cast<int>(metadata.h_res),
           .v_fov_min_deg = metadata.v_fov_min_deg,
           .v_fov_max_deg = metadata.v_fov_max_deg,
-          .unobserved_value = metadata.unobserved_value,
           .channel_names = channel_names,
       } {}
 

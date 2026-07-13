@@ -182,7 +182,6 @@ def get_sensor_metadata() -> dict:
             "h_res": 1024,
             "v_fov_min_deg": -45.0,
             "v_fov_max_deg": 45.0,
-            "unobserved_value": -2.0,
         },
         "sensor.pinhole_image.one": {
             "pattern_type": "grid_pattern",

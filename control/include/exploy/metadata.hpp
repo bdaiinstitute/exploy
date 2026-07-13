@@ -158,8 +158,7 @@ inline void from_json(const json& j, HeightScanMetadata& hs) {
 /**
  * @brief Metadata for spherical image sensors (e.g., LiDAR).
  *
- * Specifies the configuration for spherical images including resolution, field of view,
- * and sentinel value for unobserved points.
+ * Specifies the configuration for spherical images including resolution and field of view.
  */
 struct SphericalImageMetadata {
   std::string pattern_type{};  ///< Spherical image pattern type.
@@ -167,7 +166,6 @@ struct SphericalImageMetadata {
   int h_res{};                 ///< Horizontal resolution (points per scan line).
   double v_fov_min_deg{};      ///< Minimum vertical field of view in degrees.
   double v_fov_max_deg{};      ///< Maximum vertical field of view in degrees.
-  double unobserved_value{};   ///< Sentinel value for unobserved/invalid points.
 };
 
 /**
@@ -182,7 +180,6 @@ inline void from_json(const json& j, SphericalImageMetadata& si) {
   j.at("h_res").get_to(si.h_res);
   j.at("v_fov_min_deg").get_to(si.v_fov_min_deg);
   j.at("v_fov_max_deg").get_to(si.v_fov_max_deg);
-  j.at("unobserved_value").get_to(si.unobserved_value);
 }
 
 /**
