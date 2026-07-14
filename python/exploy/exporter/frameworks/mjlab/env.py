@@ -15,6 +15,28 @@ from exploy.exporter.frameworks.mjlab.raycaster_data import RayCasterDataSource
 from exploy.exporter.frameworks.mjlab.utils import get_observation_names
 
 
+class _ONNXObservationCompute:
+    """Drop-in replacement for ``ObservationManager.compute`` that fires ``update`` first.
+
+    MjLab computes observations at the very end of ``ManagerBasedRlEnv.step`` (after
+    ``sim.forward()``, event application, and ``sim.sense()``). The network outputs must
+    be written into the environment immediately before that computation so that the
+    observations reflect the latest state. This wrapper calls ``update`` and then
+    delegates to the original ``compute``, preserving its signature and return value.
+
+    A dedicated class (rather than a closure) gives a stable type identity so callers can
+    detect an already-installed wrapper via ``isinstance`` and avoid double-wrapping.
+    """
+
+    def __init__(self, wrapped_compute: Callable[..., object], update: Callable[[], None]):
+        self.wrapped_compute = wrapped_compute
+        self._update = update
+
+    def __call__(self, *args, **kwargs):
+        self._update()
+        return self.wrapped_compute(*args, **kwargs)
+
+
 class MjlabExportableEnvironment(ExportableEnvironment):
     """Wraps a MjLab ``ManagerBasedRlEnv`` for ONNX export.
 
@@ -67,12 +89,17 @@ class MjlabExportableEnvironment(ExportableEnvironment):
         self._env.command_manager.compute(dt=0.0)
 
     def cleanup(self) -> None:
-        """Restore original entity data and raycaster sensor data."""
+        """Restore original entity data, raycaster data, and evaluation hooks."""
         for i, entity in enumerate(self._env.scene.entities.values()):
             if i < len(self._entity_data_list):
                 entity._data = self._entity_data_list[i]
         for sensor_name, original_data in self._raycaster_data_list:
             self._env.scene.sensors[sensor_name]._data = original_data
+
+        obs_manager = self._env.observation_manager
+        if isinstance(obs_manager.compute, _ONNXObservationCompute):
+            obs_manager.compute = obs_manager.compute.wrapped_compute
+        self._env.scene._sensors.pop("onnx", None)
 
     def compute_observations(self) -> torch.Tensor:
         obs_dict = self._env.observation_manager.compute(update_history=True)
@@ -150,11 +177,19 @@ class MjlabExportableEnvironment(ExportableEnvironment):
         update: Callable[[], None],
         evaluate_substep: Callable[[int], None],
     ) -> None:
-        """Register evaluation hooks by injecting a dummy sensor and command term.
+        """Register evaluation callbacks into MjLab's step loop.
 
-        MjLab iterates ``scene._sensors`` at each substep and calls ``sensor.update()``,
-        and calls ``command_manager.compute()`` after each step.  We inject dummy
-        objects into those dictionaries so our callbacks fire at the right times.
+        Two hook points are used:
+
+        * ``evaluate_substep`` / ``update`` per physics substep: MjLab calls
+          ``scene.update`` inside its decimation loop, which invokes ``sensor.update``
+          on every registered sensor. We inject a dummy ``_ONNXSensor`` so our substep
+          callbacks fire at each substep.
+        * ``update`` before observation computation: observations are built at the end of
+          ``step`` via ``observation_manager.compute``. We wrap that method with
+          ``_ONNXObservationCompute`` so the latest network outputs are written just
+          before observations are read. The ``isinstance`` guard keeps the wrap
+          idempotent across repeated registrations.
         """
         # Disable lazy sensor update so sensors are called at every substep.
         if hasattr(self._env.scene, "_cfg"):
@@ -174,14 +209,9 @@ class MjlabExportableEnvironment(ExportableEnvironment):
 
         self._env.scene._sensors["onnx"] = _ONNXSensor()
 
-        class _ONNXCommand:
-            def compute(self, *args, **kwargs):
-                update()
-
-            def reset(self, *args, **kwargs):
-                return {}
-
-        self._env.command_manager._terms["onnx"] = _ONNXCommand()
+        obs_manager = self._env.observation_manager
+        if not isinstance(obs_manager.compute, _ONNXObservationCompute):
+            obs_manager.compute = _ONNXObservationCompute(obs_manager.compute, update)
 
     def step(self, actions: torch.Tensor) -> tuple[torch.Tensor, bool]:
         """Step the environment forward, delegating to mjlab's own step loop."""
