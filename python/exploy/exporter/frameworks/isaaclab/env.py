@@ -9,6 +9,10 @@ from isaaclab.sensors import RayCaster
 
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
 from exploy.exporter.frameworks.isaaclab.articulation_data import ArticulationDataSource
+from exploy.exporter.frameworks.isaaclab.derived_tensors import (
+    body_link_ang_vel_b,
+    body_link_lin_vel_b,
+)
 from exploy.exporter.frameworks.isaaclab.raycaster_data import RayCasterDataSource
 from exploy.exporter.frameworks.isaaclab.rigid_object_data import RigidObjectDataSource
 from exploy.exporter.frameworks.isaaclab.utils import get_observation_names
@@ -19,6 +23,11 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         self,
         env: ManagerBasedRLEnv,
     ):
+        """Wrap an Isaac Lab environment for export.
+
+        Args:
+            env: The Isaac Lab environment to wrap.
+        """
         assert type(env) is ManagerBasedRLEnv, (
             "IsaacLabExportableEnvironment only supports ManagerBasedRLEnv environments."
         )
@@ -32,11 +41,15 @@ class IsaacLabExportableEnvironment(ExportableEnvironment):
         self._empty_actor_observations = self._env.obs_buf[self._policy_obs_group_name].clone()
         self._empty_actions = self._env.action_manager._action.clone()
 
-        # Replace articulation data.
+        # Replace articulation data and materialize the derived tensors against the proxies. The
+        # materializations share the proxies' lifecycle: they die with the proxies when cleanup()
+        # restores the original data.
         self._art_data_list = []
         for articulation in self._env.scene.articulations.values():
             self._art_data_list.append(articulation._data)
             articulation._data = ArticulationDataSource(articulation=articulation)
+            body_link_lin_vel_b.materialize(articulation._data)
+            body_link_ang_vel_b.materialize(articulation._data)
 
         # Replace rigid object data.
         self._rigid_object_list = []

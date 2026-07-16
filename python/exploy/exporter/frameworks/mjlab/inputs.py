@@ -7,6 +7,10 @@ from mjlab.sensor import RayCastSensor
 from mjlab.tasks.velocity.mdp import UniformVelocityCommand
 
 from exploy.exporter.core.context_manager import ContextManager, Group, Input
+from exploy.exporter.frameworks.mjlab.derived_tensors import (
+    body_link_ang_vel_b,
+    body_link_lin_vel_b,
+)
 
 OBJ_PREFIX = "obj"
 SENSOR_PREFIX = "sensor"
@@ -65,6 +69,49 @@ def add_body_pos_and_quat(entities: dict, context_manager: ContextManager) -> No
                 Input(
                     name=f"{OBJ_PREFIX}.{obj_name}.{body_name}.w_Q_b",
                     get_from_env_cb=lambda _entity=entity, idx=i: _entity.data.body_link_quat_w[
+                        :, idx
+                    ],
+                )
+            )
+
+
+def add_body_vel(entities: dict, context_manager: ContextManager) -> None:
+    """Add body velocity inputs for all entities, skipping root bodies.
+
+    For each entity, this adds the linear and angular velocities of every non-root body relative
+    to the world/inertial frame, expressed in that body's own (actor/link) frame.
+
+    mjlab only stores per-body velocities in the world frame, so the body-frame quantities are
+    derived from the world-frame link velocities and the body orientations. They are materialized
+    as stored per-body leaves against the ``EntityDataSource`` when
+    ``MjlabExportableEnvironment`` swaps it in, so the input callbacks and observation functions
+    read the exact stored objects during tracing, making these inputs ONNX graph inputs.
+
+    During evaluation, after the original entity data has been restored, the input callbacks fall
+    back to computing the same quantities from the live world-frame data.
+
+    Args:
+        entities: Dict mapping entity name to Entity objects.
+        context_manager: The context manager to add inputs to.
+    """
+    for obj_name, entity in entities.items():
+        root_body_name = entity.root_body.name.split("/")[-1]
+        for i, body_name in enumerate(entity.body_names):
+            if body_name == root_body_name:
+                continue
+            prefix = f"{OBJ_PREFIX}.{obj_name}.{body_name}"
+            context_manager.add_component(
+                Input(
+                    name=f"{prefix}.lin_vel_b_rt_w_in_b",
+                    get_from_env_cb=lambda _entity=entity, idx=i: body_link_lin_vel_b(_entity.data)[
+                        :, idx
+                    ],
+                )
+            )
+            context_manager.add_component(
+                Input(
+                    name=f"{prefix}.ang_vel_b_rt_w_in_b",
+                    get_from_env_cb=lambda _entity=entity, idx=i: body_link_ang_vel_b(_entity.data)[
                         :, idx
                     ],
                 )

@@ -115,3 +115,19 @@ improving the structure of exported computational graphs.
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+Derived Tensors
+---------------
+
+Materialization of derived quantities as ONNX-traceable leaf tensors.
+
+The ``DerivedTensor`` class bundles a derived quantity's compute function and split dimension.
+Materializing it against a data-source proxy stores the computed value as a leaf
+tensor so it can become an ONNX graph input; calling it returns the stored leaf during export and
+computes the quantity live otherwise.
+
+.. automodule:: exploy.exporter.core.derived_tensors
+   :members:
+   :undoc-members:
+   :show-inheritance:

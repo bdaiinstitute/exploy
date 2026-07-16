@@ -92,3 +92,36 @@ class TestOnnxEnvironmentExporter:
         mock_env.process_actions.assert_not_called()
         # But apply_actions should still be called
         mock_env.apply_actions.assert_called_once()
+
+
+class TestFindDanglingInputs:
+    @staticmethod
+    def _make_model(input_names: list[str]):
+        """Build a minimal ONNX model with the given graph input names."""
+        import onnx
+
+        inputs = [
+            onnx.helper.make_tensor_value_info(name, onnx.TensorProto.FLOAT, [1])
+            for name in input_names
+        ]
+        output = onnx.helper.make_tensor_value_info("out", onnx.TensorProto.FLOAT, [1])
+        node = onnx.helper.make_node("Identity", [input_names[0]], ["out"])
+        graph = onnx.helper.make_graph([node], "test_graph", inputs, [output])
+        return onnx.helper.make_model(graph)
+
+    def test_reports_registered_inputs_missing_from_graph(self):
+        from exploy.exporter.core.utils.onnx import find_dangling_inputs
+
+        model = self._make_model(["a", "memory.m.in", "ctx.step_count"])
+
+        dangling = find_dangling_inputs(model, ["a", "b", "memory.m.in", "memory.n.in"])
+
+        assert dangling == ["b", "memory.n.in"]
+
+    def test_empty_when_all_registered_inputs_are_graph_inputs(self):
+        from exploy.exporter.core.utils.onnx import find_dangling_inputs
+
+        model = self._make_model(["a", "b"])
+
+        assert find_dangling_inputs(model, ["a", "b"]) == []
+        assert find_dangling_inputs(model, []) == []

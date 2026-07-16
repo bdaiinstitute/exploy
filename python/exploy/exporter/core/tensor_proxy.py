@@ -177,6 +177,15 @@ class TensorProxy:
         return self._tensors
 
 
+def to_tensor(value: torch.Tensor | TensorProxy) -> torch.Tensor:
+    """Convert a `TensorProxy` to a `torch.Tensor`; pass plain tensors through unchanged.
+
+    Useful before calling functions that use tensor methods internally (e.g. framework math
+    utilities), which `TensorProxy.__torch_function__` cannot intercept.
+    """
+    return value.to_tensor() if isinstance(value, TensorProxy) else value
+
+
 def args_to_tensor(args):
     """Convert each element in a sequence to torch.Tensor, preserving the sequence structure."""
     new_args = []

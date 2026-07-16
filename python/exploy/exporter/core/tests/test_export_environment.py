@@ -191,6 +191,40 @@ class EnvironmentWithTorchModule(Environment):
         )
 
 
+class FrozenDataSource:
+    """Snapshot standing in for an export data-source proxy (like the framework
+    ``ArticulationDataSource``): derived tensors are materialized against it during export and
+    the materializations die with it once the original data source is restored."""
+
+    def __init__(self, data_source: DataSource):
+        self.foo = data_source.foo
+        self.bar = data_source.bar
+        self.baz = data_source.baz
+
+
+class EnvironmentWithPretrainedEncoder(Environment):
+    """An environment whose observations consume the output of a frozen pretrained encoder.
+
+    The encoder is not registered as a module: its output is materialized as a ``DerivedTensor``
+    instead, so the exported graph is cut at the latent, which becomes an ONNX graph input.
+    """
+
+    def __init__(self, data_source: DataSource, encoder_latent):
+        self._encoder_latent = encoder_latent
+        super().__init__(data_source=data_source)
+
+    def compute_obs(self) -> torch.Tensor:
+        return torch.cat(
+            [
+                self._encoder_latent(self.data_source),
+                self.data_source.bar + 2.0 * self.data_source.baz,
+                self.data_source.baz,
+                self._actions,
+            ],
+            dim=-1,
+        )
+
+
 class PostSubstepUpdater:
     """A class used to inject evaluation callbacks at the end of each substep during environment
     stepping, to test that the ONNX graph stays in sync with the environment across substeps.
@@ -268,6 +302,21 @@ class ExportableEnv(ExportableEnvironment):
     def step(self, actions: torch.Tensor) -> tuple[torch.Tensor, bool]:
         self._env._post_substep_callbacks["onnx_evaluator_callback"].sub_step_ctr = 0
         return self.env.step(actions)
+
+
+class ExportableEncoderEnv(ExportableEnv):
+    """Exportable adapter for ``EnvironmentWithPretrainedEncoder`` (latent replaces foo)."""
+
+    def __init__(self, env: Environment, latent_dim: int):
+        super().__init__(env=env)
+        self._latent_dim = latent_dim
+
+    def get_observation_names(self) -> list[str]:
+        latent_names = [f"latent_{i}" for i in range(self._latent_dim)]
+        obs2_names = [f"bar_{i}" for i in range(self.env.data_source.bar.shape[-1])]
+        obs3_names = [f"baz_{i}" for i in range(self.env.data_source.baz.shape[-1])]
+        obs4_names = [f"actions_{i}" for i in range(self.env._actions.shape[-1])]
+        return latent_names + obs2_names + obs3_names + obs4_names
 
 
 class Actor(ExportableActor):
@@ -423,6 +472,140 @@ def export_and_evaluate_env(
 
 
 class TestExportableEnvironment:
+    def test_dangling_input_detection(self):
+        """An input whose tensor is never read during tracing must be reported as dangling,
+        while consumed inputs must appear as ONNX graph inputs."""
+        import onnx
+
+        from exploy.exporter.core.utils.onnx import find_dangling_inputs
+
+        data_source = DataSource()
+        env = Environment(data_source=data_source)
+        exp_env = ExportableEnv(env=env)
+        actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
+
+        exp_env.context_manager().add_components(
+            [
+                Input(name="foo", get_from_env_cb=lambda: exp_env.env.data_source.foo),
+                Input(name="bar", get_from_env_cb=lambda: exp_env.env.data_source.bar),
+                Input(name="baz", get_from_env_cb=lambda: exp_env.env.data_source.baz),
+                # This input's callback computes a fresh tensor, so its captured object is never
+                # read by compute_obs() during tracing and it cannot become a graph input.
+                Input(name="unused_in", get_from_env_cb=lambda: exp_env.env.data_source.foo * 2.0),
+                Memory(name="actions", get_from_env_cb=lambda: exp_env.env._actions),
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            onnx_path = pathlib.Path(tmpdir) / "exploy"
+            onnx_file_name = "test_dangling_input.onnx"
+            export_environment_as_onnx(
+                env=exp_env,
+                actor=actor,
+                path=onnx_path,
+                filename=onnx_file_name,
+            )
+
+            model = onnx.load(str(onnx_path / onnx_file_name))
+            dangling = find_dangling_inputs(model, exp_env.context_manager().get_input_names())
+
+        assert dangling == ["unused_in"]
+
+    def test_pretrained_encoder_output_replaced_by_derived_input(self):
+        """The output of a frozen pretrained encoder can be replaced by a derived-tensor input:
+        the exported graph is cut at the latent (which becomes an ONNX graph input) and the
+        encoder weights are not embedded. Once the export snapshot is discarded, the input
+        callback falls back to running the encoder live, so evaluation matches the environment.
+        """
+        import gc
+
+        import onnx
+
+        from exploy.exporter.core.derived_tensors import DerivedTensor
+        from exploy.exporter.core.utils.onnx import find_dangling_inputs
+
+        encoder = torch.nn.Linear(in_features=4, out_features=3).eval()
+        encoder.requires_grad_(False)
+        encoder_latent = DerivedTensor(compute_fn=lambda data: encoder(data.foo))
+
+        data_source = DataSource()
+        env = EnvironmentWithPretrainedEncoder(
+            data_source=data_source, encoder_latent=encoder_latent
+        )
+        exp_env = ExportableEncoderEnv(env=env, latent_dim=3)
+        actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
+
+        # Swap in a frozen snapshot and materialize the latent against it, as the framework
+        # exportable environments do with their data-source proxies. This must happen before the
+        # inputs are registered: an Input captures the tensor its callback returns at
+        # registration time, and only the stored leaf can become a graph input.
+        proxy = FrozenDataSource(data_source)
+        env._data_source = proxy
+        stored = encoder_latent.materialize(proxy)
+
+        exp_env.context_manager().add_components(
+            [
+                # The graph is cut at the encoder output: the latent is the input, not foo.
+                Input(
+                    name="encoder.latent",
+                    get_from_env_cb=lambda: encoder_latent(exp_env.env.data_source),
+                ),
+                Input(name="bar", get_from_env_cb=lambda: exp_env.env.data_source.bar),
+                Input(name="baz", get_from_env_cb=lambda: exp_env.env.data_source.baz),
+                Output(name="out", get_from_env_cb=lambda: exp_env.env._output),
+                Memory(name="actions", get_from_env_cb=lambda: exp_env.env._actions),
+                Memory(
+                    name="process_actions", get_from_env_cb=lambda: exp_env.env._processed_action
+                ),
+            ]
+        )
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            onnx_path = pathlib.Path(tmpdir) / "exploy"
+            onnx_file_name = "test_encoder_latent.onnx"
+            export_environment_as_onnx(
+                env=exp_env,
+                actor=actor,
+                path=onnx_path,
+                filename=onnx_file_name,
+            )
+
+            model = onnx.load(str(onnx_path / onnx_file_name))
+            graph_input_names = {graph_input.name for graph_input in model.graph.input}
+            assert "encoder.latent" in graph_input_names
+            assert find_dangling_inputs(model, exp_env.context_manager().get_input_names()) == []
+
+            # The encoder weights must not be embedded in the graph.
+            encoder_weight = encoder.weight.detach().numpy()
+            for initializer in model.graph.initializer:
+                values = onnx.numpy_helper.to_array(initializer)
+                assert values.shape != encoder_weight.shape or not (values == encoder_weight).all()
+
+            # Restore the original data source; the materialization dies with the snapshot, so
+            # the latent is computed live from then on (as during post-export evaluation).
+            env._data_source = data_source
+            del proxy
+            gc.collect()
+            assert encoder_latent(data_source) is not stored
+
+            session_wrapper = SessionWrapper(
+                onnx_folder=onnx_path,
+                onnx_file_name=onnx_file_name,
+                actor=actor,
+                optimize=True,
+            )
+            with torch.inference_mode():
+                export_ok, _ = evaluate(
+                    env=exp_env,
+                    context_manager=exp_env.context_manager(),
+                    session_wrapper=session_wrapper,
+                    num_episodes=2,
+                    max_episode_steps=20,
+                    verbose=False,
+                    pause_on_failure=False,
+                )
+        assert export_ok
+
     def test_env(self):
         """Test exporting an environment."""
         data_source = DataSource()

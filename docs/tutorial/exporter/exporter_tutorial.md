@@ -317,6 +317,25 @@ Each component takes a `name` and a `get_from_env_cb` callback that returns the 
 tensor from the environment. Optionally, you can attach `metadata` as a dictionary — these
 key-value pairs are embedded in the exported ONNX file and can be read at deployment time.
 
+### Inputs Are Wired by Object Identity
+
+An input only becomes an ONNX graph input if the *exact tensor object* returned by its callback
+is read during the traced `compute_observations()` call. Callbacks that return a stored tensor
+(like `foo`, `bar`, and `baz` above) satisfy this naturally. A callback that *computes* a fresh
+tensor does not: the observation computation produces a different object during tracing, so the
+registered input dangles and is silently dropped from the exported graph — the exporter prints an
+informational message listing such inputs after export.
+
+To use a derived quantity (an arbitrary function of the environment state) as a graph input, it
+must be materialized as a stored tensor first. Declare the quantity once as a
+{py:class}`DerivedTensor <exploy.exporter.core.derived_tensors.DerivedTensor>` (compute
+function and optional split dimension), call `materialize(data)` with the data-source proxy when
+registering inputs, and call the object itself wherever the value is needed — it returns the
+stored leaf during export and falls back to computing the quantity live once the proxy is
+discarded (during training or post-export evaluation). See
+[Advanced: Derived Input Tensors](#advanced-derived-input-tensors) for a worked example (body
+velocities expressed in each body's own frame).
+
 ### Grouping Related Inputs
 
 Related inputs can be organized into a {py:class}`Group <exploy.exporter.core.components.Group>`.
@@ -663,6 +682,208 @@ This ensures the ONNX graph exposes them as both inputs and outputs, so the infe
 feed the previous hidden state back in at each step.
 
 After this setup, export and evaluate as usual.
+
+---
+
+## Advanced: Derived Input Tensors
+
+Some quantities you want to feed the policy are not stored directly on the simulator's data
+source — they are *derived* from other state. A common example is a body's linear and angular
+velocity expressed in that body's own frame: many simulators only expose per-body velocities in
+the world frame, so the body-frame quantities must be computed by rotating the world-frame
+velocities by the inverse of the body orientation.
+
+As explained in [Inputs Are Wired by Object Identity](#inputs-are-wired-by-object-identity), a
+callback that *computes* a fresh tensor cannot become a graph input: the observation computation
+produces a different object during tracing, so the registered input dangles and is dropped. To
+turn a derived quantity into a graph boundary it must first be **materialized** as a stored leaf
+tensor. The stored value is registered against the data-source proxy it was computed from, so its
+lifetime follows the export data-source swap.
+
+### Declaring a derived tensor
+
+Declare the quantity once as a
+{py:class}`DerivedTensor <exploy.exporter.core.derived_tensors.DerivedTensor>`, bundling a
+compute function and an optional split dimension. The compute function can be any
+callable with any signature — a free function, a bound method, or a callable class instance —
+since `materialize(...)` and calls of the `DerivedTensor` forward their `*args` and `**kwargs`
+to it unchanged, and materialized values are keyed by the identity of all call arguments.
+Splitting wraps the stored value in a
+{py:class}`TensorProxy <exploy.exporter.core.tensor_proxy.TensorProxy>` so that each slice along
+that dimension (e.g. each body) is an independent leaf — one ONNX input per body:
+
+```python
+import torch
+
+import isaaclab.utils.math as math_utils
+
+from exploy.exporter.core.derived_tensors import DerivedTensor
+from exploy.exporter.core.tensor_proxy import to_tensor
+
+
+def _compute_body_link_lin_vel_b(data) -> torch.Tensor:
+    return math_utils.quat_apply_inverse(
+        to_tensor(data.body_link_quat_w), to_tensor(data.body_link_lin_vel_w)
+    )
+
+
+def _compute_body_link_ang_vel_b(data) -> torch.Tensor:
+    return math_utils.quat_apply_inverse(
+        to_tensor(data.body_link_quat_w), to_tensor(data.body_link_ang_vel_w)
+    )
+
+
+# Body link velocities rt the world frame, expressed in each body's own frame, with shape
+# (num_instances, num_bodies, 3). Split along dim 1 so each body becomes its own ONNX input.
+body_link_lin_vel_b = DerivedTensor(compute_fn=_compute_body_link_lin_vel_b, split_dim=1)
+body_link_ang_vel_b = DerivedTensor(compute_fn=_compute_body_link_ang_vel_b, split_dim=1)
+```
+
+### Materializing and registering inputs
+
+Call `materialize(data)` with the data-source proxy to compute the quantity once and store it as
+a leaf, then bind each `Input` to a slice of the stored value. Only materialize the export
+proxy — its state is a frozen snapshot, whereas materializing live framework data would freeze
+the quantity while the simulation keeps changing. The framework-shipped derived tensors are
+materialized automatically when the exportable environment swaps the data sources in; a custom
+quantity is materialized in the export script, which runs after the swap. Materialize **before**
+registering the `Input`s: an `Input` captures the tensor returned by its callback at
+construction time, and only the stored leaf can become a graph input:
+
+```python
+articulation_name = "robot"  # the articulation's name in the scene
+data = entity.data  # the ArticulationDataSource / EntityDataSource proxy
+body_link_lin_vel_b.materialize(data)
+body_link_ang_vel_b.materialize(data)
+
+for idx, body_name in enumerate(entity.body_names):
+    context_manager.add_component(
+        Input(
+            name=f"obj.{articulation_name}.{body_name}.lin_vel_b_rt_w_in_b",
+            get_from_env_cb=lambda _entity=entity, i=idx: body_link_lin_vel_b(_entity.data)[:, i],
+        )
+    )
+```
+
+Because the `Input` callback returns a slice of the *stored* leaf, the exact same object is read
+during tracing and the input becomes a graph boundary supplied by the deployment side.
+
+### Reading a derived tensor in an observation term
+
+The same `DerivedTensor` object is callable and works as a framework observation term in both
+training and export. During export the leaf has been materialized against the proxy, so tracing
+reads the stored object; during training (or post-export evaluation, once the original data is
+restored) the value is computed live:
+
+```python
+import torch
+from isaaclab.assets import Articulation
+from isaaclab.managers import SceneEntityCfg
+
+from exploy.exporter.frameworks.isaaclab.derived_tensors import body_link_ang_vel_b, body_link_lin_vel_b
+
+
+def body_lin_vel_b(env, asset_cfg=SceneEntityCfg("robot")) -> torch.Tensor:
+    """Linear velocities of the selected bodies rt the world frame, in each body's own frame."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    return body_link_lin_vel_b(asset.data)[:, asset_cfg.body_ids].reshape(env.num_envs, -1)
+
+
+def body_ang_vel_b(env, asset_cfg=SceneEntityCfg("robot")) -> torch.Tensor:
+    """Angular velocities of the selected bodies rt the world frame, in each body's own frame."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    return body_link_ang_vel_b(asset.data)[:, asset_cfg.body_ids].reshape(env.num_envs, -1)
+```
+
+Observation terms do not have to be free functions. Isaac Lab also supports class-based terms —
+subclasses of `ManagerTermBase` that are constructed with the term config and the environment,
+and called like functions afterwards. A `DerivedTensor` works the same way there, since it is
+simply called with the asset's data object:
+
+```python
+import torch
+from isaaclab.assets import Articulation
+from isaaclab.envs import ManagerBasedEnv
+from isaaclab.managers import ManagerTermBase, ObservationTermCfg, SceneEntityCfg
+
+from exploy.exporter.frameworks.isaaclab.derived_tensors import body_link_lin_vel_b
+
+
+class body_lin_vel_b(ManagerTermBase):
+    """Linear velocities of the selected bodies rt the world frame, in each body's own frame."""
+
+    def __init__(self, cfg: ObservationTermCfg, env: ManagerBasedEnv):
+        super().__init__(cfg, env)
+        asset_cfg: SceneEntityCfg = cfg.params["asset_cfg"]
+        self._asset: Articulation = env.scene[asset_cfg.name]
+
+    def __call__(self, env: ManagerBasedEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:
+        return body_link_lin_vel_b(self._asset.data)[:, asset_cfg.body_ids].reshape(
+            env.num_envs, -1
+        )
+```
+
+The same mechanism also works in the other direction: because `materialize(...)` and calls of a
+`DerivedTensor` forward `*args` and `**kwargs` to the compute function, the compute function
+itself can be a callable class instance (e.g. one constructed with the environment) or take
+additional arguments — the materialized value is keyed by the identity of all call arguments.
+
+Bundling the compute function and split dimension in a single `DerivedTensor` guarantees that
+materialization (during export) and live computation (during training) can never use mismatched
+functions.
+
+### Replacing the output of a pretrained encoder
+
+Derived tensors are not limited to kinematic quantities — they cut the ONNX graph at *any*
+computed value. A common use case is a pretrained, frozen encoder (e.g. a perception backbone)
+whose output feeds the policy. [Advanced: Using Torch Modules in
+Observations](#advanced-using-torch-modules-in-observations) shows how to **embed** such a
+module in the graph with `add_module()`. If instead the encoder should run *outside* the
+exported policy — for example in a separate perception process on the robot — materialize its
+output as a derived tensor: the latent becomes an ONNX graph input supplied by the deployment
+side, and the encoder's weights are not embedded in the exported file.
+
+```python
+from exploy.exporter.core.derived_tensors import DerivedTensor
+
+encoder = load_pretrained_encoder().eval()  # frozen, not registered via add_module()
+
+encoder_latent = DerivedTensor(compute_fn=lambda data: encoder(data.camera_features))
+```
+
+The observation computation reads the quantity through the `DerivedTensor`:
+
+```python
+def compute_obs(self) -> torch.Tensor:
+    return torch.cat(
+        [
+            encoder_latent(self.data_source),
+            ...,
+        ],
+        dim=-1,
+    )
+```
+
+In the export script, materialize the latent against the export data-source proxy (after the
+exportable environment has swapped it in, before registering the inputs) and bind an `Input` to
+it:
+
+```python
+encoder_latent.materialize(data)
+
+context_manager.add_component(
+    Input(
+        name="encoder.latent",
+        get_from_env_cb=lambda: encoder_latent(data),
+    )
+)
+```
+
+During tracing, `compute_obs()` reads the stored leaf, so the graph is cut at the latent:
+`encoder.latent` becomes a graph input, the encoder is not traced, and any inputs consumed only
+by the encoder (e.g. the raw camera features) are dropped from the graph. During post-export
+evaluation, once the original data source is restored and the proxy is discarded, both the
+observation computation and the input callback fall back to running the encoder live.
 
 ---
 

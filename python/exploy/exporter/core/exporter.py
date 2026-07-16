@@ -9,7 +9,7 @@ import onnx
 import torch
 
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
-from exploy.exporter.core.utils.onnx import construct_decimation_wrapper
+from exploy.exporter.core.utils.onnx import construct_decimation_wrapper, find_dangling_inputs
 from exploy.exporter.core.utils.paths import get_exploy_version, prepare_onnx_paths
 
 
@@ -248,6 +248,17 @@ class OnnxEnvironmentExporter(torch.nn.Module):
             ir_version=self._ir_version,
         )
         onnx.save(wrapper_model, str(export_paths.main))
+
+        # Inputs are wired into the graph by object identity: an input whose tensor is never read
+        # during tracing is silently dropped by torch.onnx.export. Report them so that inputs
+        # meant to be graph boundaries (e.g. derived quantities) do not vanish unnoticed.
+        dangling_inputs = find_dangling_inputs(wrapper_model, input_names)
+        if dangling_inputs:
+            print(
+                "INFO [exploy.exporter]: The following registered inputs are not part of the "
+                "exported ONNX graph and were dropped (their tensors were never read during "
+                "tracing):\n" + "\n".join(f"  - {name}" for name in dangling_inputs)
+            )
 
         # Load the ONNX model to add metadata to it.
         onnx_model = onnx.load(str(export_paths.main))

@@ -9,6 +9,10 @@ from isaaclab.sensors.ray_caster.patterns.patterns_cfg import GridPatternCfg, Pa
 
 from exploy.exporter.core.context_manager import ContextManager, Group, Input
 from exploy.exporter.frameworks.isaaclab import utils
+from exploy.exporter.frameworks.isaaclab.derived_tensors import (
+    body_link_ang_vel_b,
+    body_link_lin_vel_b,
+)
 
 OBJ_PREFIX = "obj"
 SENSOR_PREFIX = "sensor"
@@ -144,6 +148,56 @@ def add_body_pos_and_quat(
         articulations=articulations,
         context_manager=context_manager,
     )
+
+
+def add_body_vel(
+    articulations: dict[str, Articulation],
+    context_manager: ContextManager,
+):
+    """Add body velocity inputs for all articulations, skipping root bodies.
+
+    For each articulation, this function adds inputs for the body linear and angular
+    velocities relative to the world/inertial frame expressed in their local frame.
+
+    Stock Isaac Lab only exposes per-body velocities in the world frame, so the body-frame
+    quantities are derived from the world-frame link velocities and the body orientations. They
+    are materialized as stored per-body leaves against the `ArticulationDataSource` when
+    `IsaacLabExportableEnvironment` swaps it in, so the input callbacks and observation functions
+    read the exact stored objects during tracing, making these inputs ONNX graph inputs.
+
+    During evaluation, after the original articulation data has been restored, the input callbacks
+    fall back to computing the same quantities from the live world-frame data.
+
+    Args:
+        articulations: Dictionary mapping object names to Articulation instances.
+        context_manager: The context manager to add body velocity inputs to.
+    """
+    # Add inputs for all body velocities expressed in their local (body) frame.
+    for obj_name, articulation in articulations.items():
+        root_name = articulation.body_names[0]
+        for body_name in articulation.data.body_names:
+            if body_name == root_name:
+                continue
+            body_ids, _ = articulation.find_bodies(body_name)
+            assert len(body_ids) == 1, (
+                f"Body name {body_name} is not unique in articulation {obj_name}. Found body IDs: {body_ids}"
+            )
+            body_idx = body_ids[0]
+            input_name_prefix = f"{OBJ_PREFIX}.{obj_name}.{body_name}"
+            lin_vel_b_rt_w_in_b = Input(
+                name=f"{input_name_prefix}.lin_vel_b_rt_w_in_b",
+                get_from_env_cb=lambda art=articulation, idx=body_idx: body_link_lin_vel_b(
+                    art.data
+                )[:, idx],
+            )
+            ang_vel_b_rt_w_in_b = Input(
+                name=f"{input_name_prefix}.ang_vel_b_rt_w_in_b",
+                get_from_env_cb=lambda art=articulation, idx=body_idx: body_link_ang_vel_b(
+                    art.data
+                )[:, idx],
+            )
+            context_manager.add_component(lin_vel_b_rt_w_in_b)
+            context_manager.add_component(ang_vel_b_rt_w_in_b)
 
 
 def add_base_vel(

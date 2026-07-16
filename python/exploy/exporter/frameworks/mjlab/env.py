@@ -10,6 +10,10 @@ from mjlab.envs import ManagerBasedRlEnv
 from mjlab.sensor import RayCastSensor
 
 from exploy.exporter.core.exportable_environment import ExportableEnvironment
+from exploy.exporter.frameworks.mjlab.derived_tensors import (
+    body_link_ang_vel_b,
+    body_link_lin_vel_b,
+)
 from exploy.exporter.frameworks.mjlab.entity_data import EntityDataSource
 from exploy.exporter.frameworks.mjlab.raycaster_data import RayCasterDataSource
 from exploy.exporter.frameworks.mjlab.utils import get_observation_names
@@ -53,15 +57,26 @@ class MjlabExportableEnvironment(ExportableEnvironment):
         env: ManagerBasedRlEnv,
         policy_obs_group_name: str = "actor",
     ):
+        """Wrap a MjLab environment for export.
+
+        Args:
+            env: The MjLab environment to wrap.
+            policy_obs_group_name: The group name of the policy observations in the environment's
+                observation manager.
+        """
         super().__init__()
         self._env = env
         self._policy_obs_group_name = policy_obs_group_name
 
-        # Replace entity data with ONNX-traceable proxies.
+        # Replace entity data with ONNX-traceable proxies and materialize the derived tensors
+        # against them. The materializations share the proxies' lifecycle: they die with the
+        # proxies when cleanup() restores the original data.
         self._entity_data_list: list = []
         for entity in self._env.scene.entities.values():
             self._entity_data_list.append(entity._data)
             entity._data = EntityDataSource(entity=entity)
+            body_link_lin_vel_b.materialize(entity._data)
+            body_link_ang_vel_b.materialize(entity._data)
 
         # Replace raycaster sensor data with ONNX-traceable proxies.
         self._raycaster_data_list: list[tuple] = []

@@ -1,6 +1,30 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
+from collections.abc import Sequence
+
 import onnx
+
+
+def find_dangling_inputs(
+    model: onnx.ModelProto,
+    registered_input_names: Sequence[str],
+) -> list[str]:
+    """Find registered inputs that are not inputs of the ONNX graph.
+
+    The exporter wires graph inputs by object identity: a registered input becomes an ONNX graph
+    input only if the exact tensor object it holds is read while tracing the environment. Inputs
+    whose tensors are never touched (e.g. a derived quantity that is recomputed instead of read
+    from its stored leaf) are silently dropped by ``torch.onnx.export``.
+
+    Args:
+        model: The exported ONNX model.
+        registered_input_names: Input names registered with the context manager.
+
+    Returns:
+        The registered input names missing from the model's graph inputs, in registration order.
+    """
+    graph_input_names = {graph_input.name for graph_input in model.graph.input}
+    return [name for name in registered_input_names if name not in graph_input_names]
 
 
 def _copy_value_info(value_info: onnx.ValueInfoProto) -> onnx.ValueInfoProto:

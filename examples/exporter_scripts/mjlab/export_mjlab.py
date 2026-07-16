@@ -136,6 +136,7 @@ def export_mjlab(
     inputs.add_commands(unwrapped_env.command_manager, context_manager)
     inputs.add_base_com_vel(entities, context_manager)
     inputs.add_body_pos_and_quat(entities, context_manager)
+    inputs.add_body_vel(entities, context_manager)
     inputs.add_joint_pos_and_vel(entities, context_manager)
     inputs.add_sensor_inputs(unwrapped_env.scene.sensors, context_manager)
     add_imu_inputs(unwrapped_env.scene.sensors, context_manager)
