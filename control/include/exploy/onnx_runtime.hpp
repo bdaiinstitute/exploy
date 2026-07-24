@@ -29,6 +29,11 @@ struct onnx_type<int32_t> {
 };
 
 template <>
+struct onnx_type<int64_t> {
+  static constexpr ONNXTensorElementDataType value = ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64;
+};
+
+template <>
 struct onnx_type<bool> {
   static constexpr ONNXTensorElementDataType value = ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL;
 };

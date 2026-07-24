@@ -65,6 +65,10 @@ void resetTensorBuffer(Ort::Value& tensor, ONNXTensorElementDataType data_type) 
       std::fill_n(tensor.GetTensorMutableData<int32_t>(), count, 0);
       break;
     }
+    case ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64: {
+      std::fill_n(tensor.GetTensorMutableData<int64_t>(), count, 0);
+      break;
+    }
     case ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL: {
       std::fill_n(tensor.GetTensorMutableData<bool>(), count, false);
       break;
@@ -245,6 +249,9 @@ bool OnnxRuntime::copyOutputToInput(const std::string& output_name, const std::s
       break;
     case ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32:
       copyTensorData.template operator()<int32_t>();
+      break;
+    case ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64:
+      copyTensorData.template operator()<int64_t>();
       break;
     case ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL:
       copyTensorData.template operator()<bool>();

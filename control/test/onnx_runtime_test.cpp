@@ -79,6 +79,7 @@ TEST_F(OnnxRuntimeTest, InputTensorNames) {
   // Test expected input names from the simple model
   EXPECT_TRUE(input_names.contains("float_input"));
   EXPECT_TRUE(input_names.contains("int_input"));
+  EXPECT_TRUE(input_names.contains("int64_input"));
   EXPECT_TRUE(input_names.contains("bool_input"));
   EXPECT_TRUE(input_names.contains("init_float_input"));
 }
@@ -93,6 +94,7 @@ TEST_F(OnnxRuntimeTest, OutputTensorNames) {
   // Test expected output names from the simple model
   EXPECT_TRUE(output_names.contains("float_output"));
   EXPECT_TRUE(output_names.contains("int_output"));
+  EXPECT_TRUE(output_names.contains("int64_output"));
   EXPECT_TRUE(output_names.contains("bool_output"));
 }
 
@@ -196,6 +198,14 @@ TEST_F(OnnxRuntimeTest, SimpleModelWithDifferentTensorTypes) {
   int_buffer.value()[1] = 20;
   int_buffer.value()[2] = 30;
 
+  // Test int64 tensor
+  auto int64_buffer = runtime.inputBuffer<int64_t>("int64_input");
+  ASSERT_TRUE(int64_buffer.has_value());
+  EXPECT_EQ(int64_buffer->size(), 3);
+  int64_buffer.value()[0] = 100;
+  int64_buffer.value()[1] = 200;
+  int64_buffer.value()[2] = 300;
+
   // Test bool tensor
   auto bool_buffer = runtime.inputBuffer<bool>("bool_input");
   ASSERT_TRUE(bool_buffer.has_value());
@@ -220,6 +230,13 @@ TEST_F(OnnxRuntimeTest, SimpleModelWithDifferentTensorTypes) {
   EXPECT_EQ(int_output.value()[0], 11);  // 10 + 1
   EXPECT_EQ(int_output.value()[1], 21);  // 20 + 1
   EXPECT_EQ(int_output.value()[2], 31);  // 30 + 1
+
+  // Check int64 output (should be input + 2)
+  auto int64_output = runtime.outputBuffer<int64_t>("int64_output");
+  ASSERT_TRUE(int64_output.has_value());
+  EXPECT_EQ(int64_output.value()[0], 102);  // 100 + 2
+  EXPECT_EQ(int64_output.value()[1], 202);  // 200 + 2
+  EXPECT_EQ(int64_output.value()[2], 302);  // 300 + 2
 
   // Check bool output (should be logical NOT of input)
   auto bool_output = runtime.outputBuffer<bool>("bool_output");
@@ -259,6 +276,10 @@ TEST_F(OnnxRuntimeTest, ResetBuffersDifferentTypes) {
   ASSERT_TRUE(int_buffer.has_value());
   int_buffer.value()[0] = 99;
 
+  auto int64_buffer = runtime.inputBuffer<int64_t>("int64_input");
+  ASSERT_TRUE(int64_buffer.has_value());
+  int64_buffer.value()[0] = 12345;
+
   auto bool_buffer = runtime.inputBuffer<bool>("bool_input");
   ASSERT_TRUE(bool_buffer.has_value());
   bool_buffer.value()[0] = true;
@@ -269,6 +290,7 @@ TEST_F(OnnxRuntimeTest, ResetBuffersDifferentTypes) {
   // Verify all buffers are reset to their default values
   EXPECT_EQ(float_buffer.value()[0], 0.0f);
   EXPECT_EQ(int_buffer.value()[0], 0);
+  EXPECT_EQ(int64_buffer.value()[0], 0);
   EXPECT_EQ(bool_buffer.value()[0], false);
 }
 
@@ -340,6 +362,63 @@ TEST_F(OnnxRuntimeTest, CopyOutputToInputIntType) {
   EXPECT_EQ(int_input.value()[2], 31);
 }
 
+TEST_F(OnnxRuntimeTest, Int64BufferType) {
+  OnnxRuntime runtime;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_));
+
+  // Test getting input buffer for existing int64 tensor
+  auto int64_buffer = runtime.inputBuffer<int64_t>("int64_input");
+  ASSERT_TRUE(int64_buffer.has_value());
+  EXPECT_EQ(int64_buffer->size(), 3);  // Based on simple model shape (1, 3)
+
+  // Test getting output buffer for existing int64 tensor
+  auto int64_output_buffer = runtime.outputBuffer<int64_t>("int64_output");
+  ASSERT_TRUE(int64_output_buffer.has_value());
+  EXPECT_EQ(int64_output_buffer->size(), 3);
+
+  // Accessing an int64 tensor with the wrong type must fail
+  auto wrong_type_buffer = runtime.inputBuffer<int32_t>("int64_input");
+  EXPECT_FALSE(wrong_type_buffer.has_value());
+
+  // Accessing an int32 tensor as int64 must also fail
+  auto wrong_int64_buffer = runtime.inputBuffer<int64_t>("int_input");
+  EXPECT_FALSE(wrong_int64_buffer.has_value());
+}
+
+TEST_F(OnnxRuntimeTest, CopyOutputToInputInt64Type) {
+  OnnxRuntime runtime;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_));
+
+  // Set input values and run evaluation to get output
+  auto int64_input = runtime.inputBuffer<int64_t>("int64_input");
+  ASSERT_TRUE(int64_input.has_value());
+  int64_input.value()[0] = 100;
+  int64_input.value()[1] = 200;
+  int64_input.value()[2] = 300;
+
+  ASSERT_TRUE(runtime.evaluate());
+
+  // Get the output values (should be input + 2)
+  auto int64_output = runtime.outputBuffer<int64_t>("int64_output");
+  ASSERT_TRUE(int64_output.has_value());
+  EXPECT_EQ(int64_output.value()[0], 102);  // 100 + 2
+  EXPECT_EQ(int64_output.value()[1], 202);  // 200 + 2
+  EXPECT_EQ(int64_output.value()[2], 302);  // 300 + 2
+
+  // Reset input to different values
+  int64_input.value()[0] = 0;
+  int64_input.value()[1] = 0;
+  int64_input.value()[2] = 0;
+
+  // Copy output to input
+  ASSERT_TRUE(runtime.copyOutputToInput("int64_output", "int64_input"));
+
+  // Verify input now contains the output values
+  EXPECT_EQ(int64_input.value()[0], 102);
+  EXPECT_EQ(int64_input.value()[1], 202);
+  EXPECT_EQ(int64_input.value()[2], 302);
+}
+
 TEST_F(OnnxRuntimeTest, CopyOutputToInputBoolType) {
   OnnxRuntime runtime;
   ASSERT_TRUE(runtime.initialize(simple_model_path_));
@@ -397,6 +476,12 @@ TEST_F(OnnxRuntimeTest, CopyOutputToInputTypeMismatch) {
 
   // Test copying int output to float input (should fail due to type mismatch)
   EXPECT_FALSE(runtime.copyOutputToInput("float_output", "int_input"));
+
+  // Test copying int32 output to int64 input (should fail due to type mismatch)
+  EXPECT_FALSE(runtime.copyOutputToInput("int_output", "int64_input"));
+
+  // Test copying int64 output to int32 input (should fail due to type mismatch)
+  EXPECT_FALSE(runtime.copyOutputToInput("int64_output", "int_input"));
 
   // Test copying bool output to float input (should fail due to type mismatch)
   EXPECT_FALSE(runtime.copyOutputToInput("float_output", "bool_input"));

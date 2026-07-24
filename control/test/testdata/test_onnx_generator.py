@@ -387,12 +387,13 @@ class SimpleTestModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, float_input, int_input, bool_input, init_float_input):
+    def forward(self, float_input, int_input, int64_input, bool_input, init_float_input):
         float_output = float_input * 2.0 + init_float_input
         int_output = int_input + 1  # Simple transformation
+        int64_output = int64_input + 2  # Simple transformation
         bool_output = torch.logical_not(bool_input)  # Simple transformation
 
-        return float_output, int_output, bool_output
+        return float_output, int_output, int64_output, bool_output
 
 
 def export_simple_model(data_dir: str):
@@ -404,6 +405,7 @@ def export_simple_model(data_dir: str):
     # Create test inputs with different types
     float_input = torch.tensor([[1.5, 2.5, 3.5]], dtype=torch.float32)
     int_input = torch.tensor([[10, 20, 30]], dtype=torch.int32)
+    int64_input = torch.tensor([[100, 200, 300]], dtype=torch.int64)
     bool_input = torch.tensor([[True, False, True]], dtype=torch.bool)
     # Default values for the overridable initializer baked into the exported model.
     default_init_float_input = np.zeros((1, 3), dtype=np.float32)
@@ -411,10 +413,16 @@ def export_simple_model(data_dir: str):
 
     torch.onnx.export(
         simple_model,
-        (float_input, int_input, bool_input, init_float_input),
+        (float_input, int_input, int64_input, bool_input, init_float_input),
         output_path_simple,
-        input_names=["float_input", "int_input", "bool_input", "init_float_input"],
-        output_names=["float_output", "int_output", "bool_output"],
+        input_names=[
+            "float_input",
+            "int_input",
+            "int64_input",
+            "bool_input",
+            "init_float_input",
+        ],
+        output_names=["float_output", "int_output", "int64_output", "bool_output"],
     )
 
     onnx_model = onnx.load(output_path_simple)
