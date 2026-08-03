@@ -1,7 +1,9 @@
 // Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
+#include <initializer_list>
 #include <optional>
 #include <string>
+#include <unordered_set>
 
 #include "exploy/components.hpp"
 
@@ -63,11 +65,31 @@ void copyToBuffer(const std::vector<double>& from, std::span<float> to) {
   });
 }
 
+// Expand a base key into per-suffix tensor names (e.g. "key" -> {"key.suffix", ...}).
+std::unordered_set<std::string> expandKeys(const std::string& key,
+                                           const std::unordered_set<std::string>& suffixes) {
+  std::unordered_set<std::string> names;
+  names.reserve(suffixes.size());
+  for (const auto& suffix : suffixes) {
+    names.insert(fmt::format("{}.{}", key, suffix));
+  }
+  return names;
+}
+
+// Collect the non-empty keys from the provided list into a tensor-name set.
+std::unordered_set<std::string> nonEmptyKeys(std::initializer_list<std::string> keys) {
+  std::unordered_set<std::string> names;
+  for (const auto& key : keys) {
+    if (!key.empty()) names.insert(key);
+  }
+  return names;
+}
+
 }  // namespace
 
 // Implementation of IMULinearVelocityInput methods
 IMULinearVelocityInput::IMULinearVelocityInput(const std::string& key, const std::string& imu_name)
-    : Input("IMULinearVelocityInput"), key_(key), imu_name_(imu_name) {}
+    : Input("IMULinearVelocityInput", {key}), key_(key), imu_name_(imu_name) {}
 
 bool IMULinearVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initImuLinearVelocityImu({.imu_name = imu_name_});
@@ -86,7 +108,7 @@ bool IMULinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& sta
 // Implementation of IMUAngularVelocityInput methods
 IMUAngularVelocityInput::IMUAngularVelocityInput(const std::string& key,
                                                  const std::string& imu_name)
-    : Input("IMUAngularVelocityInput"), key_(key), imu_name_(imu_name) {}
+    : Input("IMUAngularVelocityInput", {key}), key_(key), imu_name_(imu_name) {}
 
 bool IMUAngularVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initImuAngularVelocityImu({.imu_name = imu_name_});
@@ -103,7 +125,7 @@ bool IMUAngularVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& st
 }
 
 IMUOrientationInput::IMUOrientationInput(const std::string& key, const std::string& imu_name)
-    : Input("IMUOrientationInput"), key_(key), imu_name_(imu_name) {}
+    : Input("IMUOrientationInput", {key}), key_(key), imu_name_(imu_name) {}
 
 bool IMUOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initImuOrientationW({.imu_name = imu_name_});
@@ -122,7 +144,7 @@ bool IMUOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
 // Implementation of JointPositionInput methods
 JointPositionInput::JointPositionInput(const std::string& key, const std::string& articulation_name,
                                        const std::vector<std::string>& joint_names)
-    : Input("JointPositionInput"),
+    : Input("JointPositionInput", {key}),
       key_(key),
       articulation_name_(articulation_name),
       joint_names_(joint_names) {}
@@ -154,7 +176,7 @@ bool JointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, 
 // Implementation of JointVelocityInput methods
 JointVelocityInput::JointVelocityInput(const std::string& key, const std::string& articulation_name,
                                        const std::vector<std::string>& joint_names)
-    : Input("JointVelocityInput"),
+    : Input("JointVelocityInput", {key}),
       key_(key),
       articulation_name_(articulation_name),
       joint_names_(joint_names) {}
@@ -184,7 +206,7 @@ bool JointVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& state, 
 
 // Implementation of BasePositionInput methods
 BasePositionInput::BasePositionInput(const std::string& key, const std::string& articulation_name)
-    : Input("BasePositionInput"), key_(key), articulation_name_(articulation_name) {}
+    : Input("BasePositionInput", {key}), key_(key), articulation_name_(articulation_name) {}
 
 bool BasePositionInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initBasePosW({.articulation_name = articulation_name_});
@@ -202,7 +224,7 @@ bool BasePositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, C
 // Implementation of BaseOrientationInput methods
 BaseOrientationInput::BaseOrientationInput(const std::string& key,
                                            const std::string& articulation_name)
-    : Input("BaseOrientationInput"), key_(key), articulation_name_(articulation_name) {}
+    : Input("BaseOrientationInput", {key}), key_(key), articulation_name_(articulation_name) {}
 
 bool BaseOrientationInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initBaseQuatW({.articulation_name = articulation_name_});
@@ -221,7 +243,7 @@ bool BaseOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state
 // Implementation of BaseLinearVelocityInput methods
 BaseLinearVelocityInput::BaseLinearVelocityInput(const std::string& key,
                                                  const std::string& articulation_name)
-    : Input("BaseLinearVelocityInput"), key_(key), articulation_name_(articulation_name) {}
+    : Input("BaseLinearVelocityInput", {key}), key_(key), articulation_name_(articulation_name) {}
 
 bool BaseLinearVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initBaseLinVelB({.articulation_name = articulation_name_});
@@ -240,7 +262,7 @@ bool BaseLinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& st
 // Implementation of BaseAngularVelocityInput methods
 BaseAngularVelocityInput::BaseAngularVelocityInput(const std::string& key,
                                                    const std::string& articulation_name)
-    : Input("BaseAngularVelocityInput"), key_(key), articulation_name_(articulation_name) {}
+    : Input("BaseAngularVelocityInput", {key}), key_(key), articulation_name_(articulation_name) {}
 
 bool BaseAngularVelocityInput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initBaseAngVelB({.articulation_name = articulation_name_});
@@ -261,7 +283,7 @@ JointTargetOutput::JointTargetOutput(const std::string& pos_key, const std::stri
                                      const std::string& eff_key,
                                      const std::string& articulation_name,
                                      const metadata::JointOutputMetadata& metadata)
-    : Output("JointTargetOutput"),
+    : Output("JointTargetOutput", nonEmptyKeys({pos_key, vel_key, eff_key})),
       pos_key_(pos_key),
       vel_key_(vel_key),
       eff_key_(eff_key),
@@ -329,7 +351,7 @@ bool JointTargetOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
 
 SE2VelocityOutput::SE2VelocityOutput(const std::string& key,
                                      const metadata::Se2VelocityOutputMetadata& metadata)
-    : Output("SE2VelocityOutput"), key_(key), metadata_(metadata) {}
+    : Output("SE2VelocityOutput", {key}), key_(key), metadata_(metadata) {}
 
 bool SE2VelocityOutput::init(RobotStateInterface& state, CommandInterface&) {
   return state.initSe2Velocity({.frame_name = metadata_.target_frame});
@@ -359,7 +381,7 @@ bool SE2VelocityOutput::write(OnnxRuntime& runtime, RobotStateInterface& state, 
 HeightScanInput::HeightScanInput(const std::string& key, const std::string& sensor_name,
                                  const std::unordered_set<std::string>& layer_names,
                                  const metadata::HeightScanMetadata& metadata)
-    : Input("HeightScanInput"),
+    : Input("HeightScanInput", expandKeys(key, layer_names)),
       key_(key),
       articulation_name_(metadata.articulation_name),
       scan_info_{
@@ -416,7 +438,7 @@ bool HeightScanInput::read(OnnxRuntime& runtime, RobotStateInterface& state, Com
 SphericalImageInput::SphericalImageInput(const std::string& key, const std::string& sensor_name,
                                          const std::unordered_set<std::string>& channel_names,
                                          const metadata::SphericalImageMetadata& metadata)
-    : Input("SphericalImageInput"),
+    : Input("SphericalImageInput", expandKeys(key, channel_names)),
       key_(key),
       info_{
           .sensor_name = sensor_name,
@@ -453,7 +475,7 @@ bool SphericalImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state,
 PinholeImageInput::PinholeImageInput(const std::string& key, const std::string& sensor_name,
                                      const std::unordered_set<std::string>& channel_names,
                                      const metadata::PinholeImageMetadata& metadata)
-    : Input("PinholeImageInput"),
+    : Input("PinholeImageInput", expandKeys(key, channel_names)),
       key_(key),
       info_{
           .sensor_name = sensor_name,
@@ -489,7 +511,7 @@ bool PinholeImageInput::read(OnnxRuntime& runtime, RobotStateInterface& state, C
 
 // Implementation of CommandSE3PoseInput methods
 CommandSE3PoseInput::CommandSE3PoseInput(const std::string& key, const std::string& command_name)
-    : Input("CommandSE3PoseInput"), key_(key), command_name_(command_name) {}
+    : Input("CommandSE3PoseInput", {key}), key_(key), command_name_(command_name) {}
 
 bool CommandSE3PoseInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
   return command.initSe3Pose({.command_name = command_name_});
@@ -509,7 +531,7 @@ bool CommandSE3PoseInput::read(OnnxRuntime& runtime, RobotStateInterface& /*stat
 CommandSE2VelocityInput::CommandSE2VelocityInput(
     const std::string& key, const std::string& command_name,
     const metadata::SE2VelocityCommandMetadata& metadata)
-    : Input("CommandSE2VelocityInput"),
+    : Input("CommandSE2VelocityInput", {key}),
       key_(key),
       command_name_(command_name),
       metadata_(metadata) {}
@@ -530,7 +552,7 @@ bool CommandSE2VelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& /*
 
 // Implementation of CommandBooleanInput methods
 CommandBooleanInput::CommandBooleanInput(const std::string& key, const std::string& command_name)
-    : Input("CommandBooleanInput"), key_(key), command_name_(command_name) {}
+    : Input("CommandBooleanInput", {key}), key_(key), command_name_(command_name) {}
 
 bool CommandBooleanInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
   return command.initBooleanSelector({.command_name = command_name_});
@@ -550,7 +572,7 @@ bool CommandBooleanInput::read(OnnxRuntime& runtime, RobotStateInterface& /*stat
 CommandJointPositionInput::CommandJointPositionInput(
     const std::string& key, const std::string& command_name,
     const metadata::JointPositionCommandMetadata& metadata)
-    : Input("CommandJointPositionInput"),
+    : Input("CommandJointPositionInput", {key}),
       key_(key),
       command_name_(command_name),
       metadata_(metadata) {}
@@ -591,7 +613,10 @@ bool CommandJointPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& 
 // Implementation of CommandFloatInput methods
 CommandFloatInput::CommandFloatInput(const std::string& key, const std::string& command_name,
                                      const metadata::FloatCommandMetadata& metadata)
-    : Input("CommandFloatInput"), key_(key), command_name_(command_name), metadata_(metadata) {}
+    : Input("CommandFloatInput", {key}),
+      key_(key),
+      command_name_(command_name),
+      metadata_(metadata) {}
 
 bool CommandFloatInput::init(RobotStateInterface& /*state*/, CommandInterface& command) {
   return command.initFloatValue({.command_name = command_name_, .range = metadata_.range});
@@ -610,7 +635,7 @@ bool CommandFloatInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*
 // Implementation of methods for body components.
 BodyPositionInput::BodyPositionInput(const std::string& key, const std::string& articulation_name,
                                      const std::string& body_name)
-    : Input("BodyPositionInput"),
+    : Input("BodyPositionInput", {key}),
       key_(key),
       articulation_name_(articulation_name),
       body_name_(body_name) {}
@@ -632,7 +657,7 @@ bool BodyPositionInput::read(OnnxRuntime& runtime, RobotStateInterface& state, C
 BodyOrientationInput::BodyOrientationInput(const std::string& key,
                                            const std::string& articulation_name,
                                            const std::string& body_name)
-    : Input("BodyOrientationInput"),
+    : Input("BodyOrientationInput", {key}),
       key_(key),
       articulation_name_(articulation_name),
       body_name_(body_name) {}
@@ -656,7 +681,7 @@ bool BodyOrientationInput::read(OnnxRuntime& runtime, RobotStateInterface& state
 BodyLinearVelocityInput::BodyLinearVelocityInput(const std::string& key,
                                                  const std::string& articulation_name,
                                                  const std::string& body_name)
-    : Input("BodyLinearVelocityInput"),
+    : Input("BodyLinearVelocityInput", {key}),
       key_(key),
       articulation_name_(articulation_name),
       body_name_(body_name) {}
@@ -680,7 +705,7 @@ bool BodyLinearVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& st
 BodyAngularVelocityInput::BodyAngularVelocityInput(const std::string& key,
                                                    const std::string& articulation_name,
                                                    const std::string& body_name)
-    : Input("BodyAngularVelocityInput"),
+    : Input("BodyAngularVelocityInput", {key}),
       key_(key),
       articulation_name_(articulation_name),
       body_name_(body_name) {}
@@ -702,7 +727,8 @@ bool BodyAngularVelocityInput::read(OnnxRuntime& runtime, RobotStateInterface& s
 }
 
 // Implementation of StepCountInput methods
-StepCountInput::StepCountInput(const std::string& key) : Input("StepCountInput"), key_(key) {}
+StepCountInput::StepCountInput(const std::string& key)
+    : Input("StepCountInput", {key}), key_(key) {}
 
 bool StepCountInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
                           CommandInterface& /*command*/) {
@@ -712,7 +738,9 @@ bool StepCountInput::read(OnnxRuntime& runtime, RobotStateInterface& /*state*/,
   return true;
 }
 
-MemoryOutput::MemoryOutput(const std::string& key) : Output("MemoryOutput"), key_(key) {}
+MemoryOutput::MemoryOutput(const std::string& key)
+    : Output("MemoryOutput", {fmt::format("memory.{}.in", key), fmt::format("memory.{}.out", key)}),
+      key_(key) {}
 
 bool MemoryOutput::init(RobotStateInterface& /*state*/, CommandInterface& /*command*/) {
   return true;

@@ -94,6 +94,7 @@ class OnnxRLController {
 
   bool readInputs();
   bool writeOutputs();
+  bool runObservers(uint64_t time_us);
 
   OnnxContext context_{};
   OnnxRuntime onnx_model_{};
@@ -108,6 +109,10 @@ class OnnxRLController {
   // is set under the worker's mutex. Read on the main thread only after observing
   // work_finished_ under that same mutex — no atomic needed.
   double inference_duration_s_{};
+
+  // Set on the main thread in update() before invoking the worker, so the write_fn
+  // (which runs the observers) can forward the current timestamp to data collection.
+  uint64_t update_time_us_{};
 
   std::unique_ptr<Worker> worker_{nullptr};
 };

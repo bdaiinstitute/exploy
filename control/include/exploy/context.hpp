@@ -69,6 +69,13 @@ class OnnxContext {
   const std::vector<std::unique_ptr<Output>>& getOutputs() const { return outputs_; }
 
   /**
+   * @brief Get all created read-only observer components.
+   *
+   * @return Const reference to vector of observer component unique pointers.
+   */
+  const std::vector<std::unique_ptr<Observer>>& getObservers() const { return observers_; }
+
+  /**
    * @brief Get the control loop update rate from ONNX model metadata.
    *
    * @return Update rate in Hz, or 0 if not specified in model metadata.
@@ -76,8 +83,38 @@ class OnnxContext {
   int updateRate() const { return update_rate_; }
 
  private:
+  /**
+   * @brief Run every registered matcher against all model input/output tensors.
+   *
+   * Records matched tensors inside each matcher and populates group metadata so the
+   * subsequent component creation step can build the corresponding components.
+   *
+   * @param onnx_model Reference to an initialized OnnxRuntime instance.
+   */
+  void runAllMatchers(OnnxRuntime& onnx_model);
+
+  /**
+   * @brief Create input, output and observer components from the matched tensors.
+   *
+   * Populates inputs_, outputs_ and observers_ from the registered matchers.
+   */
+  void collectComponents();
+
+  /**
+   * @brief Verify that every model input/output tensor is served by exactly one component.
+   *
+   * Observers are read-only and do not participate in this check.
+   *
+   * @param onnx_model Reference to an initialized OnnxRuntime instance.
+   * @param strict If true, an unmatched tensor is an error; if false, it is only a warning.
+   * @return true if ownership is valid, false otherwise.
+   */
+  bool validateTensorOwnership(OnnxRuntime& onnx_model, bool strict) const;
+
   std::vector<std::unique_ptr<Input>> inputs_;    ///< Input components for reading robot data.
   std::vector<std::unique_ptr<Output>> outputs_;  ///< Output components for writing robot commands.
+  std::vector<std::unique_ptr<Observer>>
+      observers_;  ///< Read-only observer components for debugging/visualization.
   std::vector<std::unique_ptr<Matcher>> matchers_;  ///< Registered single-tensor matchers.
   std::vector<std::unique_ptr<GroupMatcher>>
       group_matchers_;                                       ///< Registered multi-tensor matchers.

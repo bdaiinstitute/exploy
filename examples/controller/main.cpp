@@ -46,6 +46,7 @@
 
 #include "fixed_command_interface.hpp"
 #include "loopback_state_interface.hpp"
+#include "memory_visualizer.hpp"
 
 struct Args {
   std::string onnx_path;
@@ -149,6 +150,12 @@ int main(int argc, char** argv) {
   exploy::control::OnnxRLController controller(state, command, data_collection);
   // Register custom matchers.
   controller.context().registerMatcher(std::make_unique<CustomBodyPositionMatcher>());
+
+  // Register a read-only observer matcher that visualizes recurrent memory state each step.
+  // Observation does not claim tensors functionally, so it coexists with the built-in
+  // MemoryMatcher that owns the same memory.<key>.in / memory.<key>.out tensors.
+  controller.context().registerMatcher(
+      std::make_unique<exploy::control::examples::MemoryVisualizationMatcher>());
 
   // Load the ONNX model.
   if (!controller.create(args.onnx_path)) {

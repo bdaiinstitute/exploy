@@ -113,7 +113,7 @@ class CustomInput : public Input {
  public:
   CustomInput(const std::string& key, const std::string& command_name,
               CustomInterface* custom_interface)
-      : Input("CustomInput"),
+      : Input("CustomInput", {key}),
         key_(key),
         command_name_(command_name),
         custom_interface_(*custom_interface) {}

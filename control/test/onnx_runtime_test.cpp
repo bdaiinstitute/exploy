@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <span>
+#include <type_traits>
 
 namespace exploy::control {
 
@@ -124,6 +125,36 @@ TEST_F(OnnxRuntimeTest, OutputBufferFloatType) {
   // Test getting output buffer for non-existent tensor
   auto nonexistent_buffer = runtime.outputBuffer<float>("nonexistent");
   EXPECT_FALSE(nonexistent_buffer.has_value());
+}
+
+TEST_F(OnnxRuntimeTest, ConstInputOutputBufferReadOnly) {
+  OnnxRuntime runtime;
+  ASSERT_TRUE(runtime.initialize(simple_model_path_));
+
+  // Write known values through the mutable input buffer.
+  auto mutable_input = runtime.inputBuffer<float>("float_input");
+  ASSERT_TRUE(mutable_input.has_value());
+  for (std::size_t i = 0; i < mutable_input->size(); ++i) {
+    (*mutable_input)[i] = static_cast<float>(i) + 0.5F;
+  }
+
+  // The const overload must return a read-only view of the same data.
+  const OnnxRuntime& const_runtime = runtime;
+  auto const_input = const_runtime.inputBuffer<float>("float_input");
+  ASSERT_TRUE(const_input.has_value());
+  static_assert(std::is_same_v<decltype(const_input)::value_type, std::span<const float>>,
+                "const inputBuffer must return a span of const float");
+  ASSERT_EQ(const_input->size(), mutable_input->size());
+  for (std::size_t i = 0; i < const_input->size(); ++i) {
+    EXPECT_FLOAT_EQ((*const_input)[i], static_cast<float>(i) + 0.5F);
+  }
+
+  // Const output accessor and unknown-name / wrong-type handling.
+  auto const_output = const_runtime.outputBuffer<float>("float_output");
+  ASSERT_TRUE(const_output.has_value());
+  EXPECT_EQ(const_output->size(), 3);
+  EXPECT_FALSE(const_runtime.inputBuffer<float>("nonexistent").has_value());
+  EXPECT_FALSE(const_runtime.inputBuffer<int32_t>("float_input").has_value());
 }
 
 TEST_F(OnnxRuntimeTest, InputBufferWrongType) {

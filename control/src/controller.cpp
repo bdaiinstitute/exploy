@@ -63,13 +63,19 @@ bool OnnxRLController::init(bool enable_data_collection, WorkerMode mode) {
 
   for (const auto& input : context_.getInputs()) {
     if (!input->init(state_, command_)) {
-      LOG_STREAM(ERROR, "Error initializing input.");
+      LOG_STREAM(ERROR, "Error initializing input: " << input->getName());
       return false;
     }
   }
   for (const auto& output : context_.getOutputs()) {
     if (!output->init(state_, command_)) {
-      LOG_STREAM(ERROR, "Error initializing output.");
+      LOG_STREAM(ERROR, "Error initializing output: " << output->getName());
+      return false;
+    }
+  }
+  for (const auto& observer : context_.getObservers()) {
+    if (!observer->init()) {
+      LOG_STREAM(ERROR, "Error initializing observer: " << observer->getName());
       return false;
     }
   }
@@ -96,7 +102,7 @@ bool OnnxRLController::init(bool enable_data_collection, WorkerMode mode) {
         return success;
       },
       [this]() {
-        return writeOutputs();
+        return writeOutputs() && runObservers(update_time_us_);
       });
   if (!success) {
     LOG(ERROR, "Failed to set worker callbacks.");
@@ -139,7 +145,7 @@ void OnnxRLController::reset() {
 bool OnnxRLController::readInputs() {
   for (const auto& input : context_.getInputs()) {
     if (!input->read(onnx_model_, state_, command_)) {
-      LOG_STREAM(ERROR, "Failed to read input");
+      LOG_STREAM(ERROR, "Failed to read input: " << input->getName());
       return false;
     }
   }
@@ -149,21 +155,27 @@ bool OnnxRLController::readInputs() {
 bool OnnxRLController::writeOutputs() {
   for (const auto& output : context_.getOutputs()) {
     if (!output->write(onnx_model_, state_, command_)) {
-      LOG_STREAM(ERROR, "Failed to write output");
+      LOG_STREAM(ERROR, "Failed to write output: " << output->getName());
       return false;
     }
   }
   return true;
 }
 
-bool OnnxRLController::update(uint64_t time_us) {
-  if (!worker_) return false;
-  if (!worker_->update(time_us)) return false;
-
+bool OnnxRLController::runObservers(uint64_t time_us) {
+  for (const auto& observer : context_.getObservers()) {
+    observer->observe(onnx_model_);
+  }
   if (!data_collection_.collectData(time_us)) {
     LOG(WARN, "Data collection failed.");
   }
+  return true;
+}
 
+bool OnnxRLController::update(uint64_t time_us) {
+  if (!worker_) return false;
+  update_time_us_ = time_us;
+  if (!worker_->update(time_us)) return false;
   return true;
 }
 

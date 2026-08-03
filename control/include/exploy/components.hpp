@@ -2,6 +2,8 @@
 #pragma once
 
 #include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "exploy/command_interface.hpp"
 #include "exploy/metadata.hpp"
@@ -17,7 +19,15 @@ namespace exploy::control {
  * input tensors. Subclasses implement specific data sources (joints, IMU, cameras, etc.).
  */
 struct Input {
-  explicit Input(const std::string& name) : name_(name) {}
+  /**
+   * @brief Construct an input component.
+   *
+   * @param name Human-readable component type name (used in logs).
+   * @param tensor_names ONNX input tensor name(s) this component populates. Used to verify
+   * that every ONNX input tensor is served by exactly one component.
+   */
+  Input(std::string name, std::unordered_set<std::string> tensor_names)
+      : name_(std::move(name)), tensor_names_(std::move(tensor_names)) {}
   virtual ~Input() = default;
 
   /**
@@ -50,8 +60,18 @@ struct Input {
    */
   virtual const std::string& getName() const { return name_; }
 
+  /**
+   * @brief Get the ONNX input tensor name(s) this component populates.
+   *
+   * Used to verify that every ONNX input tensor is served by exactly one component.
+   *
+   * @return Names of the ONNX tensors this component serves.
+   */
+  const std::unordered_set<std::string>& tensorNames() const { return tensor_names_; }
+
  private:
-  std::string name_;  ///< Name of this component.
+  std::string name_;                              ///< Name of this component.
+  std::unordered_set<std::string> tensor_names_;  ///< ONNX tensor names served by this component.
 };
 
 /**
@@ -62,7 +82,15 @@ struct Input {
  * velocity commands, memory buffers, etc.).
  */
 struct Output {
-  explicit Output(const std::string& name) : name_(name) {}
+  /**
+   * @brief Construct an output component.
+   *
+   * @param name Human-readable component type name (used in logs).
+   * @param tensor_names ONNX output tensor name(s) this component serves. Used to verify
+   * that every ONNX output tensor is served by exactly one component.
+   */
+  Output(std::string name, std::unordered_set<std::string> tensor_names)
+      : name_(std::move(name)), tensor_names_(std::move(tensor_names)) {}
   virtual ~Output() = default;
 
   /**
@@ -88,6 +116,56 @@ struct Output {
    */
   virtual bool write(OnnxRuntime& runtime, RobotStateInterface& state,
                      CommandInterface& command) = 0;
+
+  /**
+   * @brief Get the name of this component.
+   * @return Name of this component.
+   */
+  virtual const std::string& getName() const { return name_; }
+
+  /**
+   * @brief Get the ONNX tensor name(s) this component is responsible for.
+   *
+   * Used to verify that every ONNX tensor is served by exactly one component. The set may include
+   * any ONNX tensor names the component owns (for example MemoryOutput owns both an input and an
+   * output tensor), not just output tensors.
+   *
+   * @return Names of the ONNX tensors this component serves.
+   */
+  const std::unordered_set<std::string>& tensorNames() const { return tensor_names_; }
+
+ private:
+  std::string name_;                              ///< Name of this component.
+  std::unordered_set<std::string> tensor_names_;  ///< ONNX tensor names served by this component.
+};
+
+/**
+ * @brief Abstract base class for read-only observer components.
+ *
+ * Observer components inspect ONNX runtime buffers without modifying them, e.g. for
+ * debugging or visualization. Read-only access is enforced by the type system.
+ * Observers are created by matchers via `Matcher::createObservers()` /
+ * `GroupMatcher::createObservers()` and run once per control step after inference.
+ */
+struct Observer {
+  explicit Observer(const std::string& name) : name_(name) {}
+  virtual ~Observer() = default;
+
+  /**
+   * @brief Initialize the observer component (non-real-time).
+   *
+   * Called once during controller setup.
+   *
+   * @return true if initialization succeeded, false otherwise.
+   */
+  virtual bool init() { return true; }
+
+  /**
+   * @brief Inspect ONNX buffers without modifying them (real-time).
+   *
+   * @param runtime ONNX runtime containing input/output buffers (read-only).
+   */
+  virtual void observe(const OnnxRuntime& runtime) const = 0;
 
   /**
    * @brief Get the name of this component.

@@ -112,6 +112,22 @@ class OnnxRuntime {
   }
 
   /**
+   * @brief Retrieves a read-only span to the input tensor buffer of the specified name.
+   *
+   * @tparam T The data type of the tensor elements (e.g., float, int32_t, bool).
+   * @param name The name of the input tensor.
+   * @return An optional span of const elements to the tensor buffer if it exists and matches the
+   * requested type, nullopt otherwise.
+   *
+   */
+  template <typename T>
+  inline std::optional<std::span<const T>> inputBuffer(const std::string& name) const {
+    if (!input_names_to_index_.contains(name)) return std::nullopt;
+    auto index = input_names_to_index_.at(name);
+    return getBuffer<T>(input_.tensors[index], input_.data_types[index]);
+  }
+
+  /**
    * @brief Retrieves a mutable span to the output tensor buffer of the specified name.
    *
    * @tparam T The data type of the tensor elements (e.g., float, int32_t, bool).
@@ -122,6 +138,22 @@ class OnnxRuntime {
    */
   template <typename T>
   inline std::optional<std::span<T>> outputBuffer(const std::string& name) {
+    if (!output_names_to_index_.contains(name)) return std::nullopt;
+    auto index = output_names_to_index_.at(name);
+    return getBuffer<T>(output_.tensors[index], output_.data_types[index]);
+  }
+
+  /**
+   * @brief Retrieves a read-only span to the output tensor buffer of the specified name.
+   *
+   * @tparam T The data type of the tensor elements (e.g., float, int32_t, bool).
+   * @param name The name of the output tensor.
+   * @return An optional span of const elements to the tensor buffer if it exists and matches the
+   * requested type, nullopt otherwise.
+   *
+   */
+  template <typename T>
+  inline std::optional<std::span<const T>> outputBuffer(const std::string& name) const {
     if (!output_names_to_index_.contains(name)) return std::nullopt;
     auto index = output_names_to_index_.at(name);
     return getBuffer<T>(output_.tensors[index], output_.data_types[index]);
@@ -169,6 +201,14 @@ class OnnxRuntime {
     if (data_type != onnx_type<T>::value) return std::nullopt;
     T* data_ptr = tensor.GetTensorMutableData<T>();
     return std::span<T>(data_ptr, tensor.GetTensorTypeAndShapeInfo().GetElementCount());
+  }
+
+  template <typename T>
+  inline std::optional<std::span<const T>> getBuffer(const Ort::Value& tensor,
+                                                     ONNXTensorElementDataType data_type) const {
+    if (data_type != onnx_type<T>::value) return std::nullopt;
+    const T* data_ptr = tensor.GetTensorData<T>();
+    return std::span<const T>(data_ptr, tensor.GetTensorTypeAndShapeInfo().GetElementCount());
   }
 
   std::unique_ptr<Ort::Env> env_{nullptr};

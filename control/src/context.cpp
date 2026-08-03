@@ -9,6 +9,7 @@
 
 #include <cmath>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace exploy::control {
@@ -55,6 +56,7 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   // Reset the components and matchers.
   inputs_.clear();
   outputs_.clear();
+  observers_.clear();
   for (auto& m : matchers_) m->resetMatcher();
   for (auto& m : group_matchers_) m->resetMatcher();
 
@@ -78,57 +80,31 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
 
   base_names_ = parseBaseNames(onnx_model);
 
-  // Match metadata input names to registered matchers to create components. Each input must match
-  // exactly one matcher.
-  for (const auto& input_name : onnx_model.inputNames()) {
+  runAllMatchers(onnx_model);
+  collectComponents();
+  return validateTensorOwnership(onnx_model, strict);
+}
+
+void OnnxContext::runAllMatchers(OnnxRuntime& onnx_model) {
+  // Run every matcher against every input and output tensor. matches() records the matched tensors
+  // inside each matcher so that createInputs()/createOutputs()/createObservers() can build the
+  // corresponding components later. Multiple matchers may match the same tensor (for example a
+  // functional matcher and a read-only observer); tensor ownership is validated at the component
+  // level, so no exclusivity is enforced here.
+  const auto run_matchers = [&](const std::string& tensor_name) {
     Match maybe_match{
-        .name = input_name,
-        .metadata = onnx_model.getCustomMetadata(input_name),
+        .name = tensor_name,
+        .metadata = onnx_model.getCustomMetadata(tensor_name),
         .base_names = base_names_,
     };
-    std::vector<std::string> matched_by;
-    for (auto& group_matcher : group_matchers_) {
-      if (group_matcher->matches(maybe_match)) matched_by.push_back(group_matcher->getName());
-    }
-    for (auto& matcher : matchers_) {
-      if (matcher->matches(maybe_match)) matched_by.push_back(matcher->getName());
-    }
-    if (matched_by.empty()) {
-      LOG_STREAM(WARNING, fmt::format("No matcher found for input '{}'", input_name));
-      if (strict) {
-        return false;
-      }
-    } else if (matched_by.size() > 1) {
-      LOG_STREAM(ERROR, fmt::format("Multiple matchers ({}) found for input '{}': [{}]",
-                                    matched_by.size(), input_name, fmt::join(matched_by, ", ")));
-      return false;
-    }
-  }
+    for (auto& group_matcher : group_matchers_) group_matcher->matches(maybe_match);
+    for (auto& matcher : matchers_) matcher->matches(maybe_match);
+  };
 
-  // Match metadata output names to registered matchers to create components. Each output must match
-  // exactly one matcher.
+  for (const auto& input_name : onnx_model.inputNames()) run_matchers(input_name);
   for (const auto& output_name : onnx_model.outputNames()) {
     if (output_name == "actions" || output_name == "obs") continue;
-    Match maybe_match{
-        .name = output_name,
-        .metadata = onnx_model.getCustomMetadata(output_name),
-        .base_names = base_names_,
-    };
-    std::vector<std::string> matched_by;
-    for (auto& group_matcher : group_matchers_) {
-      if (group_matcher->matches(maybe_match)) matched_by.push_back(group_matcher->getName());
-    }
-    for (auto& matcher : matchers_) {
-      if (matcher->matches(maybe_match)) matched_by.push_back(matcher->getName());
-    }
-    if (matched_by.empty()) {
-      LOG_STREAM(WARNING, fmt::format("No matcher found for output '{}'", output_name));
-      if (strict) return false;
-    } else if (matched_by.size() > 1) {
-      LOG_STREAM(ERROR, fmt::format("Multiple matchers ({}) found for output '{}': [{}]",
-                                    matched_by.size(), output_name, fmt::join(matched_by, ", ")));
-      return false;
-    }
+    run_matchers(output_name);
   }
 
   for (auto& group_matcher : group_matchers_) {
@@ -136,7 +112,9 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
       return onnx_model.getCustomMetadata(name);
     });
   }
+}
 
+void OnnxContext::collectComponents() {
   auto collect_components = [](auto& components, auto& matchers, auto creator_fn) {
     for (auto& matcher : matchers) {
       auto items = (matcher.get()->*creator_fn)();
@@ -149,6 +127,48 @@ bool OnnxContext::createContext(OnnxRuntime& onnx_model, bool strict) {
   collect_components(inputs_, group_matchers_, &GroupMatcher::createInputs);
   collect_components(outputs_, matchers_, &Matcher::createOutputs);
   collect_components(outputs_, group_matchers_, &GroupMatcher::createOutputs);
+  collect_components(observers_, matchers_, &Matcher::createObservers);
+  collect_components(observers_, group_matchers_, &GroupMatcher::createObservers);
+}
+
+bool OnnxContext::validateTensorOwnership(OnnxRuntime& onnx_model, bool strict) const {
+  // Every input and output tensor must be served by exactly one input/output component. Observers
+  // are read-only and do not participate in this check. Build a map of tensor name -> owning
+  // component names from the components that were created above.
+  std::unordered_map<std::string, std::vector<std::string>> tensor_owners;
+  for (const auto& input : inputs_) {
+    for (const auto& tensor_name : input->tensorNames()) {
+      tensor_owners[tensor_name].push_back(input->getName());
+    }
+  }
+  for (const auto& output : outputs_) {
+    for (const auto& tensor_name : output->tensorNames()) {
+      tensor_owners[tensor_name].push_back(output->getName());
+    }
+  }
+
+  const auto check_tensor_owner = [&](const std::string& tensor_name, const char* kind) -> bool {
+    const auto it = tensor_owners.find(tensor_name);
+    if (it == tensor_owners.end() || it->second.empty()) {
+      LOG_STREAM(WARNING, fmt::format("No component found for {} '{}'", kind, tensor_name));
+      return !strict;
+    }
+    if (it->second.size() > 1) {
+      LOG_STREAM(ERROR,
+                 fmt::format("Multiple components ({}) found for {} '{}': [{}]", it->second.size(),
+                             kind, tensor_name, fmt::join(it->second, ", ")));
+      return false;
+    }
+    return true;
+  };
+
+  for (const auto& input_name : onnx_model.inputNames()) {
+    if (!check_tensor_owner(input_name, "input")) return false;
+  }
+  for (const auto& output_name : onnx_model.outputNames()) {
+    if (output_name == "actions" || output_name == "obs") continue;
+    if (!check_tensor_owner(output_name, "output")) return false;
+  }
 
   return true;
 }

@@ -168,13 +168,19 @@ State Interface
 Components
 ----------
 
-Input and output components for data flow management.
+Input, output, and observer components for data flow management.
+Inputs and outputs read/write ONNX buffers and the robot interfaces; observers
+inspect ONNX buffers read-only (e.g. for debugging or visualization).
 
 .. doxygenstruct:: exploy::control::Input
    :members:
    :undoc-members:
 
 .. doxygenstruct:: exploy::control::Output
+   :members:
+   :undoc-members:
+
+.. doxygenstruct:: exploy::control::Observer
    :members:
    :undoc-members:
 
@@ -255,7 +261,14 @@ Select a strategy via :cpp:enum:`exploy::control::WorkerMode` when calling
 Matchers
 --------
 
-Component matchers for automatic ONNX I/O mapping.
+Component matchers for automatic ONNX I/O mapping. A matcher's ``matches()`` claims a
+tensor and produces components via ``createInputs()``, ``createOutputs()``, and
+``createObservers()``. Ownership is enforced at the component level: every ONNX input and
+output tensor must be served by exactly one input/output component, as declared through
+:cpp:func:`exploy::control::Input::tensorNames` /
+:cpp:func:`exploy::control::Output::tensorNames`. Observers are read-only, do not declare
+tensor ownership, and are exempt from this check, so they may observe tensors already
+served by another component.
 
 .. doxygenclass:: exploy::control::Matcher
    :members:

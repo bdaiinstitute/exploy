@@ -64,7 +64,7 @@ class Matcher {
    * @param maybe_match Potential match containing tensor name and metadata.
    * @return true if the tensor matches and was stored, false otherwise.
    */
-  virtual bool matches(const Match& maybe_match) = 0;
+  virtual bool matches(const Match& /*maybe_match*/) { return false; }
 
   /**
    * @brief Create input components from all matched tensors.
@@ -79,6 +79,17 @@ class Matcher {
    * @return Vector of output component unique pointers.
    */
   virtual std::vector<std::unique_ptr<Output>> createOutputs() const { return {}; }
+
+  /**
+   * @brief Create read-only observer components from all matched tensors.
+   *
+   * A matcher that creates observers (and no inputs/outputs) is a read-only observer: the
+   * tensors it matches are not counted as functionally owned, so it may observe tensors that
+   * are already owned by another matcher.
+   *
+   * @return Vector of observer component unique pointers.
+   */
+  virtual std::vector<std::unique_ptr<Observer>> createObservers() const { return {}; }
 
   /**
    * @brief Reset the matcher by clearing all found matches and any subclass state.
@@ -145,6 +156,17 @@ class GroupMatcher {
    * @return Vector of output component unique pointers.
    */
   virtual std::vector<std::unique_ptr<Output>> createOutputs() const { return {}; }
+
+  /**
+   * @brief Create read-only observer components from all matched tensor groups.
+   *
+   * A group matcher that creates observers (and no inputs/outputs) is a read-only observer:
+   * the tensors it matches are not counted as functionally owned, so it may observe tensors
+   * that are already owned by another matcher.
+   *
+   * @return Vector of observer component unique pointers.
+   */
+  virtual std::vector<std::unique_ptr<Observer>> createObservers() const { return {}; }
 
   /**
    * @brief Populate metadata for all matched groups using a metadata getter function.

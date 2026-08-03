@@ -454,6 +454,91 @@ Overlapping patterns cause `create()` to fail.
 
 ---
 
+## Advanced: Read-only Observers
+
+Sometimes you want to *inspect* a tensor without claiming it — for example, to log
+or visualize a recurrent policy's internal memory (`memory.<key>.in` /
+`memory.<key>.out`) while the built-in `MemoryMatcher` still owns those tensors.
+
+An **observer matcher** does exactly this. Instead of `createInputs()` /
+`createOutputs()`, it produces `Observer` components via `createObservers()`.
+Ownership is enforced at the **component** level — only `Input` / `Output`
+components declare the tensors they serve (through `tensorNames()`), so an
+observer never conflicts with the one-component-per-tensor rule. A tensor can be
+owned by a functional matcher's component and observed by an observer at the same
+time.
+
+An `Observer` is read-only by construction: `observe()` receives only a
+`const OnnxRuntime&` and is itself `const`, so it can read tensor buffers (through
+the const `inputBuffer()` / `outputBuffer()` overloads, which return
+`std::span<const T>`) but cannot modify them. Observers have no access to the robot
+state or command interfaces. They run once per control step, after inference.
+
+```cpp
+#include "components.hpp"
+#include "matcher.hpp"
+
+#include <iostream>
+#include <memory>
+#include <regex>
+#include <string>
+
+// Read-only observer that prints one tensor's values each step.
+class PrintObserver : public exploy::control::Observer {
+ public:
+  explicit PrintObserver(const std::string& tensor_name)
+      : Observer("PrintObserver[" + tensor_name + "]"), tensor_name_(tensor_name) {}
+
+  void observe(const exploy::control::OnnxRuntime& runtime) const override {
+    // The tensor may be a model input or output; try inputs first, then outputs.
+    auto buffer = runtime.inputBuffer<float>(tensor_name_);
+    if (!buffer.has_value()) buffer = runtime.outputBuffer<float>(tensor_name_);
+    if (!buffer.has_value()) return;  // Not a float tensor, or unknown name.
+    // buffer->front() is const — the observer cannot write to the buffer.
+    std::cout << tensor_name_ << "[0] = " << buffer->front() << "\n";
+  }
+
+ private:
+  std::string tensor_name_;
+};
+
+// Observer matcher: does not claim tensors functionally; only observes.
+class MemoryObserverMatcher : public exploy::control::Matcher {
+ public:
+  MemoryObserverMatcher() : Matcher("MemoryObserverMatcher") {}
+
+  bool matches(const exploy::control::Match& maybe_match) override {
+    if (!std::regex_match(maybe_match.name, kPattern)) return false;
+    observed_.push_back(maybe_match.name);
+    return true;
+  }
+
+  std::vector<std::unique_ptr<exploy::control::Observer>> createObservers() const override {
+    std::vector<std::unique_ptr<exploy::control::Observer>> observers;
+    for (const auto& name : observed_) {
+      observers.push_back(std::make_unique<PrintObserver>(name));
+    }
+    return observers;
+  }
+
+ private:
+  void reset() override { observed_.clear(); }
+
+  static inline const std::regex kPattern{R"(memory\..*\.in)"};
+  std::vector<std::string> observed_;
+};
+
+// Register alongside the built-in matchers (does not require disabling defaults):
+controller.context().registerMatcher(std::make_unique<MemoryObserverMatcher>());
+```
+
+Because observation is independent of functional matching, you can register an
+observer matcher on top of the default matchers without triggering the overlap
+error. A full runnable example lives in
+`examples/controller/memory_visualizer.hpp`.
+
+---
+
 ## Advanced: Custom Logging Backend
 
 By default the controller logs to stdout. To redirect log messages to your own
