@@ -6,7 +6,12 @@ version = "0.1.0"
 description = "EXport and dePLOY Reinforcement Learning policies."
 authors = ["TODO"]
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-arm64"]
+platforms = [
+  { name = "linux-64-cuda13", platform = "linux-64", cuda = "13", glibc = "2.35" },
+  { name = "linux-64-cpu", platform = "linux-64", glibc = "2.35" },
+  "osx-arm64",
+]
+requires-pixi = ">=0.75"
 
 # ================
 # Feature: default
@@ -81,6 +86,9 @@ features = [
 ]
 solve-group = "exploy"
 
+[feature.env-python]
+platforms = ["linux-64-cpu", "osx-arm64"]
+
 [feature.env-python.tasks]
 test-python = "pytest"
 test-python-core = "pytest -m core"
@@ -106,6 +114,9 @@ features = [
   "exploy-python-runtime",
 ]
 solve-group = "exploy"
+
+[feature.env-cpp]
+platforms = ["linux-64-cpu", "osx-arm64"]
 
 [feature.cpp-dev.dependencies]
 cmake = ">=3.23"
@@ -189,6 +200,9 @@ features = [
 ]
 solve-group = "exploy"
 
+[feature.env-ci]
+platforms = ["linux-64-cpu", "osx-arm64"]
+
 [feature.env-ci.dependencies]
 clang-format = "*"
 nodejs = "*"
@@ -221,6 +235,9 @@ features = [
   "editable-exploy-python",
 ]
 solve-group = "exploy"
+
+[feature.env-docs]
+platforms = ["linux-64-cpu", "osx-arm64"]
 
 [feature.env-docs.dependencies]
 breathe = "*"
@@ -386,10 +403,7 @@ uv = "*"
 # ---------------
 
 [feature.mjlab-120]
-platforms = ["linux-64"]
-
-[feature.mjlab-120.system-requirements]
-libc = { family = "glibc", version = "2.35" }
+platforms = ["linux-64-cpu"]
 
 [feature.mjlab-120.dependencies]
 numpy = "<2"
@@ -408,15 +422,11 @@ mujoco-warp = "<3.9.1"
 # -----------------
 
 [feature.isaaclab-232]
-platforms = ["linux-64"]
+platforms = ["linux-64-cuda13"]
 
 [feature.isaaclab-232.activation.env]
 LD_LIBRARY_PATH = "$LD_LIBRARY_PATH:$CONDA_PREFIX/lib"
 OMNI_KIT_ACCEPT_EULA = "yes"
-
-[feature.isaaclab-232.system-requirements]
-cuda = "13"
-libc = { family = "glibc", version = "2.35" }
 
 [feature.isaaclab-232.pypi-options]
 no-build-isolation = true

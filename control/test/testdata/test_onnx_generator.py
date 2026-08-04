@@ -119,7 +119,7 @@ class FullTestModel(torch.nn.Module):
         inputs = [v for k, v in locals().items() if k != "self"]
 
         # Identity operations to keep them in the graph
-        processed = [i * 1.0 for i in inputs]
+        processed = [i.to(torch.float32) * 1.0 for i in inputs]
 
         concatenated = torch.cat(processed, dim=1)
 

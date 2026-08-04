@@ -252,12 +252,15 @@ Looking at `compute_obs()` from Step 1, the observation is computed from three s
 (`foo`, `bar`, `baz`) and the previous actions:
 
 ```python
-torch.cat([
-    self.data_source.foo + 1.0,
-    self.data_source.bar + 2.0 * self.data_source.baz,
-    self.data_source.baz,
-    self._actions,
-], dim=-1)
+torch.cat(
+    [
+        self.data_source.foo + 1.0,
+        self.data_source.bar + 2.0 * self.data_source.baz,
+        self.data_source.baz,
+        self._actions,
+    ],
+    dim=-1,
+)
 ```
 
 Each of these tensors needs to be declared so the exporter knows how to feed data into the ONNX
@@ -780,7 +783,10 @@ import torch
 from isaaclab.assets import Articulation
 from isaaclab.managers import SceneEntityCfg
 
-from exploy.exporter.frameworks.isaaclab.derived_tensors import body_link_ang_vel_b, body_link_lin_vel_b
+from exploy.exporter.frameworks.isaaclab.derived_tensors import (
+    body_link_ang_vel_b,
+    body_link_lin_vel_b,
+)
 
 
 def body_lin_vel_b(env, asset_cfg=SceneEntityCfg("robot")) -> torch.Tensor:
@@ -984,7 +990,9 @@ env = Environment(data_source=data_source)
 exp_env = ExportableEnv(env=env)
 actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
 
-assert export_and_evaluate(exp_env, actor, "policy.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20)
+assert export_and_evaluate(
+    exp_env, actor, "policy.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20
+)
 ```
 
 ### Environment with a torch module
@@ -996,7 +1004,9 @@ exp_env = ExportableEnv(env=env)
 actor = Actor(num_obs=env.num_obs, num_act=env.num_act).eval()
 exp_env.context_manager().add_module(env.module)
 
-assert export_and_evaluate(exp_env, actor, "policy_with_module.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20)
+assert export_and_evaluate(
+    exp_env, actor, "policy_with_module.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20
+)
 ```
 
 ### Environment with a torch module and an RNN actor
@@ -1014,5 +1024,7 @@ add_actor_memory(
     get_hidden_states_func=actor.get_state,
 )
 
-assert export_and_evaluate(exp_env, actor, "policy_with_rnn.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20)
+assert export_and_evaluate(
+    exp_env, actor, "policy_with_rnn.onnx", num_eval_episodes=1, max_eval_steps_per_episode=20
+)
 ```
