@@ -6,6 +6,8 @@ import isaaclab.utils.math as math_utils
 import torch
 from isaaclab.assets import RigidObject, RigidObjectData
 
+from exploy.exporter.core.tensor_proxy import TensorProxy
+
 
 class RigidObjectDataSource:
     """Mimic the interface of a `RigidObjectData`, but manage its own tensor data.
@@ -37,9 +39,16 @@ class RigidObjectDataSource:
         self._root_lin_vel_b = rigid_object_data.root_lin_vel_b.clone()
         self._root_ang_vel_b = rigid_object_data.root_ang_vel_b.clone()
 
-        # Initialize tensors by cloning from the original data.
-        self._root_pos_w = rigid_object_data.root_pos_w.clone()
-        self._root_quat_w = rigid_object_data.root_quat_w.clone()
+        # Initialize body pose tensors.
+        # Note: we use a `TensorProxy` class that allows us to split the original body tensors into
+        #       one tensor per body. Indexing the proxy returns the exact stored per-body tensor, so
+        #       inputs registered against `body_pos_w`/`body_quat_w` (and the root pose derived from
+        #       them) bind to real graph inputs instead of being constant-folded during tracing.
+        self._root_body_id = 0
+
+        self._body_pos_w = TensorProxy(rigid_object_data.body_pos_w.clone(), split_dim=1)
+        self._body_quat_w = TensorProxy(rigid_object_data.body_quat_w.clone(), split_dim=1)
+
         self._body_acc_w = rigid_object_data.body_acc_w.clone()
 
         # Clone all tensors from source class.
@@ -173,7 +182,7 @@ class RigidObjectDataSource:
 
         This quantity is the position of the actor frame of the root rigid body.
         """
-        return self._root_pos_w
+        return self.body_pos_w[:, self._root_body_id]
 
     @property
     def root_quat_w(self) -> torch.Tensor:
@@ -181,7 +190,7 @@ class RigidObjectDataSource:
 
         This quantity is the orientation of the actor frame of the root rigid body.
         """
-        return self._root_quat_w
+        return self.body_quat_w[:, self._root_body_id]
 
     @property
     def root_vel_w(self) -> torch.Tensor:
@@ -364,7 +373,7 @@ class RigidObjectDataSource:
 
         This quantity is the position of the rigid bodies' actor frame.
         """
-        return self._root_pos_w.view(-1, 1, 3)
+        return self._body_pos_w
 
     @property
     def body_quat_w(self) -> torch.Tensor:
@@ -372,7 +381,7 @@ class RigidObjectDataSource:
 
         This quantity is the orientation of the rigid bodies' actor frame.
         """
-        return self._root_quat_w.view(-1, 1, 4)
+        return self._body_quat_w
 
     @property
     def body_vel_w(self) -> torch.Tensor:
@@ -425,7 +434,7 @@ class RigidObjectDataSource:
         This quantity is the position of the rigid bodies' actor frame relative to the world.
         """
 
-        return self.root_pos_w.view(-1, 1, 3)
+        return self.body_pos_w
 
     @property
     def body_link_quat_w(self) -> torch.Tensor:
@@ -433,7 +442,7 @@ class RigidObjectDataSource:
 
         This quantity is the orientation of the rigid bodies' actor frame relative to the world.
         """
-        return self.root_quat_w.view(-1, 1, 4)
+        return self.body_quat_w
 
     @property
     def body_link_vel_w(self) -> torch.Tensor:
@@ -567,7 +576,7 @@ def dict_to_rigid_object_data(
     env_id: int,
 ) -> None:
     assert isinstance(target, RigidObjectDataSource)
-    target._root_pos_w[env_id] = data[f"body.{object_name}.pos"]
-    target._root_quat_w[env_id] = data[f"body.{object_name}.quat"]
+    target._body_pos_w[env_id, target._root_body_id] = data[f"body.{object_name}.pos"]
+    target._body_quat_w[env_id, target._root_body_id] = data[f"body.{object_name}.quat"]
     target._root_lin_vel_b[env_id] = data[f"body.{object_name}.lin_vel"]
     target._root_ang_vel_b[env_id] = data[f"body.{object_name}.ang_vel"]

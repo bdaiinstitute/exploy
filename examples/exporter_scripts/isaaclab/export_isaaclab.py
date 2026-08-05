@@ -104,17 +104,12 @@ def export_isaaclab(
     articulations = env.unwrapped.scene.articulations
     context_manager = exportable_env.context_manager()
 
-    inputs.add_base_vel(
-        articulations=articulations,
-        context_manager=context_manager,
-    )
-
-    inputs.add_base_pose(
-        articulations=articulations,
-        context_manager=context_manager,
-    )
-
     inputs.add_body_pos_and_quat(
+        articulations=articulations,
+        context_manager=context_manager,
+    )
+
+    inputs.add_body_vel(
         articulations=articulations,
         context_manager=context_manager,
     )
