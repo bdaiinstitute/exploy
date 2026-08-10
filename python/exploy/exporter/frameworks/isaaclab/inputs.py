@@ -1,5 +1,7 @@
 # Copyright (c) 2026 Robotics and AI Institute LLC dba RAI Institute. All rights reserved.
 
+from __future__ import annotations
+
 from collections.abc import Mapping
 
 import torch

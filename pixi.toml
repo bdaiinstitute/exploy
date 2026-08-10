@@ -240,12 +240,13 @@ solve-group = "exploy"
 platforms = ["linux-64-cpu", "osx-arm64"]
 
 [feature.env-docs.dependencies]
-breathe = "*"
+# breathe <4.36 breaks on Sphinx >=9 (removed python domain classes); breathe 4.36 caps Sphinx <9.
+breathe = ">=4.36"
 doxygen = "*"
 furo = "*"
 myst-parser = "*"
 python = "*"
-sphinx = "*"
+sphinx = ">=8.1,<9"
 sphinx-autodoc-typehints = "*"
 
 [feature.env-docs.tasks]
