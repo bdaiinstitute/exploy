@@ -97,7 +97,7 @@ def add_actor_memory(
         context_manager.add_component(
             Connection(
                 name=f"connection_{component_name}",
-                getter=memory_comp.get_from_env_cb,
+                getter=memory_comp.input.get_from_env_cb,
                 setter=set_hidden_state,
             )
         )

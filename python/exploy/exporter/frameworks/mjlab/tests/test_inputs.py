@@ -42,7 +42,7 @@ def test_add_body_vel(env):
         inputs.add_body_vel(entities, context_manager)
 
         input_components = context_manager.get_input_components()
-        comp_by_name = {comp.input_name: comp for comp in input_components}
+        comp_by_name = {comp.name: comp for comp in input_components}
 
         # Build the set of names we expect: two velocity inputs per non-root body, root skipped.
         expected_names: set[str] = set()
@@ -85,8 +85,8 @@ def test_add_body_vel(env):
 
                 lin_vel_comp = comp_by_name[f"{prefix}.lin_vel_b_rt_w_in_b"]
                 ang_vel_comp = comp_by_name[f"{prefix}.ang_vel_b_rt_w_in_b"]
-                lin_vel = lin_vel_comp.input_data
-                ang_vel = ang_vel_comp.input_data
+                lin_vel = lin_vel_comp.data
+                ang_vel = ang_vel_comp.data
 
                 # Identity: the input holds the stored slice, and repeated callback reads return
                 # the same object.

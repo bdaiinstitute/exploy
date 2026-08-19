@@ -36,12 +36,12 @@ class Input:
         self._id = id(self._data)
 
     @property
-    def input_data(self) -> torch.Tensor:
+    def data(self) -> torch.Tensor:
         """Get internal data as a torch tensor."""
         return self._data
 
     @property
-    def input_data_numpy(self) -> dict[str, np.ndarray]:
+    def data_numpy(self) -> np.ndarray:
         """Get internal data as a numpy array."""
         return self._data.cpu().numpy()
 
@@ -51,7 +51,7 @@ class Input:
         return self._metadata
 
     @property
-    def input_name(self) -> str:
+    def name(self) -> str:
         """Return the name of this input."""
         return self._name
 
@@ -89,7 +89,7 @@ class Output:
         return self._metadata
 
     @property
-    def output_name(self) -> str:
+    def name(self) -> str:
         """Return the name of this output."""
         return self._name
 
@@ -99,7 +99,7 @@ class Output:
         return self._get_from_env_cb()
 
     @property
-    def value_numpy(self) -> torch.Tensor:
+    def value_numpy(self) -> np.ndarray:
         """Get the latest value from the environment as a numpy array by calling the callback."""
         return self._get_from_env_cb().cpu().numpy()
 
@@ -109,47 +109,61 @@ class Output:
         return self._get_from_env_cb
 
 
-class Memory(Input, Output):
+class Memory:
     """Handle memory inputs and outputs.
 
     This class abstracts how to get and set values used in an environment that has memory, for
     example actions and previous actions. Values are retrieved by passing callables.
+
+    A memory element pairs an `Input` and an `Output` that share the same environment callback:
+    the output of one inference step is fed back as the input of the next one.
     """
 
     def __init__(
         self,
         name: str,
         get_from_env_cb: Callable[[], torch.Tensor],
+        metadata: Any = None,
     ):
-        Input.__init__(
-            self,
-            name=name,
+        """Construct a Memory element.
+
+        Args:
+            name (str): Identifier for this memory element.
+            get_from_env_cb (Callable[[], torch.Tensor]): Callback function that retrieves the
+                memory value from the environment as a torch.Tensor.
+            metadata (Any): Optional metadata associated with this memory element. It is stored on
+                the memory element itself, under the name shared by its input and output.
+        """
+        self._metadata = metadata
+        self._name = f"memory.{name}"
+        self._input = Input(
+            name=f"{self._name}.in",
             get_from_env_cb=get_from_env_cb,
         )
-        Output.__init__(
-            self,
-            name=name,
+        self._output = Output(
+            name=f"{self._name}.out",
             get_from_env_cb=get_from_env_cb,
         )
-        self._memory_info = {}
 
     @property
-    def input_name(self) -> str:
-        """This component's name, formatted for use as an ONNX exporter input."""
-        return f"memory.{self._name}.in"
+    def name(self) -> str:
+        """Return the name shared by this memory element's input and output."""
+        return self._name
 
     @property
-    def output_name(self) -> str:
-        """This component's name, formatted for use as an ONNX exporter output."""
-        return f"memory.{self._name}.out"
+    def metadata(self) -> Any:
+        """Get metadata about this memory element."""
+        return self._metadata
 
-    def io_name_to_name(self, io_name: str) -> str:
-        """Helper function to convert a name formatted for inputs or outputs to a memory element name."""
-        return io_name.removeprefix("memory.").removesuffix(".in").removesuffix(".out")
+    @property
+    def input(self) -> Input:
+        """Return the input side of this memory element."""
+        return self._input
 
-    def io_name_to_output_name(self, io_name: str) -> str:
-        """Helper function to convert a name formatted for inputs or outputs to the corresponding outputs to a memory element name."""
-        return io_name.removesuffix(".in") + ".out"
+    @property
+    def output(self) -> Output:
+        """Return the output side of this memory element."""
+        return self._output
 
 
 class Group:

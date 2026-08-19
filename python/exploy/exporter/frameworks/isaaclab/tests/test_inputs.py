@@ -58,7 +58,7 @@ def test_add_body_vel(sim_setup):
     inputs.add_body_vel(articulations=articulations, context_manager=context_manager)
 
     input_components = context_manager.get_input_components()
-    comp_by_name = {comp.input_name: comp for comp in input_components}
+    comp_by_name = {comp.name: comp for comp in input_components}
 
     # Build the set of names we expect: two velocity inputs per body.
     expected_names: set[str] = set()
@@ -79,10 +79,10 @@ def test_add_body_vel(sim_setup):
         root_prefix = f"obj.{obj_name}.{root_name}"
         root_lin_vel_comp = comp_by_name[f"{root_prefix}.lin_vel_b_rt_w_in_b"]
         root_ang_vel_comp = comp_by_name[f"{root_prefix}.ang_vel_b_rt_w_in_b"]
-        assert root_lin_vel_comp.input_data is articulation.data.root_lin_vel_b
-        assert root_ang_vel_comp.input_data is articulation.data.root_ang_vel_b
-        assert root_lin_vel_comp.get_from_env_cb() is root_lin_vel_comp.input_data
-        assert root_ang_vel_comp.get_from_env_cb() is root_ang_vel_comp.input_data
+        assert root_lin_vel_comp.data is articulation.data.root_lin_vel_b
+        assert root_ang_vel_comp.data is articulation.data.root_ang_vel_b
+        assert root_lin_vel_comp.get_from_env_cb() is root_lin_vel_comp.data
+        assert root_ang_vel_comp.get_from_env_cb() is root_ang_vel_comp.data
 
     # The body-frame velocities must be materialized against the data source as per-body leaves.
     for articulation in articulations.values():
@@ -103,8 +103,8 @@ def test_add_body_vel(sim_setup):
 
             lin_vel_comp = comp_by_name[f"{prefix}.lin_vel_b_rt_w_in_b"]
             ang_vel_comp = comp_by_name[f"{prefix}.ang_vel_b_rt_w_in_b"]
-            lin_vel = lin_vel_comp.input_data
-            ang_vel = ang_vel_comp.input_data
+            lin_vel = lin_vel_comp.data
+            ang_vel = ang_vel_comp.data
 
             # Identity: the input holds the stored slice, and repeated callback reads return the
             # same object.
@@ -250,7 +250,7 @@ def test_add_body_inputs_rigid_object(sim_setup):
         inputs.add_body_pos_and_quat(articulations=rigid_objects, context_manager=context_manager)
         inputs.add_body_vel(articulations=rigid_objects, context_manager=context_manager)
 
-        comp_by_name = {comp.input_name: comp for comp in context_manager.get_input_components()}
+        comp_by_name = {comp.name: comp for comp in context_manager.get_input_components()}
 
         # A rigid object has exactly one body, so we expect one input per quantity.
         assert set(comp_by_name) == {
@@ -268,28 +268,28 @@ def test_add_body_inputs_rigid_object(sim_setup):
         # Identity: each input must hold the exact tensor stored on the data source, and repeated
         # callback reads must return that same object. Without this, the inputs are dropped during
         # tracing and the quantities are baked into the ONNX graph as constants.
-        assert pos_comp.input_data is source.body_pos_w[:, 0]
-        assert quat_comp.input_data is source.body_quat_w[:, 0]
-        assert lin_vel_comp.input_data is source.root_lin_vel_b
-        assert ang_vel_comp.input_data is source.root_ang_vel_b
+        assert pos_comp.data is source.body_pos_w[:, 0]
+        assert quat_comp.data is source.body_quat_w[:, 0]
+        assert lin_vel_comp.data is source.root_lin_vel_b
+        assert ang_vel_comp.data is source.root_ang_vel_b
 
         for comp in (pos_comp, quat_comp, lin_vel_comp, ang_vel_comp):
-            assert comp.get_from_env_cb() is comp.input_data
+            assert comp.get_from_env_cb() is comp.data
 
         # The root pose must be derived from the very same stored leaves as the body pose, so that
         # observation terms reading either view are connected to the same graph inputs.
-        assert source.root_pos_w is pos_comp.input_data
-        assert source.root_quat_w is quat_comp.input_data
+        assert source.root_pos_w is pos_comp.data
+        assert source.root_quat_w is quat_comp.data
 
         # Values must round-trip from the live simulation state.
-        assert pos_comp.input_data.shape == (num_cubes, 3)
-        assert quat_comp.input_data.shape == (num_cubes, 4)
-        assert lin_vel_comp.input_data.shape == (num_cubes, 3)
-        assert ang_vel_comp.input_data.shape == (num_cubes, 3)
-        assert torch.allclose(pos_comp.input_data, expected_pos)
-        assert torch.allclose(quat_comp.input_data, expected_quat)
-        assert torch.allclose(lin_vel_comp.input_data, expected_lin_vel)
-        assert torch.allclose(ang_vel_comp.input_data, expected_ang_vel)
+        assert pos_comp.data.shape == (num_cubes, 3)
+        assert quat_comp.data.shape == (num_cubes, 4)
+        assert lin_vel_comp.data.shape == (num_cubes, 3)
+        assert ang_vel_comp.data.shape == (num_cubes, 3)
+        assert torch.allclose(pos_comp.data, expected_pos)
+        assert torch.allclose(quat_comp.data, expected_quat)
+        assert torch.allclose(lin_vel_comp.data, expected_lin_vel)
+        assert torch.allclose(ang_vel_comp.data, expected_ang_vel)
 
         # Writing new state into the data source must be visible through the registered inputs,
         # i.e. the inputs are live leaves rather than snapshots taken at registration time.
@@ -300,10 +300,10 @@ def test_add_body_inputs_rigid_object(sim_setup):
             f"body.{obj_name}.ang_vel": torch.tensor([7.0, 8.0, 9.0], device=device),
         }
         dict_to_rigid_object_data(data=new_state, object_name=obj_name, target=source, env_id=0)
-        assert torch.allclose(pos_comp.input_data[0], new_state[f"body.{obj_name}.pos"])
-        assert torch.allclose(quat_comp.input_data[0], new_state[f"body.{obj_name}.quat"])
-        assert torch.allclose(lin_vel_comp.input_data[0], new_state[f"body.{obj_name}.lin_vel"])
-        assert torch.allclose(ang_vel_comp.input_data[0], new_state[f"body.{obj_name}.ang_vel"])
+        assert torch.allclose(pos_comp.data[0], new_state[f"body.{obj_name}.pos"])
+        assert torch.allclose(quat_comp.data[0], new_state[f"body.{obj_name}.quat"])
+        assert torch.allclose(lin_vel_comp.data[0], new_state[f"body.{obj_name}.lin_vel"])
+        assert torch.allclose(ang_vel_comp.data[0], new_state[f"body.{obj_name}.ang_vel"])
 
         # The read-back helper must observe the same values.
         read_back = rigid_object_data_to_dict(object_name=obj_name, source=source, env_id=0)

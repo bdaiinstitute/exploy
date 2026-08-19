@@ -15,34 +15,48 @@ class ContextManager:
         self,
     ):
         self._components: list[Input | Output | Connection] = []
+        self._memories: list[Memory] = []
         self._groups: list[Group] = []
         self._modules: list[torch.nn.Module] = []
 
-    def add_component(self, component: Input | Output | Connection) -> None:
-        """Add a component (Input, Output, or Connection) to the context manager.
+    def add_component(self, component: Input | Output | Memory | Connection) -> None:
+        """Add a component (Input, Output, Memory, or Connection) to the context manager.
+
+        A Memory is registered as its input and output sides, so it is picked up by both
+        `get_input_components()` and `get_output_components()`.
 
         Args:
-            component: The component to add. Can be an Input, Output, or Connection.
+            component: The component to add. Can be an Input, Output, Memory, or Connection.
 
         Raises:
             AssertionError: If a component with the same name already exists.
         """
-        assert isinstance(component, (Input, Output, Connection)), (
-            "Component must be an Input, Output, or Connection."
+        assert isinstance(component, (Input, Output, Memory, Connection)), (
+            "Component must be an Input, Output, Memory, or Connection."
         )
+        if isinstance(component, Memory):
+            self.assert_unique_name(component.input.name)
+            self.assert_unique_id(component.input.id, component.input.name)
+            self.assert_unique_name(component.output.name)
+            self._components.append(component.input)
+            self._components.append(component.output)
+            self._memories.append(component)
+            return
+
         if isinstance(component, Input):
-            self.assert_unique_name(component.input_name)
-            self.assert_unique_id(component.id, component.input_name)
+            self.assert_unique_name(component.name)
+            self.assert_unique_id(component.id, component.name)
         elif isinstance(component, Output):
-            self.assert_unique_name(component.output_name)
+            self.assert_unique_name(component.name)
 
         self._components.append(component)
 
-    def add_components(self, components: list[Input | Output | Connection]) -> None:
+    def add_components(self, components: list[Input | Output | Memory | Connection]) -> None:
         """Add multiple components to the context manager.
 
         Args:
-            components: A list of components to add. Each can be an Input, Output, or Connection.
+            components: A list of components to add. Each can be an Input, Output, Memory, or
+                Connection.
 
         Raises:
             AssertionError: If any component has a name that already exists.
@@ -70,13 +84,13 @@ class ContextManager:
                 self.add_component(item)
         self._groups.append(group)
 
-    def get_input_components(self) -> list[Input | Memory]:
-        """Get all input components including memory components.
+    def get_input_components(self) -> list[Input]:
+        """Get all input components including the input side of memory components.
 
         Returns:
-            A list of all Input and Memory components.
+            A list of all Input components.
         """
-        return [comp for comp in self._components if isinstance(comp, Input | Memory)]
+        return [comp for comp in self._components if isinstance(comp, Input)]
 
     def get_connection_components(self) -> list[Connection]:
         """Get all connection components.
@@ -86,13 +100,13 @@ class ContextManager:
         """
         return [comp for comp in self._components if isinstance(comp, Connection)]
 
-    def get_output_components(self) -> list[Output | Memory]:
-        """Get all output components including memory components.
+    def get_output_components(self) -> list[Output]:
+        """Get all output components including the output side of memory components.
 
         Returns:
-            A list of all Output and Memory components.
+            A list of all Output components.
         """
-        return [comp for comp in self._components if isinstance(comp, Output | Memory)]
+        return [comp for comp in self._components if isinstance(comp, Output)]
 
     def get_memory_components(self) -> list[Memory]:
         """Get all memory components.
@@ -100,7 +114,7 @@ class ContextManager:
         Returns:
             A list of all Memory components.
         """
-        return [comp for comp in self._components if isinstance(comp, Memory)]
+        return list(self._memories)
 
     def get_component_by_name(self, name: str) -> Input | Output | None:
         """Get a component by its name.
@@ -112,9 +126,7 @@ class ContextManager:
             The component with the given name, or None if not found.
         """
         for component in self._components:
-            if isinstance(component, Output) and component.output_name == name:
-                return component
-            if isinstance(component, Input) and component.input_name == name:
+            if isinstance(component, (Input, Output)) and component.name == name:
                 return component
         return None
 
@@ -146,9 +158,7 @@ class ContextManager:
         """
         inputs = {}
         for component in self.get_input_components():
-            inputs[component.input_name] = (
-                component.input_data_numpy if to_numpy else component.input_data
-            )
+            inputs[component.name] = component.data_numpy if to_numpy else component.data
         return inputs
 
     def get_input_names(self) -> list[str]:
@@ -157,7 +167,7 @@ class ContextManager:
         Returns:
             A list of input component names.
         """
-        return [component.input_name for component in self.get_input_components()]
+        return [component.name for component in self.get_input_components()]
 
     def get_outputs(
         self, to_numpy: bool = False
@@ -172,7 +182,7 @@ class ContextManager:
         """
         outputs = {}
         for component in self.get_output_components():
-            outputs[component.output_name] = component.value_numpy if to_numpy else component.value
+            outputs[component.name] = component.value_numpy if to_numpy else component.value
         return outputs
 
     def get_output_names(self) -> list[str]:
@@ -181,20 +191,20 @@ class ContextManager:
         Returns:
             A list of output component names.
         """
-        return [output.output_name for output in self.get_output_components()]
+        return [output.name for output in self.get_output_components()]
 
     @property
     def metadata(self) -> dict[str, Any]:
         return {
             **{
-                comp.input_name: comp.metadata
+                comp.name: comp.metadata
                 for comp in self._components
-                if isinstance(comp, Input) and comp.metadata is not None
+                if isinstance(comp, (Input, Output)) and comp.metadata is not None
             },
             **{
-                comp.output_name: comp.metadata
-                for comp in self._components
-                if isinstance(comp, Output) and comp.metadata is not None
+                memory.name: memory.metadata
+                for memory in self._memories
+                if memory.metadata is not None
             },
             **{group.name: group.metadata for group in self._groups if group.metadata is not None},
         }
@@ -210,9 +220,9 @@ class ContextManager:
         """
         if name in [g.name for g in self._groups]:
             raise KeyError(f"Name '{name}' already exists as a group name.")
-        if name in [comp.input_name for comp in self.get_input_components()]:
+        if name in [comp.name for comp in self.get_input_components()]:
             raise KeyError(f"Name '{name}' already exists as an input name.")
-        if name in [comp.output_name for comp in self.get_output_components()]:
+        if name in [comp.name for comp in self.get_output_components()]:
             raise KeyError(f"Name '{name}' already exists as an output name.")
 
     def assert_unique_id(self, id: int, name: str = None):
@@ -226,9 +236,7 @@ class ContextManager:
         """
         for comp in self._components:
             if isinstance(comp, Input) and comp.id == id:
-                raise KeyError(
-                    f"ID '{id}' of {name} already exists in component {comp.input_name}."
-                )
+                raise KeyError(f"ID '{id}' of {name} already exists in component {comp.name}.")
 
     def add_module(self, module: torch.nn.Module) -> None:
         """Register a PyTorch module with this context manager.

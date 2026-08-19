@@ -24,7 +24,7 @@ class TestInput:
             metadata={"unit": "radians"},
         )
 
-        assert inp.input_name == "test_input"
+        assert inp.name == "test_input"
         assert inp.metadata == {"unit": "radians"}
 
     def test_input_numpy_conversion(self):
@@ -35,7 +35,7 @@ class TestInput:
             get_from_env_cb=lambda: data,
         )
 
-        numpy_data = inp.input_data_numpy
+        numpy_data = inp.data_numpy
         assert isinstance(numpy_data, np.ndarray)
         assert np.array_equal(numpy_data, data.numpy())
 
@@ -52,12 +52,12 @@ class TestInput:
         )
 
         # Initial data should be captured on creation
-        assert torch.equal(inp.input_data, torch.tensor([1.0, 2.0, 3.0]))
+        assert torch.equal(inp.data, torch.tensor([1.0, 2.0, 3.0]))
 
         # Read from environment after data changes
         stored["value"] = torch.tensor([10.0, 11.0, 12.0])
         inp.read()
-        assert torch.equal(inp.input_data, stored["value"])
+        assert torch.equal(inp.data, stored["value"])
 
 
 class TestOutput:
@@ -76,7 +76,7 @@ class TestOutput:
             metadata={"unit": "radians"},
         )
 
-        assert out.output_name == "test_output"
+        assert out.name == "test_output"
         assert out.metadata == {"unit": "radians"}
 
     def test_output_numpy_conversion(self):
@@ -106,26 +106,15 @@ class TestMemory:
         mem = Memory(
             name="actions",
             get_from_env_cb=getter,
+            metadata={"unit": "radians"},
         )
 
-        assert mem.input_name == "memory.actions.in"
-        assert mem.output_name == "memory.actions.out"
-        assert torch.equal(mem.input_data, data)
-        assert torch.equal(mem.value, data)
-
-    def test_memory_name_conversion(self):
-        """Test Memory name conversion utilities."""
-        mem = Memory(
-            name="actions",
-            get_from_env_cb=lambda: torch.zeros(3),
-        )
-
-        # Test io_name_to_name
-        assert mem.io_name_to_name("memory.actions.in") == "actions"
-        assert mem.io_name_to_name("memory.actions.out") == "actions"
-
-        # Test io_name_to_output_name
-        assert mem.io_name_to_output_name("memory.actions.in") == "memory.actions.out"
+        assert mem.name == "memory.actions"
+        assert mem.metadata == {"unit": "radians"}
+        assert mem.input.name == "memory.actions.in"
+        assert mem.output.name == "memory.actions.out"
+        assert torch.equal(mem.input.data, data)
+        assert torch.equal(mem.output.value, data)
 
 
 class TestGroup:
@@ -160,7 +149,4 @@ class TestGroup:
         group = Group(name="robot", items=[inp, out])
 
         for item in group.items:
-            if isinstance(item, (Input)):
-                assert item.input_name.startswith("robot.")
-            elif isinstance(item, (Output)):
-                assert item.output_name.startswith("robot.")
+            assert item.name.startswith("robot.")

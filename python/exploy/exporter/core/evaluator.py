@@ -315,7 +315,7 @@ def evaluate_episode(
         """
         # Get the environment's outputs.
         for component in context_manager.get_output_components():
-            env_outputs[component.output_name] = component.get_from_env_cb().clone().cpu()
+            env_outputs[component.name] = component.get_from_env_cb().clone().cpu()
 
         # Skip first step, as we evaluate the policy in the main evaluation loop before calling env.step().
         # Skip if we have not run the session yet.
@@ -326,7 +326,7 @@ def evaluate_episode(
         # We always use the previous ONNX memory outputs as inputs to the next ONNX inference.
         memory_components = context_manager.get_memory_components()
         for memory in memory_components:
-            onnx_inputs[memory.input_name] = session_wrapper.get_output_value(memory.output_name)
+            onnx_inputs[memory.input.name] = session_wrapper.get_output_value(memory.output.name)
         onnx_inputs["ctx.step_count"] = np.array([step_ctr], dtype=np.int32)
         session_wrapper(**onnx_inputs)
 
@@ -383,8 +383,8 @@ def evaluate_episode(
             # We overwrite the memory from the env with the previous ONNX outputs.
             memory_components = context_manager.get_memory_components()
             for memory in memory_components:
-                onnx_inputs[memory.input_name] = session_wrapper.get_output_value(
-                    memory.output_name
+                onnx_inputs[memory.input.name] = session_wrapper.get_output_value(
+                    memory.output.name
                 )
 
         # Evaluate the ONNX policy.
