@@ -285,8 +285,8 @@ your state and command interfaces, one per matched tensor.
 
 ### Choosing a worker mode
 
-`init()` accepts an optional `WorkerMode` argument that controls how inference
-is scheduled relative to the calling thread:
+`init()` accepts optional `WorkerOptions` that control how inference is scheduled
+relative to the calling thread. Passing a `WorkerMode` directly remains supported:
 
 | Mode | Behaviour |
 |------|----------|
@@ -335,12 +335,24 @@ next call once work has finished.
 ```
 
 ```cpp
-// Run inference on a background thread:
-if (!controller.init(/*enable_data_collection=*/true, WorkerMode::ASYNC)) {
+// Run inference on CPUs 2 and 3 using real-time FIFO scheduling:
+if (!controller.init(/*enable_data_collection=*/true, {
+        .mode = WorkerMode::ASYNC,
+        .scheduling = {
+            .cpu_affinity = {2, 3},
+            .policy = SchedulingPolicy::FIFO,
+            .priority = 20,
+        },
+    })) {
     std::cerr << "Controller initialisation failed\n";
     return 1;
 }
 ```
+
+An empty CPU list preserves the inherited affinity. `NORMAL` with priority zero
+preserves the inherited scheduler. Real-time policies may require `CAP_SYS_NICE`.
+On Linux, invalid settings cause the asynchronous worker to enter its faulted state.
+Other platforms log a warning and ignore non-default scheduling settings.
 
 With `WorkerMode::ASYNC`, an overrun (inference not finished when the next cycle
 starts) is handled gracefully: the cycle is skipped and `update()` returns

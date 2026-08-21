@@ -55,7 +55,7 @@ bool OnnxRLController::create(const std::string& onnx_model_path, bool register_
   return true;
 }
 
-bool OnnxRLController::init(bool enable_data_collection, WorkerMode mode) {
+bool OnnxRLController::init(bool enable_data_collection, const WorkerOptions& options) {
   if (!onnx_model_.isInitialized()) {
     LOG_STREAM(ERROR, "ONNX model is not initialized.");
     return false;
@@ -85,8 +85,8 @@ bool OnnxRLController::init(bool enable_data_collection, WorkerMode mode) {
     LOG_STREAM(ERROR, "Invalid update rate: " << rate << " Hz. Must be > 0.");
     return false;
   }
-  if (mode == WorkerMode::ASYNC) {
-    worker_ = std::make_unique<AsyncWorker>(rate);
+  if (options.mode == WorkerMode::ASYNC) {
+    worker_ = std::make_unique<AsyncWorker>(rate, options.scheduling);
   } else {
     worker_ = std::make_unique<SyncWorker>(rate);
   }

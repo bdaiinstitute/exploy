@@ -26,6 +26,12 @@ enum class WorkerMode {
   ASYNC,  ///< Run inference on a background thread (see AsyncWorker).
 };
 
+/** @brief Worker mode and optional asynchronous thread scheduling. */
+struct WorkerOptions {
+  WorkerMode mode = WorkerMode::SYNC;
+  ThreadSchedulingOptions scheduling;
+};
+
 /**
  * @class OnnxRLController
  *
@@ -69,10 +75,11 @@ class OnnxRLController {
    * @brief Initialize the controller.
    *
    * @param enable_data_collection Whether to enable data collection.
-   * @param mode Whether to run the ONNX inference synchronously or asynchronously.
+   * @param options Worker mode and asynchronous thread scheduling options.
    * @return True if initialization succeeds, false otherwise.
    */
-  bool init(bool enable_data_collection, WorkerMode mode = WorkerMode::SYNC);
+  bool init(bool enable_data_collection, const WorkerOptions& options = {});
+
   /**
    * @brief Reset the controller.
    */

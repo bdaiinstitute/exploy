@@ -5,6 +5,10 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#ifdef __linux__
+#include <sched.h>
+#endif
+
 #include <atomic>
 #include <chrono>
 #include <future>
@@ -165,6 +169,50 @@ TEST_F(WorkerTest, AsyncWorker_ThreadExecution) {
   EXPECT_NE(main_id, work_id);
   EXPECT_NE(work_id, std::thread::id());
 }
+
+#ifdef __linux__
+TEST_F(WorkerTest, AsyncWorker_Affinity) {
+  cpu_set_t available_cpus;
+  CPU_ZERO(&available_cpus);
+  ASSERT_EQ(sched_getaffinity(0, sizeof(available_cpus), &available_cpus), 0);
+
+  int target_cpu = -1;
+  for (int cpu = 0; cpu < CPU_SETSIZE; ++cpu) {
+    if (CPU_ISSET(cpu, &available_cpus)) {
+      target_cpu = cpu;
+      break;
+    }
+  }
+  ASSERT_GE(target_cpu, 0);
+
+  AsyncWorker worker(10.0, {.cpu_affinity = {static_cast<unsigned>(target_cpu)}});
+  SetupWorker(worker);
+
+  std::promise<int> work_cpu_promise;
+  auto work_cpu_future = work_cpu_promise.get_future();
+  EXPECT_CALL(callbacks_, Read()).WillOnce(Return(true));
+  EXPECT_CALL(callbacks_, Work()).WillOnce([&]() {
+    work_cpu_promise.set_value(sched_getcpu());
+    return true;
+  });
+
+  EXPECT_TRUE(worker.update(1000000));
+  ASSERT_EQ(work_cpu_future.wait_for(std::chrono::milliseconds(1000)), std::future_status::ready)
+      << "Timed out waiting for worker CPU";
+  EXPECT_EQ(work_cpu_future.get(), target_cpu);
+}
+
+TEST_F(WorkerTest, AsyncWorker_InvalidPriorityFaults) {
+  AsyncWorker worker(10.0, {.priority = 1});
+  SetupWorker(worker);
+
+  EXPECT_CALL(callbacks_, Read()).WillOnce(Return(true));
+  EXPECT_CALL(callbacks_, Work()).Times(0);
+
+  EXPECT_TRUE(worker.update(1000000));
+  retryUpdateUntilFail(worker, 1000050);
+}
+#endif
 
 TEST_F(WorkerTest, AsyncWorker_Overrun) {
   AsyncWorker worker(10.0);

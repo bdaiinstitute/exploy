@@ -6,8 +6,34 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <vector>
 
 namespace exploy::control {
+
+/**
+ * @brief Scheduling policy for an asynchronous worker thread.
+ *
+ * @note Only supported on Linux.
+ */
+enum class SchedulingPolicy {
+  NORMAL,
+  FIFO,
+  ROUND_ROBIN,
+};
+
+/**
+ * @brief Optional CPU affinity and real-time scheduling for an asynchronous worker.
+ *
+ * @note Only supported on Linux.
+ */
+struct ThreadSchedulingOptions {
+  /** CPUs on which the thread may run. Empty preserves the inherited affinity. */
+  std::vector<unsigned> cpu_affinity;
+  /** Scheduler to use. NORMAL with priority 0 preserves the inherited scheduler. */
+  SchedulingPolicy policy = SchedulingPolicy::NORMAL;
+  /** Scheduler priority. FIFO and ROUND_ROBIN priorities are platform-dependent. */
+  int priority = 0;
+};
 
 /**
  * @brief Abstract base class for controller execution strategies.
@@ -111,8 +137,9 @@ class AsyncWorker : public Worker {
  public:
   /**
    * @param update_rate_hz Desired control frequency in Hz.
+   * @param scheduling Optional CPU affinity and scheduler settings for the background thread.
    */
-  explicit AsyncWorker(double update_rate_hz);
+  AsyncWorker(double update_rate_hz, ThreadSchedulingOptions scheduling = {});
   ~AsyncWorker() override;
 
   void reset() override;
@@ -122,9 +149,11 @@ class AsyncWorker : public Worker {
   void startWorker();
   void stopWorker();
   void threadLoop();
+  bool configureThread();
 
   // Main-thread-only — no synchronization needed.
   uint64_t period_ms_;
+  const ThreadSchedulingOptions scheduling_;
   uint64_t last_scheduled_update_us_ = 0;
   bool first_run_ = true;
   uint64_t consecutive_overruns_ = 0;

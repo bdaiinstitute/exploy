@@ -3,6 +3,13 @@
 
 #include "exploy/logging_utils.hpp"
 
+#ifdef __linux__
+#include <pthread.h>
+#include <sched.h>
+#include <cerrno>
+#include <cstring>
+#endif
+
 #include <cmath>
 #include <utility>
 
@@ -57,7 +64,8 @@ bool SyncWorker::update(uint64_t time_us) {
 
 // AsyncWorker
 
-AsyncWorker::AsyncWorker(double update_rate_hz) {
+AsyncWorker::AsyncWorker(double update_rate_hz, ThreadSchedulingOptions scheduling)
+    : scheduling_(std::move(scheduling)) {
   period_ms_ = static_cast<uint64_t>(std::lround(1000.0 / update_rate_hz));
 }
 
@@ -103,7 +111,10 @@ bool AsyncWorker::update(uint64_t time_us) {
     LOG(ERROR, "AsyncWorker: callbacks not set. Call setCallbacks() before update().");
     return false;
   }
-  if (faulted_) return false;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (faulted_) return false;
+  }
 
   if (first_run_) {
     startWorker();
@@ -161,7 +172,77 @@ bool AsyncWorker::update(uint64_t time_us) {
   return true;
 }
 
+bool AsyncWorker::configureThread() {
+#ifndef __linux__
+  if (!scheduling_.cpu_affinity.empty() || scheduling_.policy != SchedulingPolicy::NORMAL ||
+      scheduling_.priority != 0) {
+    LOG(DEBUG,
+        "AsyncWorker: thread scheduling options are unsupported on this platform and will be "
+        "ignored.");
+  }
+  return true;
+#else
+  if (!scheduling_.cpu_affinity.empty()) {
+    cpu_set_t cpu_set;
+    CPU_ZERO(&cpu_set);
+    for (unsigned cpu : scheduling_.cpu_affinity) {
+      if (cpu >= CPU_SETSIZE) {
+        LOG(ERROR, "AsyncWorker: CPU %u exceeds CPU_SETSIZE (%d).", cpu, CPU_SETSIZE);
+        return false;
+      }
+      CPU_SET(cpu, &cpu_set);
+    }
+    const int error = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set), &cpu_set);
+    if (error != 0) {
+      LOG(ERROR, "AsyncWorker: failed to set CPU affinity: %s", std::strerror(error));
+      return false;
+    }
+  }
+
+  if (scheduling_.policy == SchedulingPolicy::NORMAL && scheduling_.priority == 0) return true;
+
+  int policy = SCHED_OTHER;
+  switch (scheduling_.policy) {
+    case SchedulingPolicy::NORMAL:
+      break;
+    case SchedulingPolicy::FIFO:
+      policy = SCHED_FIFO;
+      break;
+    case SchedulingPolicy::ROUND_ROBIN:
+      policy = SCHED_RR;
+      break;
+  }
+
+  errno = 0;
+  const int min_priority = sched_get_priority_min(policy);
+  const int max_priority = sched_get_priority_max(policy);
+  if (min_priority == -1 || max_priority == -1) {
+    LOG(ERROR, "AsyncWorker: failed to query scheduler priority range: %s", std::strerror(errno));
+    return false;
+  }
+  if (scheduling_.priority < min_priority || scheduling_.priority > max_priority) {
+    LOG(ERROR, "AsyncWorker: priority %d is outside the valid range [%d, %d].",
+        scheduling_.priority, min_priority, max_priority);
+    return false;
+  }
+
+  sched_param parameters{.sched_priority = scheduling_.priority};
+  const int error = pthread_setschedparam(pthread_self(), policy, &parameters);
+  if (error != 0) {
+    LOG(ERROR, "AsyncWorker: failed to set scheduler: %s", std::strerror(error));
+    return false;
+  }
+  return true;
+#endif
+}
+
 void AsyncWorker::threadLoop() {
+  if (!configureThread()) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    faulted_ = true;
+    return;
+  }
+
   while (true) {
     {
       std::unique_lock<std::mutex> lock(mutex_);

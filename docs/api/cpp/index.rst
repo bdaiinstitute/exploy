@@ -241,10 +241,18 @@ Workers
 -------
 
 Execution strategies for the read → inference → write pipeline.
-Select a strategy via :cpp:enum:`exploy::control::WorkerMode` when calling
-``OnnxRLController::init()``.
+Select a strategy and asynchronous thread scheduling via
+:cpp:struct:`exploy::control::WorkerOptions` when calling ``OnnxRLController::init()``.
 
 .. doxygenenum:: exploy::control::WorkerMode
+
+.. doxygenenum:: exploy::control::SchedulingPolicy
+
+.. doxygenstruct:: exploy::control::ThreadSchedulingOptions
+   :members:
+
+.. doxygenstruct:: exploy::control::WorkerOptions
+   :members:
 
 .. doxygenclass:: exploy::control::Worker
    :members:
