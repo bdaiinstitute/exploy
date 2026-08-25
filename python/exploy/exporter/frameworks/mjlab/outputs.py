@@ -50,7 +50,7 @@ def add_outputs(
 
         context_manager.add_group(
             Group(
-                name=f"{OUTPUT_PREFIX}.joint_targets.{action_term_name}",
+                name=f"{OUTPUT_PREFIX}.joint_targets.{action_term.cfg.entity_name}.{action_term_name}",
                 metadata={
                     "type": "joint_targets",
                     "names": joint_names,

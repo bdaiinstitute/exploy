@@ -50,7 +50,7 @@ def add_outputs(
             actuator_gains = get_articulation_actuator_gains(articulation=articulation)
 
             onnx_joint_outputs = Group(
-                name=f"{OUTPUT_PREFIX}.joint_targets.{active_term_name}",
+                name=f"{OUTPUT_PREFIX}.joint_targets.{cfg.asset_name}.{active_term_name}",
                 metadata={
                     "type": "joint_targets",
                     "names": joint_names,

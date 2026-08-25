@@ -321,7 +321,8 @@ class JointTargetMatcher : public GroupMatcher {
  private:
   void reset() override;
   const std::regex pattern_ =
-      std::regex(fmt::format("(output\\.joint_targets\\.({}))\\.(pos|vel|effort)", kAlphanumeric));
+      std::regex(fmt::format("(output\\.joint_targets\\.({})(?:\\.({}))?)\\.(pos|vel|effort)",
+                             kAlphanumeric, kAlphanumeric));
   /// Map from group name to the resolved articulation name.
   std::unordered_map<std::string, std::string> articulation_names_;
 };

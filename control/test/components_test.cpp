@@ -372,6 +372,38 @@ TEST(CommandFloatMatcherTest, CreatesInputWithMetadata) {
   ASSERT_EQ(inputs.size(), 1u);
 }
 
+TEST(CommandFloatMatcherTest, MatchesDottedCommandName) {
+  // Composite command terms register one float per field, e.g. the wholebody command's
+  // `cmd.float.<command>.height` / `.pitch`.
+  CommandFloatMatcher matcher;
+  EXPECT_TRUE(matcher.matches({.name = "cmd.float.wholebody_command.height"}));
+  EXPECT_TRUE(matcher.matches({.name = "cmd.float.wholebody_command.pitch"}));
+}
+
+TEST(CommandFloatMatcherTest, MatchesArbitrarilyNestedCommandName) {
+  CommandFloatMatcher matcher;
+  EXPECT_TRUE(matcher.matches({.name = "cmd.float.wholebody_command.height.extra"}));
+}
+
+TEST(CommandFloatMatcherTest, DoesNotMatchMalformedNames) {
+  CommandFloatMatcher matcher;
+  EXPECT_FALSE(matcher.matches({.name = "cmd.float"}));          // no segment
+  EXPECT_FALSE(matcher.matches({.name = "cmd.float."}));         // trailing dot
+  EXPECT_FALSE(matcher.matches({.name = "cmd.float..height"}));  // empty segment
+  EXPECT_FALSE(matcher.matches({.name = "cmd.float.a.b."}));     // trailing dot after nesting
+}
+
+TEST(CommandFloatMatcherTest, KeepsFieldsOfSameCommandDistinct) {
+  // The whole `<command>.<field>` string is the storage key. Keying on `<command>` alone
+  // would make the two fields collide and silently drop one input.
+  CommandFloatMatcher matcher;
+  ASSERT_TRUE(matcher.matches({.name = "cmd.float.wholebody_command.height"}));
+  ASSERT_TRUE(matcher.matches({.name = "cmd.float.wholebody_command.pitch"}));
+
+  auto inputs = matcher.createInputs();
+  EXPECT_EQ(inputs.size(), 2u);
+}
+
 TEST(CommandSE2VelocityMatcherTest, CreatesInputWithoutMetadata) {
   CommandSE2VelocityMatcher matcher;
   Match match_without_metadata{.name = "cmd.se2_velocity.vel"};
@@ -449,6 +481,103 @@ TEST(CommandJointPositionMatcherTest, MatchesMultipleCommands) {
 
   auto inputs = matcher.createInputs();
   ASSERT_EQ(inputs.size(), 2u);
+}
+
+// ---------------  JointTargetMatcher tests --------------------------------
+
+namespace {
+// Metadata shape emitted by the exporter's joint-targets group.
+constexpr const char* kJointTargetMetadata =
+    R"({"type": "joint_targets", "names": ["j1", "j2"], "stiffness": [10.0, 10.0], "damping": [1.0, 1.0]})";
+}  // namespace
+
+TEST(JointTargetMatcherTest, MatchesTwoSegmentName) {
+  // Legacy form: `output.joint_targets.<articulation>.<field>`, still emitted by the
+  // mjlab frontend and by previously exported artifacts.
+  JointTargetMatcher matcher;
+  EXPECT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.pos"}));
+  EXPECT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.vel"}));
+  EXPECT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.effort"}));
+}
+
+TEST(JointTargetMatcherTest, MatchesThreeSegmentName) {
+  // Current form: `output.joint_targets.<articulation>.<action_term>.<field>`.
+  JointTargetMatcher matcher;
+  EXPECT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.pos"}));
+  EXPECT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.vel"}));
+  EXPECT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.effort"}));
+}
+
+TEST(JointTargetMatcherTest, DoesNotMatchUnrelatedPatterns) {
+  JointTargetMatcher matcher;
+  // Missing field suffix.
+  EXPECT_FALSE(matcher.matches({.name = "output.joint_targets.robot1"}));
+  // Unsupported field.
+  EXPECT_FALSE(matcher.matches({.name = "output.joint_targets.robot1.acceleration"}));
+  // Wrong prefix.
+  EXPECT_FALSE(matcher.matches({.name = "output.se2_velocity.robot1.pos"}));
+  // One segment too many: kAlphanumeric excludes '.', so this must not match.
+  EXPECT_FALSE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.extra.pos"}));
+}
+
+TEST(JointTargetMatcherTest, GroupsFieldsOfOneTermIntoSingleOutput) {
+  JointTargetMatcher matcher;
+  ASSERT_TRUE(matcher.matches(
+      {.name = "output.joint_targets.robot1.joint_pos.pos", .metadata = kJointTargetMetadata}));
+  ASSERT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.vel"}));
+  ASSERT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.effort"}));
+
+  auto outputs = matcher.createOutputs();
+  EXPECT_EQ(outputs.size(), 1u) << "pos/vel/effort of one term belong to one group";
+}
+
+TEST(JointTargetMatcherTest, SeparatesActionTermsOfSameArticulation) {
+  // Two joint action terms on one robot (e.g. policy-driven lower body plus arms driven
+  // from a command term) must yield two distinct groups.
+  JointTargetMatcher matcher;
+  ASSERT_TRUE(matcher.matches(
+      {.name = "output.joint_targets.robot1.joint_pos.pos", .metadata = kJointTargetMetadata}));
+  ASSERT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.arms_joint_pos.pos",
+                               .metadata = kJointTargetMetadata}));
+
+  auto outputs = matcher.createOutputs();
+  EXPECT_EQ(outputs.size(), 2u);
+}
+
+TEST(JointTargetMatcherTest, SkipsOutputWithoutMetadata) {
+  JointTargetMatcher matcher;
+  ASSERT_TRUE(matcher.matches({.name = "output.joint_targets.robot1.joint_pos.pos"}));
+
+  auto outputs = matcher.createOutputs();
+  EXPECT_EQ(outputs.size(), 0u);
+}
+
+TEST(JointTargetMatcherTest, ResolvesArticulationFromFirstSegmentInBothForms) {
+  // The regression this guards: the articulation must come from the segment directly
+  // after `joint_targets.` in both forms. A group-index slip would resolve the action
+  // term name ("joint_pos") as the articulation and route targets to a nonexistent robot.
+  JointTargetMatcher matcher;
+  ASSERT_TRUE(matcher.matches(
+      {.name = "output.joint_targets.robot1.joint_pos.pos", .metadata = kJointTargetMetadata}));
+  ASSERT_TRUE(matcher.matches(
+      {.name = "output.joint_targets.robot2.pos", .metadata = kJointTargetMetadata}));
+
+  auto outputs = matcher.createOutputs();
+  ASSERT_EQ(outputs.size(), 2u);
+
+  // JointTargetOutput::init calls initJointOutput once per joint in the metadata,
+  // carrying the articulation the matcher resolved.
+  StrictMock<MockRobotStateInterface> state;
+  MockCommandInterface command;
+  EXPECT_CALL(state, initJointOutput(JointIs<JointOutputInfo>("robot1", "j1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state, initJointOutput(JointIs<JointOutputInfo>("robot1", "j2")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state, initJointOutput(JointIs<JointOutputInfo>("robot2", "j1")))
+      .WillOnce(Return(true));
+  EXPECT_CALL(state, initJointOutput(JointIs<JointOutputInfo>("robot2", "j2")))
+      .WillOnce(Return(true));
+  for (auto& output : outputs) EXPECT_TRUE(output->init(state, command));
 }
 
 // ---------------  Base*Matcher tests --------------------------------

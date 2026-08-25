@@ -452,7 +452,10 @@ CommandFloatMatcher::CommandFloatMatcher() : Matcher("CommandFloatMatcher") {}
 
 bool CommandFloatMatcher::matches(const Match& maybe_match) {
   std::smatch match;
-  std::regex pattern = std::regex(fmt::format("cmd\\.float\\.({})", kAlphanumeric));
+  // Float commands are a dot-separated path: a scalar command (`cmd.float.<command>`) or
+  // a field of a composite one (`cmd.float.<command>.<field>`), at arbitrary depth.
+  std::regex pattern =
+      std::regex(fmt::format("cmd\\.float\\.({}(?:\\.{})*)", kAlphanumeric, kAlphanumeric));
   if (std::regex_match(maybe_match.name, match, pattern)) {
     found_matches_[match[1].str()] = maybe_match;
     return true;
